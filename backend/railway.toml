@@ -1,0 +1,6 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "flask db upgrade && gunicorn run:app"
+restartPolicyType = "ON_FAILURE"
