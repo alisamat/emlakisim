@@ -73,35 +73,103 @@ Kullanıcı mesajı → Türkçe normalleştirme → Pattern/Intent matching →
 - Pattern matching ile tanınan komutlar AI'ya gitmez → sıfır maliyet, anlık sonuç
 - AI sadece anlaşılamayan veya karmaşık işlemlerde devreye girer
 
-### 2. Maliyet Minimizasyonu
-- Basit CRUD: pattern matching, AI yok → $0
-- Genel sohbet: Gemini Flash → ~$0.0001/mesaj
-- Belge/rapor: GPT-4o mini → ~$0.0003/mesaj  
-- Analiz/eşleştirme: Claude Haiku → ~$0.0005/mesaj
-- Hedef: Ortalama mesaj maliyeti < $0.0002
+### 2. Kredi Sistemi (Tek Noktadan Maliyet Yönetimi)
+Her işlemin bir kredi maliyeti var. AI maliyeti de kredi üzerinden hesaplanır:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    KREDİ MERKEZİ                            │
+│                                                             │
+│ Veri kaynakları:                                            │
+│  ├── AI token maliyeti (Gemini/GPT/Claude) → kredi          │
+│  ├── CRUD işlemleri (müşteri ekle, mülk sil) → 1 kredi      │
+│  ├── Belge üretimi (PDF, kontrat) → 2 kredi                │
+│  ├── Toplu işlem (Excel import, OCR) → N kredi              │
+│  ├── SMS/email gönderim → 1 kredi                           │
+│  ├── Sesli arama (AI telefon) → 5 kredi/dk                  │
+│  ├── Rapor üretimi → 2 kredi                                │
+│  └── Web arama/tarama → 2 kredi                             │
+│                                                             │
+│ Her işlem log'lanır:                                        │
+│  → işlem_tipi, maliyet_usd, kredi_tutarı, zaman            │
+│                                                             │
+│ Admin panel: tek noktadan tüm maliyet takibi                │
+└─────────────────────────────────────────────────────────────┘
+```
+- Pattern matching ile tanınan CRUD işlemleri → 1 kredi (AI yok, $0 maliyet)
+- AI sohbet → AI dolar maliyeti × kar marjı → kredi
+- Kredi yetersizse uyarı, satın alma yönlendirmesi
 
-### 3. Onbinlerce Komut Kombinasyonu
-AI, function calling ile DB'ye doğrudan işlem yapar:
-- "Ali Yılmaz müşterisini ekle telefonu 532..." → müşteri INSERT
-- "Kadıköy portföyündeki kiralıkları listele" → müşteri SELECT + filtre
-- "Ahmet bey ile yarın saat 3'te yer gösterme planla" → planlama INSERT + hatırlatma
-- "Son 1 ayın kira gelir raporunu çıkar" → muhasebe SELECT + rapor
-- Doğru ve güvenilir: her işlem onay mekanizması ile (kritik işlemlerde "emin misiniz?")
+### 3. Diyalog Eğitim Sistemi (Büyüyen Zeka)
+Onbinlerce diyalog oluşturmak, bunları işleme dönüştürmek ve sistem büyüdükçe öğrenmesi:
+```
+Kullanıcı diyalog → Başarılı işlem → Pattern DB'ye eklenir
+                  → Başarısız işlem → Manuel inceleme → Düzeltme → Pattern güncellenir
+```
+- Her başarılı diyalog-işlem çifti saklanır (eğitim verisi)
+- Zaman içinde pattern matching havuzu genişler → AI'ya daha az ihtiyaç → maliyet düşer
+- Model eğitimi gibi: eklenerek büyüyen sistem
+- Yeni komut kalıpları otomatik öğrenilir
+- Admin: "anlaşılamayan mesajlar" paneli → manuel pattern ekleme
 
-### 4. Güvenlik & Yedekleme
-- Kullanıcı kendi Google Drive'ına otomatik yedekleme yapabilir
-- Haftalık otomatik yedekleme (JSON/Excel export)
+### 4. Güvenlik & Yedekleme (Sorumluluk Paylaşımı)
+**Prensip:** Biz mümkün olduğu kadar veri tutma sözü vermeyiz. Kullanıcı kendi verisinin yedeğinden sorumludur.
+- Google Drive entegrasyonu: tek tıkla yedekleme
+- Mail ile veri gönderme: Excel formatında tüm verileri mail'e gönder
+- Haftalık otomatik yedekleme hatırlatması
 - Kritik işlemlerde (silme, toplu değişiklik) onay isteme
 - İşlem log'u tutma (kim, ne zaman, ne yaptı)
+- Kullanım koşullarında: "3 ay inaktif hesaplarda veri silinebilir" uyarısı
+- Kullanıcı istediği zaman tüm verisini export edebilir
 
-### 5. Toplu İşlem Yetenekleri
+### 5. Kuantum Hızlı Modüler Mimari
+Parametreler birbirleriyle ilişkili, gerektiğinde bir araya gelebilmeli:
+```
+Müşteri ←→ Mülk ←→ Yer Gösterme ←→ Belge
+   ↕           ↕           ↕            ↕
+ Talep ←→ Eşleştirme ←→ Planlama ←→ Muhasebe
+   ↕           ↕           ↕            ↕
+  Not  ←→  Rapor   ←→ Hatırlatma ←→  Fatura
+```
+- Her modül bağımsız çalışır AMA birbirini besler
+- "Müşteri ekle" → otomatik olarak talep analizi → eşleşen mülkler → öneri
+- "Mülk ekle" → otomatik fiyat karşılaştırma → potansiyel müşteriler → bildirim
+- Tek bir komut zincirleme işlem tetikleyebilir
+
+### 6. Tam Asistan Yetenekleri (Dil Modeli Gibi)
+Asistan her şeyi yapabilmeli — gerçek bir dijital çalışan gibi:
+
+**Okuma & Anlama:**
+- PDF okuma ve içerik çıkarma
+- Excel'den veri import
+- Fotoğraftan OCR (sahibinden ilanları, kartvizitler, belgeler)
+- Metin analizi ve özetleme
+
+**Üretme & Yazma:**
+- PDF belge oluşturma (kontrat, yer gösterme, fatura)
+- Excel/tablo üretme (raporlar, listeler)
+- Metin üretme (ilan metni, SMS, email)
+- Web'de arama yapma (piyasa araştırması, fiyat karşılaştırma)
+
+**İletişim:**
+- Email gönderme (müşteriye, alıcıya)
+- SMS gönderme
+- WhatsApp mesajı gönderme
+- **Sesli arama: AI telefon açma** (emlakçının yardımcısı gibi müşteriye telefon açıp konuşma — ileri seviye)
+
+**Hesaplama & Analiz:**
+- Kira vergisi, değer artış kazancı hesaplama
+- Kira getirisi (ROI) hesaplama
+- Piyasa analizi ve fiyat tavsiyesi
+- Müşteri-mülk eşleştirme puanlama
+
+### 7. Toplu İşlem Yetenekleri
 - Fotoğraftan OCR ile portföy ekleme (sahibinden.com ekran görüntüsü → ilan listesi)
 - Excel'den toplu müşteri/portföy import
 - Telefon rehberinden toplu müşteri ekleme
 - Toplu SMS/email gönderim
 - AI proaktif olarak "Excel'den toplu portföy ekleyebilirsiniz" gibi öneriler sunar
 
-### 6. Akıllı Diyalog & Akış Sistemi
+### 8. Akıllı Diyalog & Akış Sistemi
 - **Günlük:** "Günaydın! Bugün 3 yer göstermeniz var, 2 kaçırılan çağrı, 1 yeni lead"
 - **Haftalık:** "Bu hafta 12 müşteri görüştünüz, 3 yer gösterme yaptınız, gelir: ₺15.000"
 - **Aylık:** "Nisan özeti: 45 müşteri, 8 satış, 12 kiralama, toplam ₺2.1M"
