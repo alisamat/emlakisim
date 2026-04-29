@@ -49,6 +49,30 @@ def musteri_guncelle(mid):
     return jsonify({'musteri': _m(m)})
 
 
+@bp.route('/musteriler/<int:mid>', methods=['DELETE'])
+@jwt_required()
+def musteri_sil(mid):
+    m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    db.session.delete(m); db.session.commit()
+    return jsonify({'ok': True})
+
+
+@bp.route('/musteriler/ara', methods=['GET'])
+@jwt_required()
+def musteri_ara():
+    q = request.args.get('q', '').strip()
+    if not q:
+        return jsonify({'musteriler': []})
+    kayitlar = Musteri.query.filter_by(emlakci_id=_eid()).filter(
+        db.or_(
+            Musteri.ad_soyad.ilike(f'%{q}%'),
+            Musteri.telefon.ilike(f'%{q}%'),
+            Musteri.tercih_notlar.ilike(f'%{q}%'),
+        )
+    ).order_by(Musteri.guncelleme.desc()).all()
+    return jsonify({'musteriler': [_m(m) for m in kayitlar]})
+
+
 # ── Mülkler ────────────────────────────────────────────────────────────────────
 @bp.route('/mulkler', methods=['GET'])
 @jwt_required()
