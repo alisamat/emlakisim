@@ -60,6 +60,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '📦 Toplu İşlem',
+    items: [
+      { ikon: '📦', ad: 'Toplu İşlemler', tab: 'toplu' },
+      { ikon: '📸', ad: 'Fotoğraftan Portföy', tab: 'toplu' },
+    ],
+  },
+  {
     baslik: '💾 Yedekleme',
     items: [
       { ikon: '📥', ad: 'Veri İndir (Excel)', tab: 'yedekleme' },

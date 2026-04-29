@@ -19,7 +19,7 @@ def create_app(env='production'):
     jwt.init_app(app)
     CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim
+    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu
     app.register_blueprint(auth.bp)
     app.register_blueprint(webhook.bp)
     app.register_blueprint(panel.bp)
@@ -29,6 +29,7 @@ def create_app(env='production'):
     app.register_blueprint(hesaplama.bp)
     app.register_blueprint(planlama.bp)
     app.register_blueprint(egitim.bp)
+    app.register_blueprint(toplu.bp)
 
     from flask import render_template_string
     @app.route('/gizlilik')
