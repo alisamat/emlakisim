@@ -45,8 +45,9 @@ const MENU = [
     ],
   },
   {
-    baslik: '📊 Hesaplamalar',
+    baslik: '🧮 Hesaplamalar',
     items: [
+      { ikon: '🧮', ad: 'Hesaplama Araçları', tab: 'hesaplamalar' },
       { ikon: '💰', ad: 'Kira Getirisi Hesapla', mesaj: 'Kira getirisi hesapla' },
       { ikon: '🧾', ad: 'Kira Vergisi Hesapla', mesaj: 'Kira vergisi hesapla' },
     ],
