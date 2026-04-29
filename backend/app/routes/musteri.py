@@ -1,10 +1,10 @@
 """
-MÜŞTERİ PORTAL — Müşterinin belge onaylaması
+MÜŞTERİ PORTAL — Belge onay, emlakçı profil, portföy görüntüleme
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from app import db
-from app.models import MusteriOnayToken, YerGosterme
+from app.models import MusteriOnayToken, YerGosterme, Emlakci, Mulk
 
 bp = Blueprint('musteri', __name__, url_prefix='/api/musteri')
 
@@ -44,3 +44,32 @@ def onay_kaydet(token):
     db.session.commit()
 
     return jsonify({'message': 'Onay alındı. Teşekkürler.'})
+
+
+# ── Müşteri talep gönderme ───────────────────────────────
+@bp.route('/talep', methods=['POST'])
+def musteri_talep():
+    """Alıcı/satıcı talep gönderir (kayıtsız)."""
+    d = request.get_json() or {}
+    emlakci_id = d.get('emlakci_id')
+    if not emlakci_id:
+        return jsonify({'message': 'Emlakçı belirtilmedi'}), 400
+
+    e = Emlakci.query.filter_by(id=emlakci_id, aktif=True).first()
+    if not e:
+        return jsonify({'message': 'Emlakçı bulunamadı'}), 404
+
+    # Lead olarak kaydet
+    from app.models.lead import Lead
+    lead = Lead(
+        emlakci_id=emlakci_id,
+        ad_soyad=d.get('ad_soyad', ''),
+        telefon=d.get('telefon', ''),
+        email=d.get('email', ''),
+        kaynak='web',
+        ilk_mesaj=d.get('mesaj', ''),
+        detaylar=d.get('detaylar', {}),
+    )
+    db.session.add(lead)
+    db.session.commit()
+    return jsonify({'message': 'Talebiniz iletildi. En kısa sürede dönüş yapılacaktır.'})
