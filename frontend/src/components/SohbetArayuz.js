@@ -9,6 +9,7 @@ import Musteriler from './Musteriler';
 import Mulkler from './Mulkler';
 import YerGostermeler from './YerGostermeler';
 import Profil from './Profil';
+import Belgeler from './Belgeler';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -69,6 +70,7 @@ export default function SohbetArayuz() {
       case 'musteriler': return <div className="sayfa-icerik"><Musteriler /></div>;
       case 'mulkler':    return <div className="sayfa-icerik"><Mulkler /></div>;
       case 'kayitlar':   return <div className="sayfa-icerik"><YerGostermeler /></div>;
+      case 'belgeler':   return <div className="sayfa-icerik"><Belgeler /></div>;
       case 'profil':     return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

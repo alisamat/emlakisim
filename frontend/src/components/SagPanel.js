@@ -26,6 +26,7 @@ const MENU = [
     baslik: '📄 Belgeler',
     items: [
       { ikon: '📋', ad: 'Yer Gösterme Kayıtları', tab: 'kayitlar' },
+      { ikon: '📄', ad: 'Belge Oluştur', tab: 'belgeler' },
     ],
   },
   {

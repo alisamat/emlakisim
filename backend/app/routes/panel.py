@@ -1,10 +1,12 @@
 """
 PANEL — Emlakçı dashboard API'leri
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
+from app.services.belge import yer_gosterme_pdf, kira_kontrati_pdf
+import io
 
 bp = Blueprint('panel', __name__, url_prefix='/api/panel')
 
@@ -124,6 +126,56 @@ def mulk_sil(mid):
 def yer_gostermeler():
     kayitlar = YerGosterme.query.filter_by(emlakci_id=_eid()).order_by(YerGosterme.tarih.desc()).limit(50).all()
     return jsonify({'kayitlar': [_yg(y) for y in kayitlar]})
+
+
+@bp.route('/yer-gostermeler', methods=['POST'])
+@jwt_required()
+def yer_gosterme_olustur():
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    musteri = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
+
+    yg = YerGosterme(emlakci_id=_eid(), musteri_id=d.get('musteri_id'), mulk_id=d.get('mulk_id'))
+    db.session.add(yg)
+    db.session.commit()
+    return jsonify({'kayit': _yg(yg)}), 201
+
+
+@bp.route('/belge/yer-gosterme', methods=['POST'])
+@jwt_required()
+def belge_yer_gosterme():
+    """Yer gösterme belgesi PDF oluştur ve indir."""
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    musteri = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
+
+    pdf_bytes = yer_gosterme_pdf(emlakci, musteri, mulk)
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'yer_gosterme_{emlakci.id}_{musteri.id if musteri else 0}.pdf',
+    )
+
+
+@bp.route('/belge/kira-kontrati', methods=['POST'])
+@jwt_required()
+def belge_kira_kontrati():
+    """Kira kontratı PDF oluştur ve indir."""
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    kiraci = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
+
+    pdf_bytes = kira_kontrati_pdf(emlakci, kiraci, mulk, detaylar=d.get('detaylar'))
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'kira_kontrati_{emlakci.id}.pdf',
+    )
 
 
 # ── Notlar ─────────────────────────────────────────────────────────────────────
