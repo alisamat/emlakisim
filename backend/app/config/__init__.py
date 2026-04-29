@@ -1,9 +1,11 @@
 import os
+from datetime import timedelta
 
 
 class Base:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret')
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
     FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
