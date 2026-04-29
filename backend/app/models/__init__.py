@@ -136,6 +136,22 @@ class PanelMesaj(db.Model):
     olusturma   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class IslemLog(db.Model):
+    """Tüm işlemlerin kredi ve maliyet kaydı"""
+    __tablename__ = 'islem_log'
+
+    id           = db.Column(db.Integer, primary_key=True)
+    emlakci_id   = db.Column(db.Integer, db.ForeignKey('emlakci.id'), nullable=False)
+    islem_tipi   = db.Column(db.String(50))       # ai_sohbet, musteri_ekle, mulk_ekle, belge, rapor, pattern
+    model        = db.Column(db.String(30))       # gemini-flash, gpt-4o-mini, claude-haiku, pattern, null
+    token_input  = db.Column(db.Integer)
+    token_output = db.Column(db.Integer)
+    maliyet_usd  = db.Column(db.Float, default=0)
+    kredi_tutar  = db.Column(db.Float, default=0)
+    aciklama     = db.Column(db.String(200))
+    olusturma    = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class MusteriOnayToken(db.Model):
     """Müşteri belge onayı için tek kullanımlık token"""
     __tablename__ = 'musteri_onay_token'

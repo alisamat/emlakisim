@@ -1,15 +1,17 @@
 """
-PANEL SOHBET — Uygulama içi AI sohbet API
+PANEL SOHBET — Uygulama içi AI sohbet API + kredi sistemi
 """
+import os
 import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Emlakci, PanelSohbet, PanelMesaj
 from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle
+from app.services.kredi import kredi_kontrol, kredi_dus, KREDI_TABLOSU
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('sohbet', __name__, url_prefix='/api/panel')
-_panel_sessions: dict[int, dict] = {}  # emlakci_id -> session
+_panel_sessions: dict[int, dict] = {}
 
 
 @bp.route('/sohbet', methods=['POST'])
@@ -42,27 +44,38 @@ def mesaj_gonder():
     # Geçmiş mesajları al
     gecmis = [{'role': m.rol, 'content': m.icerik}
               for m in PanelMesaj.query.filter_by(sohbet_id=sohbet.id).order_by(PanelMesaj.olusturma).all()]
-
-    # Son 20 mesaj
     if len(gecmis) > 20:
         gecmis = gecmis[-20:]
 
-    # Sohbet session (bekleyen işlemler için)
     session = _panel_sessions.setdefault(emlakci.id, {})
 
     # 1. Bekleyen adımlı işlem
     bekleyen = _bekleyen_isle(session, emlakci, metin)
     if bekleyen:
         cevap = bekleyen
+        # Bekleyen işlem tamamlandı → kredi düş
+        islem = session.get('_son_islem', 'pattern')
+        kredi_dus(emlakci, islem, aciklama=metin[:100])
     else:
-        # 2. Pattern matching (sıfır maliyet)
+        # 2. Pattern matching (sıfır veya düşük maliyet)
         metin_norm = _normalize(metin)
         komut = _pattern_isle(metin_norm, emlakci, metin)
         if komut:
             cevap = _komut_calistir(komut, emlakci, metin, session)
+            kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
         else:
-            # 3. AI
-            import os
+            # 3. AI — önce kredi kontrolü
+            if not kredi_kontrol(emlakci, 1):
+                cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
+                db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+                db.session.commit()
+                return jsonify({
+                    'cevap': cevap,
+                    'kredi_kalan': emlakci.kredi,
+                    'sohbet_id': sohbet.id,
+                    'kredi_yetersiz': True,
+                }), 200
+
             sistem = _sistem_prompt(emlakci)
             try:
                 openai_key = os.environ.get('OPENAI_API_KEY', '')
@@ -73,6 +86,9 @@ def mesaj_gonder():
             except Exception as e:
                 logger.error(f'[Sohbet] AI hatası: {e}')
                 cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+
+            # AI kredi düş
+            kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model='gpt-4o-mini')
 
     # Asistan mesajını kaydet
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
