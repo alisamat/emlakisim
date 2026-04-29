@@ -55,7 +55,8 @@ const MENU = [
   {
     baslik: '📅 Planlama',
     items: [
-      { ikon: '📅', ad: 'Görevler & Takvim', tab: 'planlama' },
+      { ikon: '📋', ad: 'Görevler', tab: 'planlama' },
+      { ikon: '📅', ad: 'Takvim', tab: 'takvim' },
       { ikon: '📌', ad: 'Görev Ekle', mesaj: 'Yeni görev ekle' },
     ],
   },
