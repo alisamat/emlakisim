@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
 from app.services.belge import yer_gosterme_pdf, kira_kontrati_pdf
+from app.services.iletisim import email_gonder, musteri_email_sablonu, portfoy_email_sablonu
 import io
 
 bp = Blueprint('panel', __name__, url_prefix='/api/panel')
@@ -176,6 +177,56 @@ def belge_kira_kontrati():
         as_attachment=True,
         download_name=f'kira_kontrati_{emlakci.id}.pdf',
     )
+
+
+# ── Email ─────────────────────────────────────────────────────────────────────
+@bp.route('/email/gonder', methods=['POST'])
+@jwt_required()
+def email_gonder_endpoint():
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    alici = d.get('alici_email', '').strip()
+    konu = d.get('konu', 'Emlakisim').strip()
+    mesaj = d.get('mesaj', '').strip()
+
+    if not alici:
+        return jsonify({'message': 'Alıcı email gerekli'}), 400
+
+    # Müşteri ve mülk bilgisi opsiyonel
+    musteri = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
+
+    html = musteri_email_sablonu(emlakci, musteri, mulk, mesaj)
+    basarili, sonuc = email_gonder(alici, konu, html, gonderen_ad=emlakci.acente_adi or emlakci.ad_soyad)
+
+    if basarili:
+        return jsonify({'ok': True, 'mesaj': 'Email gönderildi'})
+    return jsonify({'message': f'Email gönderilemedi: {sonuc}'}), 500
+
+
+@bp.route('/email/portfoy', methods=['POST'])
+@jwt_required()
+def email_portfoy():
+    """Portföy listesini email ile gönder."""
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    alici = d.get('alici_email', '').strip()
+
+    if not alici:
+        return jsonify({'message': 'Alıcı email gerekli'}), 400
+
+    mulk_idler = d.get('mulk_idler', [])
+    if mulk_idler:
+        mulkler_q = Mulk.query.filter(Mulk.id.in_(mulk_idler), Mulk.emlakci_id == _eid(), Mulk.aktif == True).all()
+    else:
+        mulkler_q = Mulk.query.filter_by(emlakci_id=_eid(), aktif=True).limit(20).all()
+
+    html = portfoy_email_sablonu(emlakci, mulkler_q)
+    basarili, sonuc = email_gonder(alici, f'{emlakci.acente_adi or "Emlakisim"} — Portföy', html)
+
+    if basarili:
+        return jsonify({'ok': True, 'mesaj': f'{len(mulkler_q)} mülk email ile gönderildi'})
+    return jsonify({'message': f'Email gönderilemedi: {sonuc}'}), 500
 
 
 # ── Notlar ─────────────────────────────────────────────────────────────────────

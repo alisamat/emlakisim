@@ -30,6 +30,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '✉️ İletişim',
+    items: [
+      { ikon: '📧', ad: 'Email Gönder', mesaj: 'Email göndermek istiyorum' },
+      { ikon: '📤', ad: 'Portföy Email', mesaj: 'Portföy listesini email ile gönder' },
+    ],
+  },
+  {
     baslik: '📊 Hesaplamalar',
     items: [
       { ikon: '💰', ad: 'Kira Getirisi Hesapla', mesaj: 'Kira getirisi hesapla' },
