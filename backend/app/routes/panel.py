@@ -93,6 +93,27 @@ def mulk_ekle():
     return jsonify({'mulk': _mulk(m)}), 201
 
 
+@bp.route('/mulkler/<int:mid>', methods=['PUT'])
+@jwt_required()
+def mulk_guncelle(mid):
+    m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    d = request.get_json() or {}
+    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar']:
+        if f in d:
+            setattr(m, f, d[f])
+    db.session.commit()
+    return jsonify({'mulk': _mulk(m)})
+
+
+@bp.route('/mulkler/<int:mid>', methods=['DELETE'])
+@jwt_required()
+def mulk_sil(mid):
+    m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    m.aktif = False
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
 # ── Yer Göstermeler ────────────────────────────────────────────────────────────
 @bp.route('/yer-gostermeler', methods=['GET'])
 @jwt_required()
