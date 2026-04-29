@@ -60,6 +60,57 @@ Emlakisim, emlakçılar için yapay zeka destekli tam otomasyon asistanı.
 
 ---
 
+## TEMEL PRENSİPLER
+
+### 1. Hız Öncelikli İşlem Mimarisi
+```
+Kullanıcı mesajı → Türkçe normalleştirme → Pattern/Intent matching → Direkt DB işlemi
+                                                    ↓ (anlaşılamazsa)
+                                               AI'ya yönlendir (Gemini Flash)
+                                                    ↓ (karmaşıksa)
+                                               Claude Haiku ile analiz
+```
+- Pattern matching ile tanınan komutlar AI'ya gitmez → sıfır maliyet, anlık sonuç
+- AI sadece anlaşılamayan veya karmaşık işlemlerde devreye girer
+
+### 2. Maliyet Minimizasyonu
+- Basit CRUD: pattern matching, AI yok → $0
+- Genel sohbet: Gemini Flash → ~$0.0001/mesaj
+- Belge/rapor: GPT-4o mini → ~$0.0003/mesaj  
+- Analiz/eşleştirme: Claude Haiku → ~$0.0005/mesaj
+- Hedef: Ortalama mesaj maliyeti < $0.0002
+
+### 3. Onbinlerce Komut Kombinasyonu
+AI, function calling ile DB'ye doğrudan işlem yapar:
+- "Ali Yılmaz müşterisini ekle telefonu 532..." → müşteri INSERT
+- "Kadıköy portföyündeki kiralıkları listele" → müşteri SELECT + filtre
+- "Ahmet bey ile yarın saat 3'te yer gösterme planla" → planlama INSERT + hatırlatma
+- "Son 1 ayın kira gelir raporunu çıkar" → muhasebe SELECT + rapor
+- Doğru ve güvenilir: her işlem onay mekanizması ile (kritik işlemlerde "emin misiniz?")
+
+### 4. Güvenlik & Yedekleme
+- Kullanıcı kendi Google Drive'ına otomatik yedekleme yapabilir
+- Haftalık otomatik yedekleme (JSON/Excel export)
+- Kritik işlemlerde (silme, toplu değişiklik) onay isteme
+- İşlem log'u tutma (kim, ne zaman, ne yaptı)
+
+### 5. Toplu İşlem Yetenekleri
+- Fotoğraftan OCR ile portföy ekleme (sahibinden.com ekran görüntüsü → ilan listesi)
+- Excel'den toplu müşteri/portföy import
+- Telefon rehberinden toplu müşteri ekleme
+- Toplu SMS/email gönderim
+- AI proaktif olarak "Excel'den toplu portföy ekleyebilirsiniz" gibi öneriler sunar
+
+### 6. Akıllı Diyalog & Akış Sistemi
+- **Günlük:** "Günaydın! Bugün 3 yer göstermeniz var, 2 kaçırılan çağrı, 1 yeni lead"
+- **Haftalık:** "Bu hafta 12 müşteri görüştünüz, 3 yer gösterme yaptınız, gelir: ₺15.000"
+- **Aylık:** "Nisan özeti: 45 müşteri, 8 satış, 12 kiralama, toplam ₺2.1M"
+- **Yıllık:** "2026 performans raporu: 540 müşteri, 96 satış..."
+- Proaktif hatırlatmalar: "Ahmet bey'e 3 gündür dönüş yapılmadı"
+- Akıllı öneriler: "Kadıköy'de kiralık arayan 5 müşteriniz var, 3 uygun portföyünüz var"
+
+---
+
 ## TÜRKÇE DOĞAL DİL İŞLEME
 
 - Eksik karakter pattern'ları: "emlakçı kayıt" → "emlakçı kaydı" olarak anlaşılır
@@ -176,6 +227,26 @@ Emlakisim, emlakçılar için yapay zeka destekli tam otomasyon asistanı.
 - [ ] Instagram için portföy paylaşım içeriği hazırlama
 - [ ] Şablonlar ve otomatik metin oluşturma (AI destekli)
 - [ ] Toplu paylaşım planlama
+
+### O. Akıllı Çağrı Yönetimi
+- [ ] Gelen çağrıları dijitalleştirme (müşteri görüşme kaydı)
+- [ ] Meşgulken kaçırılan önemli çağrı bildirimi
+- [ ] Çağrı sonrası otomatik not oluşturma (AI destekli)
+- [ ] Müşteri arama geçmişi ve takibi
+
+### P. Otomatik Lead Yönetimi
+- [ ] Lead'lere anında otomatik yanıt (ilk saat kuralı)
+- [ ] FSBO (satıcı tarafından satılık) listelerini otomatik tarama
+- [ ] Mesai dışı WhatsApp sorularına AI otomatik yanıt
+- [ ] Lead sıcaklık takibi ve otomatik hatırlatma
+- [ ] Lead kaynağı analizi (WhatsApp, web, telefon)
+
+### Q. Emlak Danışmanlığı Modülü
+- [ ] Müşteri sorularına AI destekli emlak danışmanlığı cevapları
+- [ ] Emlak mevzuatı bilgi bankası (kira hukuku, tapu işlemleri, vergi)
+- [ ] Bölge bazlı piyasa analizi ve fiyat tavsiyesi
+- [ ] Yatırım danışmanlığı (getiri hesaplama, karşılaştırma)
+- [ ] Sık sorulan sorular ve hazır cevap şablonları
 
 ---
 

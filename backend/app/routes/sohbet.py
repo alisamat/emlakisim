@@ -5,10 +5,11 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Emlakci, PanelSohbet, PanelMesaj
-from app.services.asistan import _ai_cevap, _sistem_prompt
+from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('sohbet', __name__, url_prefix='/api/panel')
+_panel_sessions: dict[int, dict] = {}  # emlakci_id -> session
 
 
 @bp.route('/sohbet', methods=['POST'])
@@ -46,13 +47,32 @@ def mesaj_gonder():
     if len(gecmis) > 20:
         gecmis = gecmis[-20:]
 
-    # AI cevap
-    sistem = _sistem_prompt(emlakci)
-    try:
-        cevap = _ai_cevap(metin, gecmis, sistem)
-    except Exception as e:
-        logger.error(f'[Sohbet] AI hatası: {e}')
-        cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+    # Sohbet session (bekleyen işlemler için)
+    session = _panel_sessions.setdefault(emlakci.id, {})
+
+    # 1. Bekleyen adımlı işlem
+    bekleyen = _bekleyen_isle(session, emlakci, metin)
+    if bekleyen:
+        cevap = bekleyen
+    else:
+        # 2. Pattern matching (sıfır maliyet)
+        metin_norm = _normalize(metin)
+        komut = _pattern_isle(metin_norm, emlakci, metin)
+        if komut:
+            cevap = _komut_calistir(komut, emlakci, metin, session)
+        else:
+            # 3. AI
+            import os
+            sistem = _sistem_prompt(emlakci)
+            try:
+                openai_key = os.environ.get('OPENAI_API_KEY', '')
+                if openai_key:
+                    cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
+                else:
+                    cevap = _ai_cevap(metin, gecmis, sistem)
+            except Exception as e:
+                logger.error(f'[Sohbet] AI hatası: {e}')
+                cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
 
     # Asistan mesajını kaydet
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
