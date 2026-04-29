@@ -60,6 +60,12 @@ const MENU = [
     ],
   },
   {
+    baslik: '🔗 Eşleştirme',
+    items: [
+      { ikon: '🔗', ad: 'Müşteri-Mülk Eşleştir', tab: 'eslestirme' },
+    ],
+  },
+  {
     baslik: '🎯 Lead Yönetimi',
     items: [
       { ikon: '🎯', ad: 'Lead Listesi', tab: 'leadler' },
