@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
 from app.services.iletisim import email_gonder, musteri_email_sablonu, portfoy_email_sablonu
-from app.services.yedekleme import excel_export, yedek_ozeti
+from app.services.yedekleme import excel_export, yedek_ozeti, yedek_durumu, yedek_logla
 import io
 
 bp = Blueprint('panel', __name__, url_prefix='/api/panel')
@@ -238,6 +238,7 @@ def yedek_indir():
     """Tüm veriyi Excel olarak indir."""
     emlakci = Emlakci.query.get(_eid())
     data = excel_export(emlakci)
+    yedek_logla(emlakci)
     dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
     if data[:2] == b'PK':  # xlsx
         return send_file(io.BytesIO(data), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -250,7 +251,9 @@ def yedek_indir():
 @jwt_required()
 def yedek_ozet_endpoint():
     emlakci = Emlakci.query.get(_eid())
-    return jsonify(yedek_ozeti(emlakci))
+    ozet = yedek_ozeti(emlakci)
+    ozet['yedek_durumu'] = yedek_durumu(emlakci)
+    return jsonify(ozet)
 
 
 @bp.route('/yedek/email', methods=['POST'])

@@ -33,6 +33,7 @@ const MENU = [
     baslik: '💰 Muhasebe',
     items: [
       { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe' },
+      { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar' },
       { ikon: '📈', ad: 'Gelir Ekle', mesaj: 'Gelir eklemek istiyorum' },
       { ikon: '📉', ad: 'Gider Ekle', mesaj: 'Gider eklemek istiyorum' },
     ],
@@ -67,9 +68,10 @@ const MENU = [
     ],
   },
   {
-    baslik: '🎯 Lead Yönetimi',
+    baslik: '🎯 Lead & Çağrı',
     items: [
       { ikon: '🎯', ad: 'Lead Listesi', tab: 'leadler' },
+      { ikon: '📞', ad: 'Çağrı Kayıtları', tab: 'cagrilar' },
       { ikon: '➕', ad: 'Lead Ekle', mesaj: 'Yeni lead ekle' },
     ],
   },

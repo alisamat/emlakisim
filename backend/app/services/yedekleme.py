@@ -77,6 +77,33 @@ def _json_export(emlakci):
     return json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
 
 
+def yedek_durumu(emlakci):
+    """Yedekleme durumu ve hatırlatma kontrolü."""
+    from app.models import IslemLog
+    son_yedek = IslemLog.query.filter_by(
+        emlakci_id=emlakci.id, islem_tipi='yedekleme'
+    ).order_by(IslemLog.olusturma.desc()).first()
+
+    son_tarih = son_yedek.olusturma if son_yedek else None
+    gun_gecti = (datetime.utcnow() - son_tarih).days if son_tarih else 999
+
+    return {
+        'son_yedek': son_tarih.isoformat() if son_tarih else None,
+        'gun_gecti': gun_gecti,
+        'uyari': gun_gecti >= 7,
+        'kritik': gun_gecti >= 30,
+        'mesaj': 'Yedek güncel' if gun_gecti < 7 else f'{gun_gecti} gündür yedek alınmadı!' if gun_gecti < 30 else 'KRİTİK: 30+ gündür yedek yok!',
+    }
+
+
+def yedek_logla(emlakci):
+    """Yedek alındığında log kaydet."""
+    from app.models import IslemLog
+    log = IslemLog(emlakci_id=emlakci.id, islem_tipi='yedekleme', aciklama='Manuel yedek alındı')
+    db.session.add(log)
+    db.session.commit()
+
+
 def yedek_ozeti(emlakci):
     """Yedek için veri özeti."""
     from app.models import Musteri, Mulk, Not
