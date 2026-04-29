@@ -372,88 +372,176 @@ Kullanıcı mesaj gönderir
 
 ## AŞAMALAR
 
-### Faz 1 — Temel Altyapı (MEVCUT)
+### Faz 1 — Temel Altyapı ✅
 - [x] Backend (Flask + PostgreSQL + Railway)
 - [x] Frontend (React + Vercel + emlakisim.com)
-- [x] WhatsApp webhook kurulumu
-- [x] Meta uygulama yayınlama
-- [x] Çok modelli AI desteği
-- [x] Temel sayfalar (giriş, kayıt, panel, müşteriler, portföy, profil)
+- [x] WhatsApp webhook kurulumu + Meta uygulama yayınlama
+- [x] Çok modelli AI desteği (Gemini Flash + GPT-4o mini + Claude Haiku)
+- [x] Temel sayfalar (giriş, kayıt, müşteriler, portföy, profil)
+- [x] AI API anahtarları (GEMINI, OPENAI, ANTHROPIC) Railway'e eklendi
+- [x] JWT token süresi 30 güne uzatıldı
+- [x] Gizlilik politikası sayfası
 - [ ] WhatsApp numara taşıma — Meta Policy 1.4 ihlali çözülmeli (icon güncellendi, form gönderildi, Meta incelemesi bekleniyor 2026-04-29). Onay gelince: numara WAOtomasyon WABA → Emlakisim WABA taşınacak (2FA kapatıldı)
-- [ ] AI API anahtarları eklenmesi (GEMINI, OPENAI, ANTHROPIC)
 
-### Faz 2 — Ana Sayfa & AI Sohbet
-- [ ] OnMuhasebeci tarzı layout (sol menü + orta sohbet + sağ işlem menüsü)
-- [ ] Uygulama içi AI sohbet (WebSocket veya polling)
-- [ ] Sohbet geçmişi kaydetme
-- [ ] İşlem menüsü (hızlı erişim)
-- [ ] Mobil responsive layout
-- [ ] Türkçe NLP pattern matching
+### Faz 2 — AI Sohbet Arayüzü & Akıllı Motor ✅
+- [x] 3 panelli layout (sol menü + orta sohbet + sağ işlem menüsü)
+- [x] Uygulama içi AI sohbet (REST, sohbet geçmişi DB'de)
+- [x] İşlem menüsü (kategorili, aranabilir)
+- [x] Mobil responsive (hamburger + bottom sheet)
+- [x] Pattern matching (sıfır maliyetli komut tanıma)
+- [x] Türkçe normalleştirme (karakter toleransı)
+- [x] Function calling (AI doğrudan DB işlemi)
+- [x] Bekleyen işlem sistemi (adımlı komut tamamlama)
+- [x] Proaktif öneriler ("Excel'den toplu portföy ekleyebilirsiniz")
 
-### Faz 3 — Müşteri CRM
-- [ ] Gelişmiş müşteri yönetimi (gruplama, arama, filtreleme)
-- [ ] Hatırlatma sistemi
-- [ ] Otomatik SMS/email
-- [ ] Planlı gönderimler
-- [ ] Müşteri kartı paylaşım
+### Faz 3 — Kredi Sistemi & İşlem Log
+- [ ] Kredi merkezi: her işlem log'lanır (işlem_tipi, maliyet_usd, kredi_tutarı, zaman)
+- [ ] AI token maliyet hesaplama → kredi dönüşümü (kar marjı ile)
+- [ ] CRUD işlemleri → 1 kredi, belge → 2 kredi, toplu → N kredi
+- [ ] Kredi yetersizse uyarı + satın alma yönlendirmesi
+- [ ] Admin panel: tek noktadan maliyet takibi ve raporlama
+- [ ] Kredi satın alma sayfası (ödeme entegrasyonu)
 
-### Faz 4 — Portföy Gelişmiş
-- [ ] Fotoğraf yükleme
-- [ ] Emlak gruplama & alarm
-- [ ] Emlak detay sayfası
-- [ ] Portföy-talep eşleştirme & puanlama
+### Faz 4 — Gelişmiş Müşteri CRM
+- [ ] Müşteri düzenleme, silme, gizleme
+- [ ] Gelişmiş arama ve filtreleme (isim, telefon, talep, bütçe)
+- [ ] Müşteri gruplama ve grup bazlı toplu işlemler
+- [ ] Hatırlatma sistemi (müşteri bazlı)
+- [ ] Müşteri bazlı para hareketi kaydı ve sorgulama
+- [ ] Müşteri kartı mail/WhatsApp ile gönderme
+- [ ] Telefon rehberinden toplu müşteri ekleme
+- [ ] Excel'den toplu müşteri import
 
-### Faz 5 — Muhasebe & Finans
-- [ ] Gelir/gider takibi
-- [ ] Cari hesaplar
-- [ ] Bütçe & raporlar
-- [ ] Kredi sistemi entegrasyonu
+### Faz 5 — Gelişmiş Portföy
+- [ ] Fotoğraf yükleme ve yönetimi
+- [ ] Emlak gruplama ve alarm kurma
+- [ ] Emlak detay sayfası (tam bilgi + fotoğraf galeri)
+- [ ] Portföy-talep otomatik eşleştirme ve puanlama
+- [ ] OCR ile portföy ekleme (sahibinden ekran görüntüsü → ilan çıkarma)
+- [ ] Excel'den toplu portföy import
+- [ ] Paylaşılabilir portföy linki (tek emlak veya liste)
+- [ ] Sosyal medya paylaşım mesajı hazırlama (Facebook, Instagram, WhatsApp)
 
-### Faz 6 — Belgeler & Formlar
-- [ ] Yer gösterme belgesi PDF
-- [ ] Kira kontratı
-- [ ] Yönlendirme belgeleri
-- [ ] Alıcı/satıcı dijital onay
+### Faz 6 — Belgeler & Formlar & PDF
+- [ ] Yer gösterme belgesi PDF oluşturma
+- [ ] Kira kontratı oluşturma (şablonlu)
+- [ ] Yönlendirme belgeleri (alıcı/satıcı)
+- [ ] Alıcı/satıcı dijital onay süreci (TC kimlik ile)
+- [ ] PDF okuma ve içerik çıkarma
+- [ ] Fatura PDF oluşturma ve gönderme
 
-### Faz 7 — Hesaplamalar
+### Faz 7 — İletişim & Bildirimler
+- [ ] Otomatik SMS gönderme
+- [ ] Otomatik email gönderme
+- [ ] Planlı SMS/email zamanlama
+- [ ] Hatırlatıcılar (kendine, müşteriye)
+- [ ] Mesai dışı WhatsApp AI otomatik yanıt
+- [ ] Lead'lere anında otomatik yanıt (ilk saat kuralı)
+
+### Faz 8 — Muhasebe & Finans
+- [ ] Gelir/gider kaydı
+- [ ] Cari hesap tutma ve ekstre gönderme
+- [ ] Bütçe hazırlama
+- [ ] Fatura oluşturma ve takibi (ödendi/bekliyor/gecikmiş)
+- [ ] Ofis gider takibi (kira, faturalar, personel)
+- [ ] Raporlar (aylık, yıllık, dönemsel)
+
+### Faz 9 — Hesaplamalar & Raporlar
 - [ ] Kira vergisi hesaplama
-- [ ] Değer artış kazanç vergisi
-- [ ] Kira getirisi (ROI)
-- [ ] Piyasa raporları
+- [ ] Değer artış kazanç vergisi hesaplama
+- [ ] Kira getirisi hesaplama (ROI)
+- [ ] Piyasa analizi ve fiyat tavsiyesi
+- [ ] Müşteri-mülk eşleştirme raporu
+- [ ] Günlük/haftalık/aylık/yıllık performans özeti
 
-### Faz 8 — Alıcı/Satıcı Portalı
+### Faz 10 — Planlama & Takvim
+- [ ] Günlük/haftalık/aylık planlama
+- [ ] Takvim görünümü
+- [ ] Görev yönetimi
+- [ ] Akıllı diyalog akışı (günlük özet, haftalık rapor)
+- [ ] Proaktif hatırlatmalar ("Ahmet bey'e 3 gündür dönüş yapılmadı")
+
+### Faz 11 — Diyalog Eğitim Sistemi
+- [ ] Başarılı diyalog-işlem çiftlerini saklama (eğitim verisi)
+- [ ] Pattern havuzu otomatik genişletme
+- [ ] Admin: "anlaşılamayan mesajlar" paneli → manuel pattern ekleme
+- [ ] Zaman içinde AI'ya daha az ihtiyaç → maliyet düşer
+
+### Faz 12 — Yedekleme & Güvenlik
+- [ ] Google Drive entegrasyonu (tek tıkla yedekleme)
+- [ ] Mail ile veri gönderme (Excel formatında)
+- [ ] Haftalık otomatik yedekleme hatırlatması
+- [ ] İşlem log'u (kim, ne zaman, ne yaptı)
+- [ ] Tüm veriyi export etme (JSON/Excel)
+- [ ] Kullanım koşulları ("3 ay inaktif → veri silinebilir" uyarısı)
+
+### Faz 13 — Toplu İşlemler & OCR
+- [ ] Fotoğraftan OCR (kartvizit, belge, ilan)
+- [ ] Sahibinden.com ekran görüntüsünden ilan listesi çıkarma
+- [ ] Excel'den toplu import (müşteri + portföy)
+- [ ] Telefon rehberinden toplu müşteri ekleme
+- [ ] Toplu SMS/email gönderim
+
+### Faz 14 — Emlakçı Tanıtım & Danışmanlık
+- [ ] Her emlakçıya özel web tanıtım sayfası (emlakisim.com/e/xxx)
+- [ ] Özelleştirilebilir tasarım (logo, renk, açıklama)
+- [ ] Emlak danışmanlığı modülü (AI destekli cevaplar)
+- [ ] Emlak mevzuatı bilgi bankası
+- [ ] Sık sorulan sorular ve hazır cevap şablonları
+
+### Faz 15 — Lead & Çağrı Yönetimi
+- [ ] Lead sıcaklık takibi ve otomatik hatırlatma
+- [ ] Lead kaynağı analizi (WhatsApp, web, telefon)
+- [ ] Gelen çağrıları dijitalleştirme (görüşme kaydı)
+- [ ] Kaçırılan çağrı bildirimi
+- [ ] Çağrı sonrası otomatik not oluşturma
+
+### Faz 16 — Alıcı/Satıcı Portalı
 - [ ] WhatsApp üzerinden hesap açma
-- [ ] Belge görüntüleme
-- [ ] Onay süreci
+- [ ] Belge görüntüleme ve onay süreci
+- [ ] Emlakçının tanıtım sayfasını görüntüleme
+- [ ] Paylaşılan portföy linklerini inceleme
 - [ ] WhatsApp davet sistemi
+
+### Faz 17 — İleri Seviye (Gelecek)
+- [ ] Sesli arama: AI telefon açma (emlakçının yardımcısı gibi müşteriye konuşma)
+- [ ] Sesli not → metin çevirisi
+- [ ] Web'de arama yapma (piyasa araştırması, fiyat karşılaştırma)
+- [ ] FSBO listelerini otomatik tarama
+- [ ] Ofis yönetimi ve personel modülü
 
 ---
 
-## MEVCUT DURUM
+## MEVCUT DURUM (2026-04-29)
 
 ### Tamamlanan
 - GitHub repo: alisamat/emlakisim
 - Railway backend: backend-production-9ffc.up.railway.app (Online)
-- Vercel frontend: emlakisim.com (Aktif)
+- Vercel frontend: emlakisim.com (Aktif, GitHub'a bağlandı)
 - Meta uygulaması: Emlakisim (Published)
 - Webhook: kuruldu + messages subscribed
 - Çok modelli AI: Gemini Flash + GPT-4o mini + Claude Haiku
+- AI API anahtarları: GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY eklendi
+- 3 panelli AI sohbet arayüzü (sol/orta/sağ)
+- Pattern matching + function calling + bekleyen işlem motoru
+- Türkçe normalleştirme
+- JWT 30 gün
 - Gizlilik politikası sayfası
+- worthy-tenderness duplikat projesi silindi
 
-### Bekleyen
-- WhatsApp numara taşıma: SMS doğrulama (telefon yanına gelince)
-- AI anahtarları: GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY Railway'e eklenmeli
-- worthy-tenderness Railway projesi: silinebilir (duplikat, crashed)
+### Bekleyen (Bizden Bağımsız)
+- WhatsApp numara taşıma: Meta Policy 1.4 inceleme sonucu bekleniyor (2026-04-29 gönderildi)
+  - Onay gelince: WAOtomasyon WABA → Emlakisim WABA (2FA kapatıldı, hazır)
 
-### Bilinen Sorunlar
-- Numara hala WAOtomasyon WABA'sına bağlı → yeni WABA'ya taşınacak
-- WhatsApp gerçek mesaj henüz test edilemedi (numara taşıma bekliyor)
+### Sıradaki İş
+- Faz 3: Kredi sistemi & işlem log implementasyonu
 
 ---
 
 ## REFERANS
 
-- Tasarım referansı: OnMuhasebeci AI (3 panelli layout)
-- Dosya: `/Users/mmacac/pc/emlakisim için ötnek ana sayfa.png`
-- Domain: emlakisim.com (aktif, Vercel'e yönlendirildi)
+- Tasarım referansı: OnMuhasebeci Esnaf (`/Users/mmacac/pc/Github/onmuhasebeciesnaf`)
+- Örnek ana sayfa: `/Users/mmacac/pc/emlakisim için ötnek ana sayfa.png`
+- Domain: emlakisim.com (aktif, Vercel'e bağlı)
 - Backend URL: https://backend-production-9ffc.up.railway.app
+- GitHub: https://github.com/alisamat/emlakisim
