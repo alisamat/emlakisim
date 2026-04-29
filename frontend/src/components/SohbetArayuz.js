@@ -15,6 +15,7 @@ import Hesaplamalar from './Hesaplamalar';
 import Planlama from './Planlama';
 import Yedekleme from './Yedekleme';
 import TopluIslem from './TopluIslem';
+import Leadler from './Leadler';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -81,6 +82,7 @@ export default function SohbetArayuz() {
       case 'planlama':     return <div className="sayfa-icerik"><Planlama /></div>;
       case 'yedekleme':    return <div className="sayfa-icerik"><Yedekleme /></div>;
       case 'toplu':        return <div className="sayfa-icerik"><TopluIslem /></div>;
+      case 'leadler':      return <div className="sayfa-icerik"><Leadler /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

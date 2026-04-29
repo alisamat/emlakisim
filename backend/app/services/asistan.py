@@ -31,6 +31,9 @@ _PATTERNS = [
     (r'(?:portfoy|portföy|mulk|mülk|emlak)\s*(?:listele|göster|listesi)',    'mulk_liste'),
     # Not
     (r'(?:not)\s*(?:ekle|al|kaydet|yaz)',                     'not_ekle'),
+    # Unutma / Hatırla
+    (r'(?:unutma|hatirla|hatırla|aklinda\s*tut|aklında\s*tut)', 'unutma'),
+    (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam)',     'hatirlatma_liste'),
     # Rapor
     (r'(?:rapor|özet|istatistik|durum)',                      'rapor'),
     # Yardım
@@ -77,6 +80,13 @@ def _komut_calistir(komut, emlakci, metin, session):
         session['bekleyen_islem'] = 'not_ekle'
         return '*Not yazın:*'
 
+    if komut == 'unutma':
+        session['bekleyen_islem'] = 'unutma'
+        return '*Neyi hatırlamamı istiyorsunuz?*\n\n_Örnek: "Ahmet beye yarın dönüş yap" veya "Kadıköy dairesi 25.000 TL ye düştü"_'
+
+    if komut == 'hatirlatma_liste':
+        return _hatirlatma_listele(emlakci)
+
     return None
 
 
@@ -118,6 +128,8 @@ def _yardim_mesaji(emlakci):
             '📋 *Belgeler:* "yer gösterme oluştur"\n'
             '📊 *Rapor:* "rapor", "özet"\n'
             '📝 *Not:* "not ekle"\n'
+            '🧠 *Unutma:* "unutma: Ahmet bey\'e yarın dönüş yap"\n'
+            '📋 *Hatırlatmalar:* "hatırlatmalar"\n'
             '💰 *Hesaplama:* "kira vergisi hesapla"\n\n'
             '💡 *İpucu:* Excel\'den toplu müşteri/portföy ekleyebilirsiniz!\n'
             'Fotoğraf çekerek sahibinden ilanlarını portföye aktarabilirsiniz!\n\n'
@@ -137,6 +149,8 @@ def _bekleyen_isle(session, emlakci, metin):
         return _mulk_kaydet(emlakci, metin)
     if islem == 'not_ekle':
         return _not_kaydet(emlakci, metin)
+    if islem == 'unutma':
+        return _unutma_kaydet(emlakci, metin)
     return None
 
 
@@ -188,6 +202,24 @@ def _not_kaydet(emlakci, metin):
     db.session.add(not_obj)
     db.session.commit()
     return f'✅ *Not kaydedildi.*\n\n📝 {metin[:100]}'
+
+
+def _unutma_kaydet(emlakci, metin):
+    """'Unutma' komutu — önemli bilgiyi hatırlatma olarak kaydet."""
+    not_obj = Not(emlakci_id=emlakci.id, icerik=metin, etiket='hatirlatici')
+    db.session.add(not_obj)
+    db.session.commit()
+    return f'🧠 *Hatırladım!*\n\n📌 {metin[:150]}\n\n_"Hatırlatmalar" yazarak tüm kayıtları görebilirsiniz._'
+
+
+def _hatirlatma_listele(emlakci):
+    """Kaydedilmiş hatırlatmaları listele."""
+    notlar = Not.query.filter_by(emlakci_id=emlakci.id, etiket='hatirlatici', tamamlandi=False)\
+        .order_by(Not.olusturma.desc()).limit(10).all()
+    if not notlar:
+        return '📭 Henüz hatırlatma yok.\n\n_"Unutma: ..." yazarak hatırlatma ekleyebilirsiniz._'
+    satirlar = [f'*{i+1}.* {n.icerik[:80]}' for i, n in enumerate(notlar)]
+    return f'🧠 *Hatırlatmalarınız* ({len(notlar)})\n\n' + '\n'.join(satirlar)
 
 
 # ─── AI Fonksiyonları (function calling) ───────────────────

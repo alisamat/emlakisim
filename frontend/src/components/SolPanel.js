@@ -3,6 +3,7 @@ import api from '../api';
 
 export default function SolPanel({ kredi, sohbetId, onYeniSohbet, onSohbetSec, acik }) {
   const [sohbetler, setSohbetler] = useState([]);
+  const [arama, setArama] = useState('');
 
   const yukle = useCallback(async () => {
     try {
@@ -12,9 +13,21 @@ export default function SolPanel({ kredi, sohbetId, onYeniSohbet, onSohbetSec, a
   }, []);
 
   useEffect(() => { yukle(); }, [yukle]);
-
-  // Yeni sohbet açıldığında listeyi güncelle
   useEffect(() => { if (sohbetId) yukle(); }, [sohbetId, yukle]);
+
+  const sohbetSil = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Bu sohbeti silmek istediğinize emin misiniz?')) return;
+    try {
+      await api.delete(`/api/panel/sohbetler/${id}`);
+      setSohbetler(p => p.filter(s => s.id !== id));
+      if (sohbetId === id) onYeniSohbet();
+    } catch {}
+  };
+
+  const filtrelenmis = arama.trim()
+    ? sohbetler.filter(s => (s.baslik || '').toLowerCase().includes(arama.toLowerCase()))
+    : sohbetler;
 
   return (
     <div className={`sol-panel${acik ? ' acik' : ''}`}>
@@ -32,19 +45,48 @@ export default function SolPanel({ kredi, sohbetId, onYeniSohbet, onSohbetSec, a
       {/* Yeni Sohbet */}
       <button className="sol-panel-yeni" onClick={onYeniSohbet}>+ Yeni Sohbet</button>
 
+      {/* Arama */}
+      <div style={{ padding: '0 12px', marginBottom: 4 }}>
+        <input
+          style={{
+            width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0',
+            borderRadius: 6, fontSize: 12, outline: 'none',
+          }}
+          placeholder="🔍 Sohbet ara..."
+          value={arama}
+          onChange={e => setArama(e.target.value)}
+        />
+      </div>
+
       {/* Sohbet Geçmişi */}
-      <div className="sol-panel-baslik">Sohbet Geçmişi</div>
+      <div className="sol-panel-baslik">
+        Sohbet Geçmişi
+        <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 4 }}>({filtrelenmis.length})</span>
+      </div>
       <div className="sol-panel-liste">
-        {sohbetler.length === 0 ? (
-          <div style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8' }}>Henüz sohbet yok</div>
+        {filtrelenmis.length === 0 ? (
+          <div style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8' }}>
+            {arama ? 'Sonuç bulunamadı' : 'Henüz sohbet yok'}
+          </div>
         ) : (
-          sohbetler.map(s => (
+          filtrelenmis.map(s => (
             <div
               key={s.id}
               className={`sol-panel-sohbet${sohbetId === s.id ? ' aktif' : ''}`}
               onClick={() => onSohbetSec(s.id)}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
-              💬 {s.baslik || 'Sohbet'}
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+                💬 {s.baslik || 'Sohbet'}
+              </span>
+              <button
+                onClick={e => sohbetSil(e, s.id)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 12, color: '#cbd5e1', padding: '0 4px', flexShrink: 0,
+                }}
+                title="Sohbeti sil"
+              >✕</button>
             </div>
           ))
         )}

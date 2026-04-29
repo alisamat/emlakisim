@@ -60,6 +60,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '🎯 Lead Yönetimi',
+    items: [
+      { ikon: '🎯', ad: 'Lead Listesi', tab: 'leadler' },
+      { ikon: '➕', ad: 'Lead Ekle', mesaj: 'Yeni lead ekle' },
+    ],
+  },
+  {
     baslik: '📦 Toplu İşlem',
     items: [
       { ikon: '📦', ad: 'Toplu İşlemler', tab: 'toplu' },
