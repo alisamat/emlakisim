@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -8,6 +8,9 @@ from .config import config
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
+
+# Rate limiter (lazy init)
+_limiter = None
 
 
 def create_app(env='production'):
@@ -19,7 +22,17 @@ def create_app(env='production'):
     jwt.init_app(app)
     CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis
+    # Rate limiting
+    try:
+        from flask_limiter import Limiter
+        from flask_limiter.util import get_remote_address
+        global _limiter
+        _limiter = Limiter(get_remote_address, app=app, default_limits=["200 per minute"],
+                          storage_uri="memory://")
+    except ImportError:
+        pass
+
+    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis, bildirim
     app.register_blueprint(auth.bp)
     app.register_blueprint(webhook.bp)
     app.register_blueprint(panel.bp)
@@ -33,6 +46,7 @@ def create_app(env='production'):
     app.register_blueprint(tanitim.bp)
     app.register_blueprint(lead.bp)
     app.register_blueprint(gelismis.bp)
+    app.register_blueprint(bildirim.bp)
 
     from flask import render_template_string
     @app.route('/gizlilik')

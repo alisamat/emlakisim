@@ -1,6 +1,38 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
+
+// Web Speech API — sesli yazma
+function useSesliYazma(onSonuc) {
+  const [dinliyor, setDinliyor] = useState(false);
+  const recognition = useRef(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition.current = new SpeechRecognition();
+      recognition.current.lang = 'tr-TR';
+      recognition.current.continuous = false;
+      recognition.current.interimResults = false;
+      recognition.current.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        onSonuc(text);
+        setDinliyor(false);
+      };
+      recognition.current.onerror = () => setDinliyor(false);
+      recognition.current.onend = () => setDinliyor(false);
+    }
+  }, [onSonuc]);
+
+  const baslat = () => {
+    if (recognition.current && !dinliyor) {
+      recognition.current.start();
+      setDinliyor(true);
+    }
+  };
+
+  return { dinliyor, baslat, destekleniyor: !!recognition.current };
+}
 
 export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle }) {
   const { user } = useAuth();
@@ -8,6 +40,8 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
   const [yukleniyor, setYuk] = useState(false);
   const mesajlarRef = useRef(null);
   const inputRef = useRef(null);
+  const sesliCallback = useCallback((text) => setGirdi(p => p ? p + ' ' + text : text), []);
+  const sesli = useSesliYazma(sesliCallback);
 
   // Otomatik scroll
   useEffect(() => {
@@ -77,6 +111,24 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
 
       {/* Input */}
       <div className="sohbet-input-alan">
+        {/* Dosya ekleme */}
+        <label style={{ cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '0 4px', flexShrink: 0 }} title="Dosya ekle">
+          📎
+          <input type="file" accept="image/*,.pdf,.xlsx,.xls" style={{ display: 'none' }}
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (f) setGirdi(p => p + `\n[Dosya: ${f.name}]`);
+            }} />
+        </label>
+        {/* Kamera */}
+        <label style={{ cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '0 4px', flexShrink: 0 }} title="Fotoğraf çek">
+          📷
+          <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (f) setGirdi(p => p + `\n[Fotoğraf: ${f.name}]`);
+            }} />
+        </label>
         <textarea
           ref={inputRef}
           className="sohbet-input"
@@ -86,6 +138,16 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
           onKeyDown={tusBasma}
           rows={1}
         />
+        {/* Sesli yazma */}
+        {sesli.destekleniyor && (
+          <button onClick={sesli.baslat} style={{
+            background: sesli.dinliyor ? '#dc2626' : 'none', border: 'none',
+            fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0,
+            color: sesli.dinliyor ? '#fff' : '#94a3b8', borderRadius: 8,
+          }} title="Sesli yaz">
+            🎤
+          </button>
+        )}
         <button className="sohbet-gonder" onClick={gonder} disabled={!girdi.trim() || yukleniyor}>
           ➤
         </button>

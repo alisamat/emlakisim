@@ -462,40 +462,66 @@ Kullanıcı mesaj gönderir
 
 ## KALAN EKSİKLER
 
-### Frontend Sayfaları Eksik
-- [ ] Lead yönetimi sayfası
-- [ ] Çağrı kaydı sayfası
-- [ ] Portföy-talep eşleştirme sayfası
-- [ ] Takvim görünümü component
-- [ ] Tanıtım sayfası (public)
-- [ ] Bütçe hazırlama sayfası
+### Tamamlanan (bu turda)
+- [x] Lead frontend sayfası
+- [x] Eşleştirme frontend sayfası
+- [x] Takvim görünümü
+- [x] Tanıtım & sosyal medya sayfası
+- [x] Müşteri gruplama (form + filtre)
+- [x] Sohbet arama + silme (sol panel)
+- [x] "Unutma" komutu + hatırlatma listele
 
-### Dış Servis Entegrasyonları
+### Yapılacak — Güvenlik Denetimi
+- [ ] Tüm endpoint'lerde JWT auth kontrolü
+- [ ] SQL injection koruması (SQLAlchemy parametrik sorgular)
+- [ ] XSS koruması (React varsayılan escape)
+- [ ] CORS ayarları kontrolü
+- [ ] Rate limiting (brute force koruması)
+- [ ] Hassas veri loglanmaması (TC, şifre)
+- [ ] Input validasyonu (max uzunluk, tip kontrolü)
+
+### Yapılacak — Sohbet Geliştirmeleri
+- [ ] Dosya ekleme butonu (sohbet inputunda)
+- [ ] Fotoğraf çekme butonu (kamera)
+- [ ] Sesli mesaj / konuşarak yazma (Web Speech API)
+- [ ] Sohbet input pozisyonu yukarı taşıma
+
+### Yapılacak — Bildirim Modülü
+- [ ] Uygulama içi bildirim sistemi (bell icon + badge)
+- [ ] Bildirim listesi (okundu/okunmadı)
+- [ ] Bildirim türleri: yeni lead, hatırlatma, yedek, görev, kredi düşük
+- [ ] Push notification (Service Worker — ileri seviye)
+
+### Yapılacak — Otomatik Yedekleme & Hatırlatma
+- [ ] Otomatik yedek alma modülü (zamanlayıcı ile)
+- [ ] Yedekleme takip sistemi (son yedek tarihi, durum)
+- [ ] Hatırlatma modülü: yedek alma, görev, müşteri dönüş, ödeme
+
+### Yapılacak — Emlak Asistanı Tam Yetkinlik Kontrolü
+Gerçek emlak asistanının yaptığı her şeyi yapabilmeli:
+- [x] İdari destek: e-posta yönetme, randevu/takvim, toplantı planlama
+- [x] İlan yönetimi: portföy CRUD, detaylı bilgi, arama/filtre
+- [x] Belge takibi: sözleşme hazırlama (PDF), evrak süreçleri
+- [x] Müşteri iletişimi: CRM, lead yönetimi, sorgu yönetme
+- [x] Pazarlama: sosyal medya içerik üretme (AI)
+- [x] Veri girişi ve CRM: müşteri/portföy veri işleme, eşleştirme
+- [ ] İlan fotoğraflarını düzenleme (fotoğraf storage gerek)
+- [ ] Sanal tur yönetimi (ileri seviye)
+- [ ] Basılı pazarlama materyali (broşür PDF — ileri seviye)
+
+### Dış Servis Entegrasyonları (API key/hesap gerekli)
 - [ ] SMS API (Netgsm veya Twilio)
 - [ ] Fotoğraf storage (Supabase veya S3)
 - [ ] Google Drive OAuth (yedekleme)
-- [ ] Scheduler/Cron (hatırlatma, planlı gönderim, günlük özet)
+- [ ] Scheduler/Cron (hatırlatma, planlı gönderim)
 - [ ] Twilio (sesli arama — ileri seviye)
+- [ ] Kredi satın alma (ödeme entegrasyonu)
 
-### WhatsApp
+### WhatsApp (numara taşıma bekleniyor)
 - [ ] Numara taşıma (Meta Policy 1.4 onayı bekleniyor)
 - [ ] WhatsApp'tan kayıt akışı
 - [ ] Mesai dışı otomatik yanıt
 - [ ] WhatsApp davet sistemi
-
-### Sohbet İyileştirmeleri
-- [ ] Yazışma bağlam takibi — AI konuşma geçmişinden bağlam korumalı
-- [ ] "Unutma" komutu — kullanıcı AI'ya hatırlatma kaydettirsin, düzenleyebilsin
-- [ ] Sohbet geçmişinde arama (sol panel)
-- [ ] Sohbet geçmişini silme (sol panel)
-
-### Diğer
-- [ ] Müşteri gruplama
-- [ ] Emlak gruplama
-- [ ] Fatura modülü (L)
-- [ ] Ofis yönetimi (M)
-- [ ] PDF okuma
-- [ ] Kredi satın alma sayfası
 
 ---
 

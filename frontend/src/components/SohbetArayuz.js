@@ -110,6 +110,7 @@ export default function SohbetArayuz() {
         onSolToggle={() => { setSolAcik(p => !p); setSagAcik(false); }}
         onSagToggle={() => { setSagAcik(p => !p); setSolAcik(false); }}
         onSohbetGit={sohbetGit}
+        onOpenTab={openTab}
       />
 
       {/* Mobil backdrop */}
