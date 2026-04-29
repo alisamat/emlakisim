@@ -18,6 +18,7 @@ import TopluIslem from './TopluIslem';
 import Leadler from './Leadler';
 import Eslestirme from './Eslestirme';
 import Takvim from './Takvim';
+import Tanitim from './Tanitim';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -87,6 +88,7 @@ export default function SohbetArayuz() {
       case 'leadler':      return <div className="sayfa-icerik"><Leadler /></div>;
       case 'eslestirme':   return <div className="sayfa-icerik"><Eslestirme /></div>;
       case 'takvim':       return <div className="sayfa-icerik"><Takvim /></div>;
+      case 'tanitim':      return <div className="sayfa-icerik"><Tanitim /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

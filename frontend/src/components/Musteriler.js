@@ -123,13 +123,19 @@ function MusteriFormu({ onKaydet, onIptal, duzenle }) {
           <label className="etiket">Tercihler / Notlar</label>
           <textarea className="input" name="tercih_notlar" value={form.tercih_notlar || ''} onChange={d} rows={2} style={{ resize: 'vertical' }} />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label className="etiket">Sıcaklık</label>
-          <select className="input" name="sicaklik" value={form.sicaklik} onChange={d}>
-            <option value="sicak">🔥 Sıcak</option>
-            <option value="orta">🌤 Orta</option>
-            <option value="soguk">❄️ Soğuk</option>
-          </select>
+        <div className="grid-2" style={{ marginBottom: 16 }}>
+          <div>
+            <label className="etiket">Sıcaklık</label>
+            <select className="input" name="sicaklik" value={form.sicaklik} onChange={d}>
+              <option value="sicak">🔥 Sıcak</option>
+              <option value="orta">🌤 Orta</option>
+              <option value="soguk">❄️ Soğuk</option>
+            </select>
+          </div>
+          <div>
+            <label className="etiket">Grup</label>
+            <input className="input" name="grup" value={form.grup || ''} onChange={d} placeholder="VIP, Yatırımcı, Kadıköy..." />
+          </div>
         </div>
         {/* Dinamik detaylar */}
         <button type="button" onClick={() => setDetayAcik(p => !p)} style={{
@@ -230,6 +236,7 @@ export default function Musteriler() {
   const [duzenle, setDuzenle]       = useState(null);
   const [yukleniyor, setYuk]        = useState(false);
   const [filtre, setFiltre]         = useState('');
+  const [filtreGrup, setFiltreGrup] = useState('');
   const [arama, setArama]           = useState('');
 
   const yukle = useCallback(async () => {
@@ -265,9 +272,13 @@ export default function Musteriler() {
     setFormAcik(true);
   };
 
+  // Grupları çıkar
+  const gruplar = [...new Set(musteriler.map(m => m.grup).filter(Boolean))];
+
   // Filtreleme + arama
   let liste = musteriler;
   if (filtre) liste = liste.filter(m => m.sicaklik === filtre);
+  if (filtreGrup) liste = liste.filter(m => m.grup === filtreGrup);
   if (arama.trim()) {
     const q = arama.toLowerCase();
     liste = liste.filter(m =>
@@ -303,8 +314,8 @@ export default function Musteriler() {
         />
       </div>
 
-      {/* Filtre */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      {/* Sıcaklık Filtre */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
         {[['', 'Tümü'], ['sicak', '🔥 Sıcak'], ['orta', '🌤 Orta'], ['soguk', '❄️ Soğuk']].map(([v, l]) => (
           <button key={v} onClick={() => setFiltre(v)} style={{
             padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer',
@@ -313,6 +324,24 @@ export default function Musteriler() {
           }}>{l}</button>
         ))}
       </div>
+
+      {/* Grup Filtre */}
+      {gruplar.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <button onClick={() => setFiltreGrup('')} style={{
+            padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            background: !filtreGrup ? '#475569' : '#fff', color: !filtreGrup ? '#fff' : '#64748b',
+            border: `1px solid ${!filtreGrup ? '#475569' : '#e2e8f0'}`,
+          }}>Tüm Gruplar</button>
+          {gruplar.map(g => (
+            <button key={g} onClick={() => setFiltreGrup(filtreGrup === g ? '' : g)} style={{
+              padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: filtreGrup === g ? '#475569' : '#fff', color: filtreGrup === g ? '#fff' : '#64748b',
+              border: `1px solid ${filtreGrup === g ? '#475569' : '#e2e8f0'}`,
+            }}>🏷 {g}</button>
+          ))}
+        </div>
+      )}
 
       {yukleniyor ? (
         <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>Yükleniyor…</div>

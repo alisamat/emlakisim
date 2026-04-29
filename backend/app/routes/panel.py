@@ -32,7 +32,7 @@ def musteriler():
 @jwt_required()
 def musteri_ekle():
     d = request.get_json() or {}
-    _temel = ['ad_soyad', 'telefon', 'tc_kimlik', 'email', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik']
+    _temel = ['ad_soyad', 'telefon', 'tc_kimlik', 'email', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik', 'grup']
     m = Musteri(emlakci_id=_eid(), **{k: d.get(k) for k in _temel if d.get(k) is not None})
     if d.get('detaylar'):
         m.detaylar = d['detaylar']
@@ -45,7 +45,7 @@ def musteri_ekle():
 def musteri_guncelle(mid):
     m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
-    for f in ['ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik']:
+    for f in ['ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik', 'grup']:
         if f in d:
             setattr(m, f, d[f])
     if 'detaylar' in d:
@@ -320,7 +320,7 @@ def _m(m):
     return {
         'id': m.id, 'ad_soyad': m.ad_soyad, 'telefon': m.telefon,
         'islem_turu': m.islem_turu, 'butce_min': m.butce_min, 'butce_max': m.butce_max,
-        'tercih_notlar': m.tercih_notlar, 'sicaklik': m.sicaklik,
+        'tercih_notlar': m.tercih_notlar, 'sicaklik': m.sicaklik, 'grup': m.grup,
         'detaylar': m.detaylar or {},
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }

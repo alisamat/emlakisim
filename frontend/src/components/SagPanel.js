@@ -81,6 +81,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '🌐 Tanıtım & Paylaşım',
+    items: [
+      { ikon: '🌐', ad: 'Tanıtım Sayfası', tab: 'tanitim' },
+      { ikon: '📱', ad: 'Sosyal Medya İçerik', tab: 'tanitim' },
+    ],
+  },
+  {
     baslik: '💾 Yedekleme',
     items: [
       { ikon: '📥', ad: 'Veri İndir (Excel)', tab: 'yedekleme' },
