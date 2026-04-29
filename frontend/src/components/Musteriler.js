@@ -7,26 +7,93 @@ const SICAKLIK = {
   soguk: { label: '❄️ Soğuk', renk: '#3b82f6', bg: '#eff6ff' },
 };
 
+// İşlem türüne göre dinamik müşteri detay alanları
+const MUSTERI_DETAY = {
+  _ortak: [
+    { key: 'email', label: 'E-posta', tip: 'text' },
+    { key: 'meslek', label: 'Meslek', tip: 'text' },
+    { key: 'dogum_tarihi', label: 'Doğum Tarihi', tip: 'date' },
+    { key: 'adres', label: 'Adres', tip: 'text' },
+    { key: 'kaynak', label: 'Nereden Geldi', tip: 'select', secenekler: ['WhatsApp', 'Web', 'Telefon', 'Referans', 'İlan', 'Diğer'] },
+    { key: 'iletisim_tercihi', label: 'İletişim Tercihi', tip: 'select', secenekler: ['WhatsApp', 'Telefon', 'E-posta', 'Yüz yüze'] },
+  ],
+  kira: [
+    { key: 'tercih_sehir', label: 'Tercih Şehir', tip: 'text' },
+    { key: 'tercih_ilce', label: 'Tercih İlçe', tip: 'text' },
+    { key: 'tercih_semt', label: 'Tercih Semt/Mahalle', tip: 'text' },
+    { key: 'tercih_oda', label: 'Tercih Oda Sayısı', tip: 'text', placeholder: '2+1, 3+1' },
+    { key: 'tercih_tip', label: 'Tercih Emlak Tipi', tip: 'select', secenekler: ['Daire', 'Villa', 'Ofis', 'Dükkan', 'Farketmez'] },
+    { key: 'tercih_esyali', label: 'Eşyalı Tercih', tip: 'select', secenekler: ['Eşyalı', 'Boş', 'Farketmez'] },
+    { key: 'tasinma_tarihi', label: 'Taşınma Tarihi', tip: 'date' },
+    { key: 'kefil', label: 'Kefil Var mı', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'evcil_hayvan', label: 'Evcil Hayvan', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'sigara', label: 'Sigara', tip: 'select', secenekler: ['İçiyor', 'İçmiyor'] },
+  ],
+  satis: [
+    { key: 'tercih_sehir', label: 'Tercih Şehir', tip: 'text' },
+    { key: 'tercih_ilce', label: 'Tercih İlçe', tip: 'text' },
+    { key: 'tercih_semt', label: 'Tercih Semt/Mahalle', tip: 'text' },
+    { key: 'tercih_oda', label: 'Tercih Oda Sayısı', tip: 'text', placeholder: '2+1, 3+1' },
+    { key: 'tercih_tip', label: 'Tercih Emlak Tipi', tip: 'select', secenekler: ['Daire', 'Villa', 'Arsa', 'Ofis', 'Farketmez'] },
+    { key: 'kredi_kullanimi', label: 'Kredi Kullanacak mı', tip: 'select', secenekler: ['Evet', 'Hayır', 'Belki'] },
+    { key: 'yatirim_amacli', label: 'Yatırım Amaçlı mı', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'tapu_tercihi', label: 'Tapu Tercihi', tip: 'select', secenekler: ['Kat Mülkiyeti', 'Kat İrtifakı', 'Farketmez'] },
+    { key: 'acil_mi', label: 'Acil mi', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+  ],
+};
+
+function musteriAlanlari(islem_turu) {
+  return [...(MUSTERI_DETAY[islem_turu] || []), ...MUSTERI_DETAY._ortak];
+}
+
+function DetayInput({ alan, value, onChange }) {
+  if (alan.tip === 'select') {
+    return (
+      <div>
+        <label className="etiket">{alan.label}</label>
+        <select className="input" value={value || ''} onChange={e => onChange(alan.key, e.target.value)}>
+          <option value="">Seçiniz</option>
+          {alan.secenekler.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <label className="etiket">{alan.label}</label>
+      <input className="input" type={alan.tip || 'text'} value={value || ''} placeholder={alan.placeholder || ''}
+        onChange={e => onChange(alan.key, e.target.value)} />
+    </div>
+  );
+}
+
 function MusteriFormu({ onKaydet, onIptal, duzenle }) {
-  const [form, setForm] = useState(duzenle || {
+  const [form, setForm] = useState({
     ad_soyad: '', telefon: '', tc_kimlik: '', islem_turu: 'kira',
     butce_min: '', butce_max: '', tercih_notlar: '', sicaklik: 'orta',
+    ...(duzenle || {}),
   });
+  const [detay, setDetay] = useState(duzenle?.detaylar || {});
+  const [detayAcik, setDetayAcik] = useState(false);
   const [yukleniyor, setYuk] = useState(false);
   const d = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const dd = (key, val) => setDetay(p => ({ ...p, [key]: val }));
 
   const kaydet = async e => {
     e.preventDefault(); setYuk(true);
     try {
+      const payload = { ...form, detaylar: detay };
       let r;
       if (duzenle?.id) {
-        r = await api.put(`/api/panel/musteriler/${duzenle.id}`, form);
+        r = await api.put(`/api/panel/musteriler/${duzenle.id}`, payload);
       } else {
-        r = await api.post('/api/panel/musteriler', form);
+        r = await api.post('/api/panel/musteriler', payload);
       }
       onKaydet(r.data.musteri, !!duzenle?.id);
     } catch {} finally { setYuk(false); }
   };
+
+  const alanlar = musteriAlanlari(form.islem_turu);
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid #e2e8f0' }}>
@@ -64,6 +131,20 @@ function MusteriFormu({ onKaydet, onIptal, duzenle }) {
             <option value="soguk">❄️ Soğuk</option>
           </select>
         </div>
+        {/* Dinamik detaylar */}
+        <button type="button" onClick={() => setDetayAcik(p => !p)} style={{
+          background: 'none', border: 'none', color: '#16a34a', fontSize: 13, fontWeight: 600,
+          cursor: 'pointer', marginBottom: 12, padding: 0,
+        }}>
+          {detayAcik ? `▼ Detayları gizle (${alanlar.length} alan)` : `▶ Detayları göster (${alanlar.length} alan)`}
+        </button>
+
+        {detayAcik && (
+          <div className="grid-2" style={{ marginBottom: 12, gap: 12 }}>
+            {alanlar.map(a => <DetayInput key={a.key} alan={a} value={detay[a.key]} onChange={dd} />)}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-yesil" type="submit" disabled={yukleniyor}>{yukleniyor ? 'Kaydediliyor...' : 'Kaydet'}</button>
           <button className="btn-gri" type="button" onClick={onIptal}>İptal</button>
@@ -76,6 +157,12 @@ function MusteriFormu({ onKaydet, onIptal, duzenle }) {
 function MusteriKarti({ m, onDuzenle, onSil }) {
   const s = SICAKLIK[m.sicaklik] || SICAKLIK.orta;
   const [menuAcik, setMenuAcik] = useState(false);
+  const [detayAcik, setDetayAcik] = useState(false);
+  const det = m.detaylar || {};
+  const badges = Object.entries(det).filter(([, v]) => v).map(([k, v]) => {
+    const alan = [...(MUSTERI_DETAY[m.islem_turu] || []), ...MUSTERI_DETAY._ortak].find(a => a.key === k);
+    return alan ? `${alan.label}: ${v}` : null;
+  }).filter(Boolean);
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #e2e8f0', borderLeft: `3px solid ${s.renk}` }}>
@@ -95,6 +182,22 @@ function MusteriKarti({ m, onDuzenle, onSil }) {
             </div>
           )}
           {m.tercih_notlar && <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>{m.tercih_notlar}</div>}
+          {badges.length > 0 && (
+            <>
+              <button onClick={() => setDetayAcik(p => !p)} style={{
+                background: 'none', border: 'none', color: '#16a34a', fontSize: 12, cursor: 'pointer', padding: 0, marginTop: 6,
+              }}>
+                {detayAcik ? '▼ Gizle' : `▶ ${badges.length} detay`}
+              </button>
+              {detayAcik && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                  {badges.map((b, i) => (
+                    <span key={i} style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px', color: '#475569' }}>{b}</span>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setMenuAcik(p => !p)} style={{

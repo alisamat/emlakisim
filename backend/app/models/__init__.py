@@ -38,6 +38,7 @@ class Musteri(db.Model):
     butce_max     = db.Column(db.Float)
     tercih_notlar = db.Column(db.Text)                  # AI tarafından işlenen tercihler
     sicaklik      = db.Column(db.String(10), default='orta')  # soguk/orta/sicak
+    detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
     guncelleme    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
