@@ -451,21 +451,29 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
                 kullanilan_islem = ogrenilen
                 kullanilan_model = 'ogrenilen'
             else:
-                # 3. Sabit pattern matching (sıfır maliyet)
-                komut = _pattern_isle(metin_norm, emlakci, metin)
-                if komut:
-                    cevap = _komut_calistir(komut, emlakci, metin, session)
-                    kullanilan_islem = komut
+                # 3. Danışmanlık bilgi bankası (sıfır maliyet)
+                from app.services.danismanlik import danismanlik_cevapla
+                danismanlik = danismanlik_cevapla(metin_norm)
+                if danismanlik:
+                    cevap = danismanlik
+                    kullanilan_islem = 'danismanlik'
                     kullanilan_model = 'pattern'
                 else:
-                    # 4. AI (function calling varsa)
-                    openai_key = os.environ.get('OPENAI_API_KEY', '')
-                    if openai_key:
-                        cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci), gecmis, emlakci)
+                    # 4. Sabit pattern matching (sıfır maliyet)
+                    komut = _pattern_isle(metin_norm, emlakci, metin)
+                    if komut:
+                        cevap = _komut_calistir(komut, emlakci, metin, session)
+                        kullanilan_islem = komut
+                        kullanilan_model = 'pattern'
                     else:
-                        cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci))
-                    kullanilan_islem = 'ai_sohbet'
-                    kullanilan_model = 'openai'
+                        # 5. AI (function calling varsa)
+                        openai_key = os.environ.get('OPENAI_API_KEY', '')
+                        if openai_key:
+                            cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci), gecmis, emlakci)
+                        else:
+                            cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci))
+                        kullanilan_islem = 'ai_sohbet'
+                        kullanilan_model = 'openai'
 
         # Diyaloğu kaydet (eğitim verisi)
         diyalog_kaydet(emlakci.id, metin, metin_norm, kullanilan_islem or 'bilinmeyen', model=kullanilan_model)
