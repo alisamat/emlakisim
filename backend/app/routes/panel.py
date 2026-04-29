@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
 from app.services.iletisim import email_gonder, musteri_email_sablonu, portfoy_email_sablonu
+from app.services.yedekleme import excel_export, yedek_ozeti
 import io
 
 bp = Blueprint('panel', __name__, url_prefix='/api/panel')
@@ -228,6 +229,73 @@ def email_portfoy():
     if basarili:
         return jsonify({'ok': True, 'mesaj': f'{len(mulkler_q)} mülk email ile gönderildi'})
     return jsonify({'message': f'Email gönderilemedi: {sonuc}'}), 500
+
+
+# ── Yedekleme ─────────────────────────────────────────────────────────────────
+@bp.route('/yedek/indir', methods=['GET'])
+@jwt_required()
+def yedek_indir():
+    """Tüm veriyi Excel olarak indir."""
+    emlakci = Emlakci.query.get(_eid())
+    data = excel_export(emlakci)
+    dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
+    if data[:2] == b'PK':  # xlsx
+        return send_file(io.BytesIO(data), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True, download_name=f'{dosya_adi}.xlsx')
+    return send_file(io.BytesIO(data), mimetype='application/json',
+                     as_attachment=True, download_name=f'{dosya_adi}.json')
+
+
+@bp.route('/yedek/ozet', methods=['GET'])
+@jwt_required()
+def yedek_ozet_endpoint():
+    emlakci = Emlakci.query.get(_eid())
+    return jsonify(yedek_ozeti(emlakci))
+
+
+@bp.route('/yedek/email', methods=['POST'])
+@jwt_required()
+def yedek_email():
+    """Yedek dosyasını email ile gönder."""
+    emlakci = Emlakci.query.get(_eid())
+    alici = (request.get_json() or {}).get('email', emlakci.email)
+    if not alici:
+        return jsonify({'message': 'Email adresi gerekli'}), 400
+
+    data = excel_export(emlakci)
+    # Email ile gönder
+    import smtplib, os
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.base import MIMEBase
+    from email.mime.text import MIMEText
+    from email import encoders
+
+    smtp_user = os.environ.get('SMTP_USER', '')
+    smtp_pass = os.environ.get('SMTP_PASS', '')
+    if not smtp_user:
+        return jsonify({'message': 'SMTP ayarları eksik'}), 500
+
+    msg = MIMEMultipart()
+    msg['Subject'] = f'Emlakisim Yedek — {__import__("datetime").datetime.now().strftime("%d.%m.%Y")}'
+    msg['From'] = smtp_user
+    msg['To'] = alici
+    msg.attach(MIMEText('Emlakisim veri yedeğiniz ektedir.', 'plain', 'utf-8'))
+
+    ext = 'xlsx' if data[:2] == b'PK' else 'json'
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload(data)
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f'attachment; filename="emlakisim_yedek.{ext}"')
+    msg.attach(part)
+
+    try:
+        with smtplib.SMTP(os.environ.get('SMTP_HOST', 'smtp.gmail.com'), int(os.environ.get('SMTP_PORT', '587'))) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        return jsonify({'ok': True, 'mesaj': f'Yedek {alici} adresine gönderildi'})
+    except Exception as e:
+        return jsonify({'message': f'Gönderim hatası: {e}'}), 500
 
 
 # ── Notlar ─────────────────────────────────────────────────────────────────────

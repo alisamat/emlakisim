@@ -60,6 +60,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '💾 Yedekleme',
+    items: [
+      { ikon: '📥', ad: 'Veri İndir (Excel)', tab: 'yedekleme' },
+      { ikon: '📧', ad: 'Email ile Gönder', mesaj: 'Verilerimi email ile yedekle' },
+    ],
+  },
+  {
     baslik: '⚙️ Profil',
     items: [
       { ikon: '👤', ad: 'Profil Ayarları', tab: 'profil' },

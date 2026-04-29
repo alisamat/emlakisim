@@ -13,6 +13,7 @@ import Belgeler from './Belgeler';
 import Muhasebe from './Muhasebe';
 import Hesaplamalar from './Hesaplamalar';
 import Planlama from './Planlama';
+import Yedekleme from './Yedekleme';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -77,6 +78,7 @@ export default function SohbetArayuz() {
       case 'muhasebe':      return <div className="sayfa-icerik"><Muhasebe /></div>;
       case 'hesaplamalar': return <div className="sayfa-icerik"><Hesaplamalar /></div>;
       case 'planlama':     return <div className="sayfa-icerik"><Planlama /></div>;
+      case 'yedekleme':    return <div className="sayfa-icerik"><Yedekleme /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (
