@@ -53,6 +53,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '📅 Planlama',
+    items: [
+      { ikon: '📅', ad: 'Görevler & Takvim', tab: 'planlama' },
+      { ikon: '📌', ad: 'Görev Ekle', mesaj: 'Yeni görev ekle' },
+    ],
+  },
+  {
     baslik: '⚙️ Profil',
     items: [
       { ikon: '👤', ad: 'Profil Ayarları', tab: 'profil' },

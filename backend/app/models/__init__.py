@@ -4,6 +4,7 @@ import secrets
 
 # Muhasebe modelleri ayrı dosyada — buradan import et
 from app.models.muhasebe import GelirGider, Cari, CariHareket
+from app.models.planlama import Gorev
 
 
 class Emlakci(db.Model):
