@@ -1,33 +1,130 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
-const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis' };
+const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina', ciftlik: 'Çiftlik' };
+
+// Tip bazlı dinamik alan tanımları — yeni alan eklemek = buraya 1 satır
+const DETAY_ALANLARI = {
+  _ortak: [
+    { key: 'brut_m2', label: 'Brüt m²', tip: 'number' },
+    { key: 'net_m2', label: 'Net m²', tip: 'number' },
+    { key: 'bina_yasi', label: 'Bina Yaşı', tip: 'number' },
+    { key: 'kimden', label: 'Kimden', tip: 'select', secenekler: ['Sahibinden', 'Emlak Ofisinden', 'İnşaat Firmasından'] },
+    { key: 'tapu_durumu', label: 'Tapu Durumu', tip: 'select', secenekler: ['Kat Mülkiyetli', 'Kat İrtifakı', 'Hisseli Tapu', 'Arsa Tapulu', 'Kooperatif'] },
+    { key: 'krediye_uygun', label: 'Krediye Uygun', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'takas', label: 'Takas', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'kullanim_durumu', label: 'Kullanım Durumu', tip: 'select', secenekler: ['Boş', 'Kiracı Var', 'Mal Sahibi'] },
+  ],
+  daire: [
+    { key: 'bulundugu_kat', label: 'Bulunduğu Kat', tip: 'text' },
+    { key: 'kat_sayisi', label: 'Kat Sayısı', tip: 'number' },
+    { key: 'isinma', label: 'Isınma', tip: 'select', secenekler: ['Kombi (Doğalgaz)', 'Merkezi', 'Soba', 'Klima', 'Yerden Isıtma', 'Isı Pompası'] },
+    { key: 'banyo_sayisi', label: 'Banyo Sayısı', tip: 'number' },
+    { key: 'mutfak', label: 'Mutfak', tip: 'select', secenekler: ['Açık (Amerikan)', 'Kapalı'] },
+    { key: 'balkon', label: 'Balkon', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'asansor', label: 'Asansör', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'otopark', label: 'Otopark', tip: 'select', secenekler: ['Açık', 'Kapalı', 'Yok'] },
+    { key: 'esyali', label: 'Eşyalı', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'site_icerisinde', label: 'Site İçerisinde', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'site_adi', label: 'Site Adı', tip: 'text' },
+    { key: 'aidat', label: 'Aidat (TL)', tip: 'number' },
+    { key: 'cephe', label: 'Cephe', tip: 'select', secenekler: ['Kuzey', 'Güney', 'Doğu', 'Batı', 'Güneydoğu', 'Güneybatı'] },
+    { key: 'yapinin_durumu', label: 'Yapının Durumu', tip: 'select', secenekler: ['Sıfır', 'İkinci El', 'Tadilat Gerekli'] },
+  ],
+  villa: [
+    { key: 'kat_sayisi', label: 'Kat Sayısı', tip: 'number' },
+    { key: 'isinma', label: 'Isınma', tip: 'select', secenekler: ['Kombi (Doğalgaz)', 'Merkezi', 'Yerden Isıtma', 'Isı Pompası', 'Şömine'] },
+    { key: 'banyo_sayisi', label: 'Banyo Sayısı', tip: 'number' },
+    { key: 'havuz', label: 'Havuz', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'bahce', label: 'Bahçe', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'bahce_m2', label: 'Bahçe m²', tip: 'number' },
+    { key: 'otopark', label: 'Otopark', tip: 'select', secenekler: ['Açık', 'Kapalı Garaj', 'Yok'] },
+    { key: 'esyali', label: 'Eşyalı', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'guvenlik', label: 'Güvenlik', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'manzara', label: 'Manzara', tip: 'select', secenekler: ['Deniz', 'Göl', 'Dağ', 'Şehir', 'Doğa', 'Yok'] },
+  ],
+  arsa: [
+    { key: 'imar_durumu', label: 'İmar Durumu', tip: 'select', secenekler: ['Konut İmarlı', 'Ticari İmarlı', 'Sanayi', 'Tarla', 'İmarsız', 'Karma'] },
+    { key: 'gabari', label: 'Gabari', tip: 'text', placeholder: 'Örn: 5 kat' },
+    { key: 'emsal', label: 'Emsal (KAKS)', tip: 'text', placeholder: 'Örn: 1.50' },
+    { key: 'taks', label: 'TAKS', tip: 'text', placeholder: 'Örn: 0.30' },
+    { key: 'cephe_uzunlugu', label: 'Cephe Uzunluğu (m)', tip: 'number' },
+    { key: 'derinlik', label: 'Derinlik (m)', tip: 'number' },
+    { key: 'yola_cephe', label: 'Yola Cephe', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'altyapi', label: 'Altyapı', tip: 'select', secenekler: ['Elektrik + Su + Doğalgaz', 'Elektrik + Su', 'Yok'] },
+    { key: 'tapu_cinsi', label: 'Tapu Cinsi', tip: 'select', secenekler: ['Arsa', 'Tarla', 'Bağ', 'Bahçe'] },
+  ],
+  dukkan: [
+    { key: 'bulundugu_kat', label: 'Bulunduğu Kat', tip: 'text' },
+    { key: 'kat_sayisi', label: 'Kat Sayısı', tip: 'number' },
+    { key: 'cephe_uzunlugu', label: 'Cephe Uzunluğu (m)', tip: 'number' },
+    { key: 'yukseklik', label: 'Tavan Yüksekliği (m)', tip: 'number' },
+    { key: 'wc', label: 'WC', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'vitrin', label: 'Vitrin', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'avm_icerisinde', label: 'AVM İçerisinde', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+    { key: 'aidat', label: 'Aidat (TL)', tip: 'number' },
+  ],
+  ofis: [
+    { key: 'bulundugu_kat', label: 'Bulunduğu Kat', tip: 'text' },
+    { key: 'kat_sayisi', label: 'Kat Sayısı', tip: 'number' },
+    { key: 'oda_bolme', label: 'Oda/Bölme Sayısı', tip: 'number' },
+    { key: 'isinma', label: 'Isınma', tip: 'select', secenekler: ['Merkezi', 'Kombi', 'Klima'] },
+    { key: 'asansor', label: 'Asansör', tip: 'select', secenekler: ['Var', 'Yok'] },
+    { key: 'otopark', label: 'Otopark', tip: 'select', secenekler: ['Açık', 'Kapalı', 'Yok'] },
+    { key: 'aidat', label: 'Aidat (TL)', tip: 'number' },
+    { key: 'plaza_icerisinde', label: 'Plaza İçerisinde', tip: 'select', secenekler: ['Evet', 'Hayır'] },
+  ],
+};
+
+function alanlarGetir(tip) {
+  return [...(DETAY_ALANLARI[tip] || []), ...DETAY_ALANLARI._ortak];
+}
+
+function DetayInput({ alan, value, onChange }) {
+  if (alan.tip === 'select') {
+    return (
+      <div>
+        <label className="etiket">{alan.label}</label>
+        <select className="input" value={value || ''} onChange={e => onChange(alan.key, e.target.value)}>
+          <option value="">Seçiniz</option>
+          {alan.secenekler.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <label className="etiket">{alan.label}</label>
+      <input className="input" type={alan.tip || 'text'} value={value || ''} placeholder={alan.placeholder || ''}
+        onChange={e => onChange(alan.key, e.target.value)} />
+    </div>
+  );
+}
 
 function MulkFormu({ onKaydet, onIptal, duzenle }) {
-  const [form, setForm] = useState(duzenle || {
+  const [form, setForm] = useState({
     baslik: '', adres: '', sehir: '', ilce: '', tip: 'daire', islem_turu: 'kira',
     fiyat: '', metrekare: '', oda_sayisi: '', ada: '', parsel: '', notlar: '',
-    brut_metrekare: '', net_metrekare: '', bina_yasi: '', bulundugu_kat: '', kat_sayisi: '',
-    isinma: '', banyo_sayisi: '', mutfak: '', balkon: '', asansor: '', otopark: '',
-    esyali: '', kullanim_durumu: '', site_icerisinde: '', site_adi: '', aidat: '',
-    krediye_uygun: '', tapu_durumu: '', kimden: '', takas: '',
+    ...(duzenle || {}),
   });
+  const [detay, setDetay] = useState(duzenle?.detaylar || {});
   const [detayAcik, setDetayAcik] = useState(false);
   const [yukleniyor, setYuk] = useState(false);
   const d = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const dd = (key, val) => setDetay(p => ({ ...p, [key]: val }));
 
   const kaydet = async e => {
     e.preventDefault(); setYuk(true);
     try {
+      const payload = { ...form, detaylar: detay };
       let r;
-      if (duzenle?.id) {
-        r = await api.put(`/api/panel/mulkler/${duzenle.id}`, form);
-      } else {
-        r = await api.post('/api/panel/mulkler', form);
-      }
+      if (duzenle?.id) r = await api.put(`/api/panel/mulkler/${duzenle.id}`, payload);
+      else r = await api.post('/api/panel/mulkler', payload);
       onKaydet(r.data.mulk, !!duzenle?.id);
     } catch {} finally { setYuk(false); }
   };
+
+  const alanlar = alanlarGetir(form.tip);
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid #e2e8f0' }}>
@@ -35,7 +132,6 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
         {duzenle?.id ? 'Mülk Düzenle' : 'Yeni Mülk'}
       </div>
       <form onSubmit={kaydet}>
-        {/* Temel bilgiler */}
         <div style={{ marginBottom: 12 }}>
           <label className="etiket">Başlık</label>
           <input className="input" name="baslik" value={form.baslik} onChange={d} placeholder="Kadıköy 3+1 Kiralık Daire" />
@@ -52,9 +148,7 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
           <div>
             <label className="etiket">Tip</label>
             <select className="input" name="tip" value={form.tip} onChange={d}>
-              <option value="daire">Daire</option><option value="villa">Villa</option>
-              <option value="arsa">Arsa</option><option value="dukkan">Dükkan</option>
-              <option value="ofis">Ofis</option>
+              {Object.entries(TIP_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
           <div>
@@ -68,133 +162,25 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
           <div><label className="etiket">Fiyat (TL)</label><input className="input" name="fiyat" type="number" value={form.fiyat || ''} onChange={d} /></div>
           <div><label className="etiket">Oda Sayısı</label><input className="input" name="oda_sayisi" value={form.oda_sayisi || ''} onChange={d} placeholder="3+1" /></div>
         </div>
-        <div className="grid-2" style={{ marginBottom: 12 }}>
-          <div><label className="etiket">m² (Brüt)</label><input className="input" name="brut_metrekare" type="number" value={form.brut_metrekare || ''} onChange={d} /></div>
-          <div><label className="etiket">m² (Net)</label><input className="input" name="net_metrekare" type="number" value={form.net_metrekare || ''} onChange={d} /></div>
-        </div>
 
-        {/* Detay aç/kapa */}
+        {/* Dinamik detay alanları */}
         <button type="button" onClick={() => setDetayAcik(p => !p)} style={{
           background: 'none', border: 'none', color: '#16a34a', fontSize: 13, fontWeight: 600,
           cursor: 'pointer', marginBottom: 12, padding: 0,
         }}>
-          {detayAcik ? '▼ Detayları gizle' : '▶ Detayları göster'}
+          {detayAcik ? `▼ Detayları gizle (${alanlar.length} alan)` : `▶ Detayları göster (${alanlar.length} alan)`}
         </button>
 
         {detayAcik && (
-          <>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div><label className="etiket">Bina Yaşı</label><input className="input" name="bina_yasi" type="number" value={form.bina_yasi || ''} onChange={d} /></div>
-              <div><label className="etiket">Bulunduğu Kat</label><input className="input" name="bulundugu_kat" value={form.bulundugu_kat || ''} onChange={d} placeholder="3. Kat" /></div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div><label className="etiket">Kat Sayısı</label><input className="input" name="kat_sayisi" type="number" value={form.kat_sayisi || ''} onChange={d} /></div>
-              <div><label className="etiket">Banyo Sayısı</label><input className="input" name="banyo_sayisi" type="number" value={form.banyo_sayisi || ''} onChange={d} /></div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Isınma</label>
-                <select className="input" name="isinma" value={form.isinma || ''} onChange={d}>
-                  <option value="">Seçiniz</option>
-                  <option value="kombi">Kombi (Doğalgaz)</option>
-                  <option value="merkezi">Merkezi</option>
-                  <option value="soba">Soba</option>
-                  <option value="klima">Klima</option>
-                  <option value="yerden">Yerden Isıtma</option>
-                </select>
-              </div>
-              <div>
-                <label className="etiket">Mutfak</label>
-                <select className="input" name="mutfak" value={form.mutfak || ''} onChange={d}>
-                  <option value="">Seçiniz</option>
-                  <option value="acik">Açık (Amerikan)</option>
-                  <option value="kapali">Kapalı</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Balkon</label>
-                <select className="input" name="balkon" value={form.balkon || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="var">Var</option><option value="yok">Yok</option>
-                </select>
-              </div>
-              <div>
-                <label className="etiket">Asansör</label>
-                <select className="input" name="asansor" value={form.asansor || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="var">Var</option><option value="yok">Yok</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Otopark</label>
-                <select className="input" name="otopark" value={form.otopark || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="acik">Açık</option><option value="kapali">Kapalı</option><option value="yok">Yok</option>
-                </select>
-              </div>
-              <div>
-                <label className="etiket">Eşyalı</label>
-                <select className="input" name="esyali" value={form.esyali || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="evet">Evet</option><option value="hayir">Hayır</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Kullanım Durumu</label>
-                <select className="input" name="kullanim_durumu" value={form.kullanim_durumu || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="bos">Boş</option><option value="kiraci">Kiracı Var</option><option value="mal_sahibi">Mal Sahibi</option>
-                </select>
-              </div>
-              <div>
-                <label className="etiket">Krediye Uygun</label>
-                <select className="input" name="krediye_uygun" value={form.krediye_uygun || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="evet">Evet</option><option value="hayir">Hayır</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Tapu Durumu</label>
-                <select className="input" name="tapu_durumu" value={form.tapu_durumu || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="kat_mulkiyeti">Kat Mülkiyetli</option>
-                  <option value="kat_irtifaki">Kat İrtifakı</option><option value="hisseli">Hisseli Tapu</option>
-                  <option value="arsa">Arsa Tapulu</option>
-                </select>
-              </div>
-              <div>
-                <label className="etiket">Kimden</label>
-                <select className="input" name="kimden" value={form.kimden || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="sahibinden">Sahibinden</option><option value="emlak_ofisi">Emlak Ofisinden</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div>
-                <label className="etiket">Site İçerisinde</label>
-                <select className="input" name="site_icerisinde" value={form.site_icerisinde || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="evet">Evet</option><option value="hayir">Hayır</option>
-                </select>
-              </div>
-              <div><label className="etiket">Site Adı</label><input className="input" name="site_adi" value={form.site_adi || ''} onChange={d} /></div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div><label className="etiket">Aidat (TL)</label><input className="input" name="aidat" type="number" value={form.aidat || ''} onChange={d} /></div>
-              <div>
-                <label className="etiket">Takas</label>
-                <select className="input" name="takas" value={form.takas || ''} onChange={d}>
-                  <option value="">Seçiniz</option><option value="evet">Evet</option><option value="hayir">Hayır</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid-2" style={{ marginBottom: 12 }}>
-              <div><label className="etiket">Ada</label><input className="input" name="ada" value={form.ada || ''} onChange={d} /></div>
-              <div><label className="etiket">Parsel</label><input className="input" name="parsel" value={form.parsel || ''} onChange={d} /></div>
-            </div>
-          </>
+          <div className="grid-2" style={{ marginBottom: 12, gap: 12 }}>
+            {alanlar.map(a => <DetayInput key={a.key} alan={a} value={detay[a.key]} onChange={dd} />)}
+          </div>
         )}
 
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Ada</label><input className="input" name="ada" value={form.ada || ''} onChange={d} /></div>
+          <div><label className="etiket">Parsel</label><input className="input" name="parsel" value={form.parsel || ''} onChange={d} /></div>
+        </div>
         <div style={{ marginBottom: 16 }}>
           <label className="etiket">Notlar</label>
           <textarea className="input" name="notlar" value={form.notlar || ''} onChange={d} rows={2} style={{ resize: 'vertical' }} />
@@ -212,22 +198,12 @@ function MulkKarti({ m, onDuzenle, onSil }) {
   const renk = m.islem_turu === 'kira' ? '#3b82f6' : '#f59e0b';
   const [menuAcik, setMenuAcik] = useState(false);
   const [detayAcik, setDetayAcik] = useState(false);
+  const det = m.detaylar || {};
 
-  const detaylar = [
-    m.bulundugu_kat && `Kat: ${m.bulundugu_kat}`,
-    m.kat_sayisi && `${m.kat_sayisi} katlı`,
-    m.bina_yasi != null && `${m.bina_yasi} yaşında`,
-    m.isinma && `🔥 ${m.isinma}`,
-    m.banyo_sayisi && `🚿 ${m.banyo_sayisi} banyo`,
-    m.balkon && (m.balkon === 'var' ? '🏠 Balkon' : '❌ Balkon yok'),
-    m.asansor && (m.asansor === 'var' ? '🛗 Asansör' : '❌ Asansör yok'),
-    m.esyali && (m.esyali === 'evet' ? '🪑 Eşyalı' : 'Eşyasız'),
-    m.kullanim_durumu && `📋 ${m.kullanim_durumu === 'bos' ? 'Boş' : m.kullanim_durumu === 'kiraci' ? 'Kiracı var' : 'Mal sahibi'}`,
-    m.krediye_uygun === 'evet' && '💳 Krediye uygun',
-    m.tapu_durumu && `📄 ${m.tapu_durumu.replace('_', ' ')}`,
-    m.aidat && `🏢 Aidat: ${Number(m.aidat).toLocaleString('tr-TR')} TL`,
-    m.site_adi && `🏘 ${m.site_adi}`,
-  ].filter(Boolean);
+  const badges = Object.entries(det).filter(([, v]) => v).map(([k, v]) => {
+    const alan = [...(DETAY_ALANLARI[m.tip] || []), ...DETAY_ALANLARI._ortak].find(a => a.key === k);
+    return alan ? `${alan.label}: ${v}` : null;
+  }).filter(Boolean);
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #e2e8f0', borderLeft: `3px solid ${renk}` }}>
@@ -243,26 +219,22 @@ function MulkKarti({ m, onDuzenle, onSil }) {
           {m.adres && <div style={{ fontSize: 13, color: '#64748b' }}>📍 {m.adres}{m.sehir ? `, ${m.ilce || ''} ${m.sehir}` : ''}</div>}
           <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
             {m.fiyat && <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>💰 {Number(m.fiyat).toLocaleString('tr-TR')} TL</span>}
-            {(m.brut_metrekare || m.net_metrekare || m.metrekare) && (
-              <span style={{ fontSize: 13, color: '#64748b' }}>
-                {m.brut_metrekare ? `${m.brut_metrekare} brüt` : ''}{m.net_metrekare ? ` / ${m.net_metrekare} net` : ''}{!m.brut_metrekare && !m.net_metrekare && m.metrekare ? `${m.metrekare} m²` : ' m²'}
-              </span>
-            )}
             {m.oda_sayisi && <span style={{ fontSize: 13, color: '#64748b' }}>🛏 {m.oda_sayisi}</span>}
+            {det.brut_m2 && <span style={{ fontSize: 13, color: '#64748b' }}>{det.brut_m2} brüt m²</span>}
+            {det.net_m2 && <span style={{ fontSize: 13, color: '#64748b' }}>{det.net_m2} net m²</span>}
           </div>
 
-          {/* Detaylar */}
-          {detaylar.length > 0 && (
+          {badges.length > 0 && (
             <>
               <button onClick={() => setDetayAcik(p => !p)} style={{
                 background: 'none', border: 'none', color: '#16a34a', fontSize: 12, cursor: 'pointer', padding: 0, marginTop: 6,
               }}>
-                {detayAcik ? '▼ Detayları gizle' : `▶ ${detaylar.length} detay`}
+                {detayAcik ? '▼ Gizle' : `▶ ${badges.length} detay`}
               </button>
               {detayAcik && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-                  {detaylar.map((d, i) => (
-                    <span key={i} style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px', color: '#475569' }}>{d}</span>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                  {badges.map((b, i) => (
+                    <span key={i} style={{ fontSize: 11, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px', color: '#475569' }}>{b}</span>
                   ))}
                 </div>
               )}
@@ -330,7 +302,7 @@ export default function Mulkler() {
       {formAcik && <MulkFormu onKaydet={onKaydet} onIptal={() => { setFormAcik(false); setDuzenle(null); }} duzenle={duzenle} />}
 
       <div style={{ marginBottom: 12 }}>
-        <input className="input" placeholder="🔍 Mülk ara (başlık, adres, şehir)..." value={arama} onChange={e => setArama(e.target.value)} style={{ width: '100%' }} />
+        <input className="input" placeholder="🔍 Mülk ara..." value={arama} onChange={e => setArama(e.target.value)} style={{ width: '100%' }} />
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -342,7 +314,7 @@ export default function Mulkler() {
           }}>{l}</button>
         ))}
         <span style={{ color: '#e2e8f0' }}>|</span>
-        {[['', 'Hepsi'], ['daire', 'Daire'], ['villa', 'Villa'], ['arsa', 'Arsa'], ['dukkan', 'Dükkan'], ['ofis', 'Ofis']].map(([v, l]) => (
+        {[['', 'Hepsi'], ...Object.entries(TIP_LABEL)].map(([v, l]) => (
           <button key={v} onClick={() => setFiltreTip(v)} style={{
             padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             background: filtreTip === v ? '#475569' : '#fff', color: filtreTip === v ? '#fff' : '#64748b',
