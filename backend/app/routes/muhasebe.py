@@ -1,10 +1,12 @@
 """
-MUHASEBE — Gelir/gider, cari hesap API'leri
+MUHASEBE — Gelir/gider, cari hesap, OCR fiş okuma API'leri
 """
+import base64
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.muhasebe import GelirGider, Cari, CariHareket
+from app.services.ocr import fis_oku
 from datetime import datetime
 
 bp = Blueprint('muhasebe', __name__, url_prefix='/api/panel/muhasebe')
@@ -107,6 +109,74 @@ def cari_detay(cid):
     c = Cari.query.filter_by(id=cid, emlakci_id=_eid()).first_or_404()
     hareketler = CariHareket.query.filter_by(cari_id=cid).order_by(CariHareket.tarih.desc()).all()
     return jsonify({'cari': _cari(c), 'hareketler': [_ch(h) for h in hareketler]})
+
+
+# ── OCR Fiş Okuma ────────────────────────────────────────
+@bp.route('/fis-oku', methods=['POST'])
+@jwt_required()
+def fis_oku_endpoint():
+    """Fiş/fatura fotoğrafını OCR ile oku → gider kaydı öner."""
+    if 'image' in request.files:
+        img = request.files['image'].read()
+        img_b64 = base64.b64encode(img).decode()
+    elif request.is_json and request.json.get('image_base64'):
+        img_b64 = request.json['image_base64']
+    else:
+        return jsonify({'message': 'Fotoğraf gerekli'}), 400
+
+    sonuc = fis_oku(img_b64)
+
+    if sonuc.get('hata'):
+        return jsonify({'message': sonuc['hata']}), 500
+
+    return jsonify({
+        'ocr': sonuc,
+        'oneri': {
+            'tip': 'gider',
+            'kategori': _kategori_esle(sonuc.get('kategori', '')),
+            'tutar': sonuc.get('toplam', 0),
+            'aciklama': f"{sonuc.get('firma', '')} - {sonuc.get('belge_tipi', 'fiş')}",
+            'tarih': sonuc.get('tarih'),
+        }
+    })
+
+
+@bp.route('/fis-kaydet', methods=['POST'])
+@jwt_required()
+def fis_kaydet():
+    """OCR sonucunu onaylayıp gider olarak kaydet."""
+    d = request.get_json() or {}
+    k = GelirGider(
+        emlakci_id=_eid(),
+        tip='gider',
+        kategori=d.get('kategori', 'Diğer Gider'),
+        tutar=float(d.get('tutar', 0)),
+        aciklama=d.get('aciklama', ''),
+        detaylar={
+            'ocr_model': d.get('ocr_model'),
+            'firma': d.get('firma'),
+            'kdv_tutar': d.get('kdv_tutar'),
+            'kdv_oran': d.get('kdv_oran'),
+            'kalemler': d.get('kalemler', []),
+            'guven_skoru': d.get('guven_skoru'),
+        },
+    )
+    if d.get('tarih'):
+        try:
+            k.tarih = datetime.strptime(d['tarih'], '%d.%m.%Y')
+        except:
+            pass
+    db.session.add(k)
+    db.session.commit()
+    return jsonify({'kayit': _gg(k)}), 201
+
+
+def _kategori_esle(ocr_kategori):
+    eslesme = {
+        'ofis': 'Ofis Kirası', 'ulaşım': 'Ulaşım', 'yemek': 'Yemek',
+        'fatura': 'Fatura', 'reklam': 'Reklam', 'diğer': 'Diğer Gider',
+    }
+    return eslesme.get(ocr_kategori, 'Diğer Gider')
 
 
 # ── Serializers ──────────────────────────────────────────

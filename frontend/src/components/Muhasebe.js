@@ -1,6 +1,77 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
+function FisOkuButon({ onGiderEkle }) {
+  const [yukleniyor, setYuk] = useState(false);
+  const [sonuc, setSonuc] = useState(null);
+
+  const fisOku = async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setYuk(true); setSonuc(null);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const r = await api.post('/api/panel/muhasebe/fis-oku', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSonuc(r.data);
+    } catch { setSonuc({ hata: true }); } finally { setYuk(false); }
+  };
+
+  const kaydet = async () => {
+    if (!sonuc?.oneri) return;
+    setYuk(true);
+    try {
+      const payload = {
+        ...sonuc.oneri,
+        firma: sonuc.ocr?.firma,
+        kdv_tutar: sonuc.ocr?.kdv_tutar,
+        kdv_oran: sonuc.ocr?.kdv_oran,
+        kalemler: sonuc.ocr?.kalemler,
+        guven_skoru: sonuc.ocr?.guven_skoru,
+        ocr_model: sonuc.ocr?.model,
+      };
+      const r = await api.post('/api/panel/muhasebe/fis-kaydet', payload);
+      onGiderEkle(r.data.kayit);
+      setSonuc(null);
+    } catch {} finally { setYuk(false); }
+  };
+
+  return (
+    <>
+      <label style={{
+        background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8,
+        padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-block',
+      }}>
+        📸 Fiş Oku
+        <input type="file" accept="image/*" capture="environment" onChange={fisOku} style={{ display: 'none' }} />
+      </label>
+
+      {yukleniyor && (
+        <div style={{ background: '#fffbeb', borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 13, color: '#92400e' }}>
+          📸 Fiş okunuyor...
+        </div>
+      )}
+
+      {sonuc && !sonuc.hata && sonuc.oneri && (
+        <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #bbf7d0' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#16a34a', marginBottom: 8 }}>✅ Fiş okundu!</div>
+          <div style={{ fontSize: 13, color: '#374151', marginBottom: 4 }}>Firma: <strong>{sonuc.ocr?.firma || '-'}</strong></div>
+          <div style={{ fontSize: 13, color: '#374151', marginBottom: 4 }}>Tutar: <strong>{Number(sonuc.oneri.tutar).toLocaleString('tr-TR')} TL</strong></div>
+          <div style={{ fontSize: 13, color: '#374151', marginBottom: 4 }}>Kategori: {sonuc.oneri.kategori}</div>
+          <div style={{ fontSize: 13, color: '#374151', marginBottom: 8 }}>Tarih: {sonuc.ocr?.tarih || '-'}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>Güven: %{sonuc.ocr?.guven_skoru || '?'} · {sonuc.ocr?.model}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn-yesil" onClick={kaydet} disabled={yukleniyor} style={{ fontSize: 13 }}>✅ Gider Olarak Kaydet</button>
+            <button className="btn-gri" onClick={() => setSonuc(null)} style={{ fontSize: 13 }}>İptal</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 const KATEGORILER = {
   gelir: ['Komisyon', 'Kira Geliri', 'Danışmanlık', 'Diğer Gelir'],
   gider: ['Ofis Kirası', 'Personel', 'Reklam', 'Ulaşım', 'Fatura', 'Vergi', 'Diğer Gider'],
@@ -87,9 +158,12 @@ export default function Muhasebe() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 8 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>💰 Muhasebe</h1>
-        <button className="btn-yesil" onClick={() => setFormAcik(p => !p)}>+ Ekle</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <FisOkuButon onGiderEkle={k => { setKayitlar(p => [k, ...p]); yukle(); }} />
+          <button className="btn-yesil" onClick={() => setFormAcik(p => !p)}>+ Ekle</button>
+        </div>
       </div>
 
       {/* Özet kartları */}
