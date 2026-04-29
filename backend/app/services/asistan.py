@@ -432,23 +432,43 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
         gecmis[:] = gecmis[-20:]
 
     try:
+        from app.services.egitim import diyalog_kaydet, ogrenilen_pattern_esle
+        metin_norm = _normalize(metin)
+        kullanilan_model = None
+        kullanilan_islem = None
+
         # 1. Bekleyen adımlı işlem varsa tamamla
         bekleyen = _bekleyen_isle(session, emlakci, metin)
         if bekleyen:
             cevap = bekleyen
+            kullanilan_islem = 'bekleyen'
+            kullanilan_model = 'pattern'
         else:
-            # 2. Pattern matching (sıfır maliyet)
-            metin_norm = _normalize(metin)
-            komut = _pattern_isle(metin_norm, emlakci, metin)
-            if komut:
-                cevap = _komut_calistir(komut, emlakci, metin, session)
+            # 2. Öğrenilen pattern'lar (DB'den)
+            ogrenilen = ogrenilen_pattern_esle(metin_norm)
+            if ogrenilen:
+                cevap = _komut_calistir(ogrenilen, emlakci, metin, session)
+                kullanilan_islem = ogrenilen
+                kullanilan_model = 'ogrenilen'
             else:
-                # 3. AI (function calling varsa)
-                openai_key = os.environ.get('OPENAI_API_KEY', '')
-                if openai_key:
-                    cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci), gecmis, emlakci)
+                # 3. Sabit pattern matching (sıfır maliyet)
+                komut = _pattern_isle(metin_norm, emlakci, metin)
+                if komut:
+                    cevap = _komut_calistir(komut, emlakci, metin, session)
+                    kullanilan_islem = komut
+                    kullanilan_model = 'pattern'
                 else:
-                    cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci))
+                    # 4. AI (function calling varsa)
+                    openai_key = os.environ.get('OPENAI_API_KEY', '')
+                    if openai_key:
+                        cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci), gecmis, emlakci)
+                    else:
+                        cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci))
+                    kullanilan_islem = 'ai_sohbet'
+                    kullanilan_model = 'openai'
+
+        # Diyaloğu kaydet (eğitim verisi)
+        diyalog_kaydet(emlakci.id, metin, metin_norm, kullanilan_islem or 'bilinmeyen', model=kullanilan_model)
 
         gecmis.append({'role': 'assistant', 'content': cevap})
         wa.mesaj_gonder(pid, tok, telefon, cevap)

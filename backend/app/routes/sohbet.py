@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Emlakci, PanelSohbet, PanelMesaj
 from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle
 from app.services.kredi import kredi_kontrol, kredi_dus, KREDI_TABLOSU
+from app.services.egitim import diyalog_kaydet, ogrenilen_pattern_esle
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('sohbet', __name__, url_prefix='/api/panel')
@@ -49,46 +50,65 @@ def mesaj_gonder():
 
     session = _panel_sessions.setdefault(emlakci.id, {})
 
+    metin_norm = _normalize(metin)
+    kullanilan_model = None
+
     # 1. Bekleyen adımlı işlem
     bekleyen = _bekleyen_isle(session, emlakci, metin)
     if bekleyen:
         cevap = bekleyen
-        # Bekleyen işlem tamamlandı → kredi düş
         islem = session.get('_son_islem', 'pattern')
         kredi_dus(emlakci, islem, aciklama=metin[:100])
+        kullanilan_model = 'pattern'
     else:
-        # 2. Pattern matching (sıfır veya düşük maliyet)
-        metin_norm = _normalize(metin)
-        komut = _pattern_isle(metin_norm, emlakci, metin)
-        if komut:
-            cevap = _komut_calistir(komut, emlakci, metin, session)
-            kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
+        # 2. Öğrenilen pattern'lar (DB'den)
+        ogrenilen = ogrenilen_pattern_esle(metin_norm)
+        if ogrenilen:
+            cevap = _komut_calistir(ogrenilen, emlakci, metin, session)
+            kredi_dus(emlakci, ogrenilen, aciklama=metin[:100], model='ogrenilen')
+            kullanilan_model = 'ogrenilen'
         else:
-            # 3. AI — önce kredi kontrolü
-            if not kredi_kontrol(emlakci, 1):
-                cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
-                db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
-                db.session.commit()
-                return jsonify({
-                    'cevap': cevap,
-                    'kredi_kalan': emlakci.kredi,
-                    'sohbet_id': sohbet.id,
-                    'kredi_yetersiz': True,
-                }), 200
+            # 3. Sabit pattern matching
+            komut = _pattern_isle(metin_norm, emlakci, metin)
+            if komut:
+                cevap = _komut_calistir(komut, emlakci, metin, session)
+                kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
+                kullanilan_model = 'pattern'
+            else:
+                # 4. AI — önce kredi kontrolü
+                if not kredi_kontrol(emlakci, 1):
+                    cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
+                    db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+                    db.session.commit()
+                    return jsonify({
+                        'cevap': cevap,
+                        'kredi_kalan': emlakci.kredi,
+                        'sohbet_id': sohbet.id,
+                        'kredi_yetersiz': True,
+                    }), 200
 
-            sistem = _sistem_prompt(emlakci)
-            try:
-                openai_key = os.environ.get('OPENAI_API_KEY', '')
-                if openai_key:
-                    cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
-                else:
-                    cevap = _ai_cevap(metin, gecmis, sistem)
-            except Exception as e:
-                logger.error(f'[Sohbet] AI hatası: {e}')
-                cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+                sistem = _sistem_prompt(emlakci)
+                try:
+                    openai_key = os.environ.get('OPENAI_API_KEY', '')
+                    if openai_key:
+                        cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
+                    else:
+                        cevap = _ai_cevap(metin, gecmis, sistem)
+                except Exception as e:
+                    logger.error(f'[Sohbet] AI hatası: {e}')
+                    cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
 
-            # AI kredi düş
-            kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model='gpt-4o-mini')
+                # AI kredi düş
+                kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model='gpt-4o-mini')
+                kullanilan_model = 'openai'
+
+    # Diyaloğu kaydet (eğitim verisi)
+    islem_adi = 'ai_sohbet'
+    if kullanilan_model == 'pattern':
+        islem_adi = 'pattern'
+    elif kullanilan_model == 'ogrenilen':
+        islem_adi = 'ogrenilen'
+    diyalog_kaydet(emlakci.id, metin, metin_norm, islem_adi, model=kullanilan_model)
 
     # Asistan mesajını kaydet
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
