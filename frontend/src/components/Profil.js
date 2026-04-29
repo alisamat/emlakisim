@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Layout from './Layout';
 import { useAuth } from '../App';
 import api from '../api';
 
@@ -22,7 +21,7 @@ export default function Profil() {
   };
 
   return (
-    <Layout>
+    <>
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 20 }}>👤 Profil</h1>
 
@@ -60,6 +59,6 @@ export default function Profil() {
         {/* Çıkış */}
         <button onClick={cikisYap} className="btn-gri" style={{ width: '100%' }}>Çıkış Yap</button>
       </div>
-    </Layout>
+    </>
   );
 }

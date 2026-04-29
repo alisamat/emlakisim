@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Layout from './Layout';
 import api from '../api';
 
 export default function YerGostermeler() {
@@ -15,7 +14,7 @@ export default function YerGostermeler() {
   useEffect(() => { yukle(); }, [yukle]);
 
   return (
-    <Layout>
+    <>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>📋 Yer Gösterme Kayıtları</h1>
         <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>Toplam {kayitlar.length} kayıt</p>
@@ -50,6 +49,6 @@ export default function YerGostermeler() {
           </div>
         ))
       )}
-    </Layout>
+    </>
   );
 }

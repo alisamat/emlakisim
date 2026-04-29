@@ -113,6 +113,29 @@ class Not(db.Model):
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class PanelSohbet(db.Model):
+    """Uygulama içi AI sohbet konuşmaları"""
+    __tablename__ = 'panel_sohbet'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    emlakci_id  = db.Column(db.Integer, db.ForeignKey('emlakci.id'), nullable=False)
+    baslik      = db.Column(db.String(200))
+    olusturma   = db.Column(db.DateTime, default=datetime.utcnow)
+    guncelleme  = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    mesajlar    = db.relationship('PanelMesaj', backref='sohbet', lazy=True, order_by='PanelMesaj.olusturma')
+
+
+class PanelMesaj(db.Model):
+    """Sohbet mesajları"""
+    __tablename__ = 'panel_mesaj'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    sohbet_id   = db.Column(db.Integer, db.ForeignKey('panel_sohbet.id'), nullable=False)
+    rol         = db.Column(db.String(10), nullable=False)   # user / assistant
+    icerik      = db.Column(db.Text, nullable=False)
+    olusturma   = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class MusteriOnayToken(db.Model):
     """Müşteri belge onayı için tek kullanımlık token"""
     __tablename__ = 'musteri_onay_token'

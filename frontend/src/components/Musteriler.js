@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Layout from './Layout';
 import api from '../api';
 
 const SICAKLIK = { sicak: { label: '🔥 Sıcak', renk: '#dc2626', bg: '#fef2f2' }, orta: { label: '🌤 Orta', renk: '#f59e0b', bg: '#fffbeb' }, soguk: { label: '❄️ Soğuk', renk: '#3b82f6', bg: '#eff6ff' } };
@@ -107,7 +106,7 @@ export default function Musteriler() {
   const liste = filtre ? musteriler.filter(m => m.sicaklik === filtre) : musteriler;
 
   return (
-    <Layout>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>👥 Müşteriler</h1>
         <button className="btn-yesil" onClick={() => setFormAcik(p => !p)}>+ Ekle</button>
@@ -136,6 +135,6 @@ export default function Musteriler() {
       ) : (
         liste.map(m => <MusteriKarti key={m.id} m={m} />)
       )}
-    </Layout>
+    </>
   );
 }

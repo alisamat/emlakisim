@@ -5,11 +5,7 @@ import './index.css';
 
 import Giris          from './components/Giris';
 import Kayit          from './components/Kayit';
-import Panel          from './components/Panel';
-import Musteriler     from './components/Musteriler';
-import Mulkler        from './components/Mulkler';
-import YerGostermeler from './components/YerGostermeler';
-import Profil         from './components/Profil';
+import SohbetArayuz   from './components/SohbetArayuz';
 
 const AuthCtx = createContext(null);
 export const useAuth = () => useContext(AuthCtx);
@@ -59,14 +55,10 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/giris"      element={<Giris />} />
-          <Route path="/kayit"      element={<Kayit />} />
-          <Route path="/"           element={<Koruma><Panel /></Koruma>} />
-          <Route path="/musteriler" element={<Koruma><Musteriler /></Koruma>} />
-          <Route path="/mulkler"    element={<Koruma><Mulkler /></Koruma>} />
-          <Route path="/kayitlar"   element={<Koruma><YerGostermeler /></Koruma>} />
-          <Route path="/profil"     element={<Koruma><Profil /></Koruma>} />
-          <Route path="*"           element={<Navigate to="/" replace />} />
+          <Route path="/giris" element={<Giris />} />
+          <Route path="/kayit" element={<Kayit />} />
+          <Route path="/"      element={<Koruma><SohbetArayuz /></Koruma>} />
+          <Route path="*"      element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

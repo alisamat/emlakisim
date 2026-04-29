@@ -19,11 +19,12 @@ def create_app(env='production'):
     jwt.init_app(app)
     CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-    from .routes import auth, webhook, panel, musteri
+    from .routes import auth, webhook, panel, musteri, sohbet
     app.register_blueprint(auth.bp)
     app.register_blueprint(webhook.bp)
     app.register_blueprint(panel.bp)
     app.register_blueprint(musteri.bp)
+    app.register_blueprint(sohbet.bp)
 
     from flask import render_template_string
     @app.route('/gizlilik')

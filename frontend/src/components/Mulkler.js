@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Layout from './Layout';
 import api from '../api';
 
 function MulkFormu({ onKaydet, onIptal }) {
@@ -110,7 +109,7 @@ export default function Mulkler() {
   useEffect(() => { yukle(); }, [yukle]);
 
   return (
-    <Layout>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>🏢 Portföy</h1>
         <button className="btn-yesil" onClick={() => setFormAcik(p => !p)}>+ Ekle</button>
@@ -128,6 +127,6 @@ export default function Mulkler() {
       ) : (
         mulkler.map(m => <MulkKarti key={m.id} m={m} />)
       )}
-    </Layout>
+    </>
   );
 }
