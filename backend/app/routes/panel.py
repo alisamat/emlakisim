@@ -85,10 +85,11 @@ def mulkler():
 @jwt_required()
 def mulk_ekle():
     d = request.get_json() or {}
-    m = Mulk(emlakci_id=_eid(), **{k: d.get(k) for k in
-        ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu',
-         'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar']
-        if d.get(k) is not None})
+    _mulk_alanlar = ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar',
+                     'brut_metrekare', 'net_metrekare', 'bina_yasi', 'bulundugu_kat', 'kat_sayisi', 'isinma', 'banyo_sayisi',
+                     'mutfak', 'balkon', 'asansor', 'otopark', 'esyali', 'kullanim_durumu', 'site_icerisinde', 'site_adi',
+                     'aidat', 'krediye_uygun', 'tapu_durumu', 'kimden', 'takas']
+    m = Mulk(emlakci_id=_eid(), **{k: d.get(k) for k in _mulk_alanlar if d.get(k) is not None})
     db.session.add(m); db.session.commit()
     return jsonify({'mulk': _mulk(m)}), 201
 
@@ -98,7 +99,10 @@ def mulk_ekle():
 def mulk_guncelle(mid):
     m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
-    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar']:
+    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar',
+              'brut_metrekare', 'net_metrekare', 'bina_yasi', 'bulundugu_kat', 'kat_sayisi', 'isinma', 'banyo_sayisi',
+              'mutfak', 'balkon', 'asansor', 'otopark', 'esyali', 'kullanim_durumu', 'site_icerisinde', 'site_adi',
+              'aidat', 'krediye_uygun', 'tapu_durumu', 'kimden', 'takas']:
         if f in d:
             setattr(m, f, d[f])
     db.session.commit()
@@ -153,7 +157,16 @@ def _mulk(m):
     return {
         'id': m.id, 'baslik': m.baslik, 'adres': m.adres, 'sehir': m.sehir,
         'ilce': m.ilce, 'tip': m.tip, 'islem_turu': m.islem_turu,
-        'fiyat': m.fiyat, 'metrekare': m.metrekare, 'oda_sayisi': m.oda_sayisi, 'notlar': m.notlar,
+        'fiyat': m.fiyat, 'metrekare': m.metrekare, 'oda_sayisi': m.oda_sayisi,
+        'ada': m.ada, 'parsel': m.parsel, 'notlar': m.notlar,
+        'brut_metrekare': m.brut_metrekare, 'net_metrekare': m.net_metrekare,
+        'bina_yasi': m.bina_yasi, 'bulundugu_kat': m.bulundugu_kat, 'kat_sayisi': m.kat_sayisi,
+        'isinma': m.isinma, 'banyo_sayisi': m.banyo_sayisi, 'mutfak': m.mutfak,
+        'balkon': m.balkon, 'asansor': m.asansor, 'otopark': m.otopark,
+        'esyali': m.esyali, 'kullanim_durumu': m.kullanim_durumu,
+        'site_icerisinde': m.site_icerisinde, 'site_adi': m.site_adi,
+        'aidat': m.aidat, 'krediye_uygun': m.krediye_uygun,
+        'tapu_durumu': m.tapu_durumu, 'kimden': m.kimden, 'takas': m.takas,
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }
 

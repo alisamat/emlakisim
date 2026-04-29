@@ -62,6 +62,27 @@ class Mulk(db.Model):
     ada           = db.Column(db.String(20))
     parsel        = db.Column(db.String(20))
     notlar        = db.Column(db.Text)
+    # Detay alanları
+    brut_metrekare = db.Column(db.Float)
+    net_metrekare  = db.Column(db.Float)
+    bina_yasi      = db.Column(db.Integer)
+    bulundugu_kat  = db.Column(db.String(30))
+    kat_sayisi     = db.Column(db.Integer)
+    isinma         = db.Column(db.String(50))            # kombi, merkezi, soba, klima
+    banyo_sayisi   = db.Column(db.Integer)
+    mutfak         = db.Column(db.String(30))            # acik, kapali
+    balkon         = db.Column(db.String(10))            # var, yok
+    asansor        = db.Column(db.String(10))            # var, yok
+    otopark        = db.Column(db.String(30))            # acik, kapali, yok
+    esyali         = db.Column(db.String(10))            # evet, hayir
+    kullanim_durumu = db.Column(db.String(20))           # bos, kiraci, mal_sahibi
+    site_icerisinde = db.Column(db.String(10))           # evet, hayir
+    site_adi       = db.Column(db.String(100))
+    aidat          = db.Column(db.Float)
+    krediye_uygun  = db.Column(db.String(10))            # evet, hayir
+    tapu_durumu    = db.Column(db.String(50))            # kat_mulkiyeti, kat_irtifaki, hisseli, arsa
+    kimden         = db.Column(db.String(30))            # sahibinden, emlak_ofisi
+    takas          = db.Column(db.String(10))            # evet, hayir
     aktif         = db.Column(db.Boolean, default=True)
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 
