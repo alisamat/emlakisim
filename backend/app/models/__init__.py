@@ -6,6 +6,7 @@ import secrets
 from app.models.muhasebe import GelirGider, Cari, CariHareket
 from app.models.planlama import Gorev
 from app.models.egitim import DiyalogKayit, OgrenilenPattern
+from app.models.lead import Lead, CagriKayit
 
 
 class Emlakci(db.Model):
