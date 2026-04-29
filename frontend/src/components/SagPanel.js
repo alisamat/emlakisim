@@ -30,6 +30,14 @@ const MENU = [
     ],
   },
   {
+    baslik: '💰 Muhasebe',
+    items: [
+      { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe' },
+      { ikon: '📈', ad: 'Gelir Ekle', mesaj: 'Gelir eklemek istiyorum' },
+      { ikon: '📉', ad: 'Gider Ekle', mesaj: 'Gider eklemek istiyorum' },
+    ],
+  },
+  {
     baslik: '✉️ İletişim',
     items: [
       { ikon: '📧', ad: 'Email Gönder', mesaj: 'Email göndermek istiyorum' },

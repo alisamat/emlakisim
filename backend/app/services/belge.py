@@ -5,8 +5,9 @@ Dinamik JSON config ile şablonlar — yeni belge tipi = config'e satır
 import io
 import os
 from datetime import datetime
-from fpdf import FPDF
 
+
+from fpdf import FPDF
 
 class TurkPDF(FPDF):
     """Türkçe karakter destekli PDF."""

@@ -5,7 +5,6 @@ from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
-from app.services.belge import yer_gosterme_pdf, kira_kontrati_pdf
 from app.services.iletisim import email_gonder, musteri_email_sablonu, portfoy_email_sablonu
 import io
 
@@ -152,6 +151,7 @@ def belge_yer_gosterme():
     musteri = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
     mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
 
+    from app.services.belge import yer_gosterme_pdf
     pdf_bytes = yer_gosterme_pdf(emlakci, musteri, mulk)
     return send_file(
         io.BytesIO(pdf_bytes),
@@ -170,6 +170,7 @@ def belge_kira_kontrati():
     kiraci = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
     mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
 
+    from app.services.belge import kira_kontrati_pdf
     pdf_bytes = kira_kontrati_pdf(emlakci, kiraci, mulk, detaylar=d.get('detaylar'))
     return send_file(
         io.BytesIO(pdf_bytes),

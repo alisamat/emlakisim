@@ -2,6 +2,9 @@ from app import db
 from datetime import datetime
 import secrets
 
+# Muhasebe modelleri ayrı dosyada — buradan import et
+from app.models.muhasebe import GelirGider, Cari, CariHareket
+
 
 class Emlakci(db.Model):
     """Sisteme kayıtlı emlakçı/acente kullanıcılar"""
