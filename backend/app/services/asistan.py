@@ -36,6 +36,9 @@ _PATTERNS = [
     (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam)',     'hatirlatma_liste'),
     # Rapor
     (r'(?:rapor|özet|istatistik|durum)',                      'rapor'),
+    # Muhasebe
+    (r'(?:kar\s*zarar|kâr\s*zarar|kar.zarar|gelir\s*gider)',  'muhasebe_rapor'),
+    (r'(?:cari|alacak|borc|borç)',                            'cari_rapor'),
     # Yardım
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
 ]
@@ -75,6 +78,12 @@ def _komut_calistir(komut, emlakci, metin, session):
         return ('*Yeni mülk eklemek için bilgileri girin:*\n\n'
                 'Başlık, Adres, Tip (daire/villa/arsa), İşlem (kiralık/satılık), Fiyat\n\n'
                 '_Örnek: Kadıköy 3+1 Daire, Moda Cad. No:5, daire, kiralık, 25000_')
+
+    if komut == 'muhasebe_rapor':
+        return _muhasebe_rapor(emlakci)
+
+    if komut == 'cari_rapor':
+        return _cari_rapor(emlakci)
 
     if komut == 'not_ekle':
         session['bekleyen_islem'] = 'not_ekle'
@@ -202,6 +211,38 @@ def _not_kaydet(emlakci, metin):
     db.session.add(not_obj)
     db.session.commit()
     return f'✅ *Not kaydedildi.*\n\n📝 {metin[:100]}'
+
+
+def _muhasebe_rapor(emlakci):
+    """Muhasebe özet raporu."""
+    from app.models.muhasebe import GelirGider
+    kayitlar = GelirGider.query.filter_by(emlakci_id=emlakci.id).all()
+    gelir = sum(k.tutar for k in kayitlar if k.tip == 'gelir')
+    gider = sum(k.tutar for k in kayitlar if k.tip == 'gider')
+    kar = gelir - gider
+    f = lambda v: f'{int(v):,}'.replace(',', '.')
+    return (f'💰 *Muhasebe Özeti*\n\n'
+            f'📈 Gelir: *{f(gelir)} TL*\n'
+            f'📉 Gider: *{f(gider)} TL*\n'
+            f'{"🟢" if kar >= 0 else "🔴"} {"Kâr" if kar >= 0 else "Zarar"}: *{f(abs(kar))} TL*\n'
+            f'📊 Kâr marjı: *%{(kar/gelir*100):.1f}*\n' if gelir > 0 else
+            f'💰 *Muhasebe Özeti*\n\nHenüz gelir/gider kaydı yok.')
+
+
+def _cari_rapor(emlakci):
+    """Cari hesap özeti."""
+    from app.models.muhasebe import Cari
+    cariler = Cari.query.filter_by(emlakci_id=emlakci.id).all()
+    if not cariler:
+        return '📒 Henüz cari hesap yok.\n\n_Muhasebe menüsünden cari hesap ekleyebilirsiniz._'
+    alacak = sum(c.bakiye for c in cariler if c.bakiye > 0)
+    borc = sum(abs(c.bakiye) for c in cariler if c.bakiye < 0)
+    f = lambda v: f'{int(v):,}'.replace(',', '.')
+    satirlar = [f'  *{c.ad}*: {"+" if c.bakiye >= 0 else ""}{f(c.bakiye)} TL' for c in cariler[:8]]
+    return (f'📒 *Cari Hesaplar*\n\n'
+            f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
+            f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
+            + '\n'.join(satirlar))
 
 
 def _unutma_kaydet(emlakci, metin):

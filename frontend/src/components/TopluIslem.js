@@ -5,6 +5,7 @@ const ISLEMLER = [
   { key: 'musteri-excel', label: 'Excel\'den Müşteri Ekle', ikon: '👥', aciklama: 'Excel dosyasından toplu müşteri ekleyin (Sütunlar: Ad Soyad, Telefon, İşlem Türü)', accept: '.xlsx,.xls' },
   { key: 'portfoy-excel', label: 'Excel\'den Portföy Ekle', ikon: '🏢', aciklama: 'Excel dosyasından toplu mülk ekleyin (Sütunlar: Başlık, Adres, Tip, İşlem, Fiyat)', accept: '.xlsx,.xls' },
   { key: 'portfoy-ocr', label: 'Fotoğraftan Portföy Ekle', ikon: '📸', aciklama: 'Sahibinden.com ekran görüntüsü çekin, AI ilanları otomatik okuyup portföye eklesin', accept: 'image/*' },
+  { key: 'banka-import', label: 'Banka Excel\'den Masraf', ikon: '🏦', aciklama: 'Banka hesap özeti Excel\'den otomatik masraf çıkarma (Sütunlar: Tarih, Açıklama, Tutar)', accept: '.xlsx,.xls' },
   { key: 'rehber', label: 'Rehberden Müşteri Ekle', ikon: '📱', aciklama: 'Telefon rehberinizden kişileri müşteri olarak ekleyin', accept: null },
 ];
 
@@ -23,7 +24,8 @@ export default function TopluIslem() {
     else formData.append('file', file);
 
     try {
-      const r = await api.post(`/api/panel/toplu/${tip}`, formData, {
+      const endpoint = tip === 'banka-import' ? '/api/panel/muhasebe/banka-import' : `/api/panel/toplu/${tip}`;
+      const r = await api.post(endpoint, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setSonuc(r.data);

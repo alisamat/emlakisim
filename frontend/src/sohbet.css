@@ -14,8 +14,8 @@
 .ust-baslik {
   height: 48px;
   min-height: 48px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--bg-card, #fff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -63,8 +63,8 @@
   top: 48px; left: 0;
   width: 260px;
   height: calc(100vh - 48px);
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--bg-card, #fff);
+  border-right: 1px solid var(--border, #e2e8f0);
   overflow-y: auto;
   z-index: 40;
   display: flex;
@@ -133,8 +133,8 @@
   top: 48px; right: 0;
   width: 260px;
   height: calc(100vh - 48px);
-  background: #fff;
-  border-left: 1px solid #e2e8f0;
+  background: var(--bg-card, #fff);
+  border-left: 1px solid var(--border, #e2e8f0);
   overflow-y: auto;
   z-index: 40;
 }
@@ -224,9 +224,9 @@
 }
 .sohbet-mesaj.assistant {
   align-self: flex-start;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #1e293b;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text-primary, #1e293b);
   border-bottom-left-radius: 4px;
 }
 .sohbet-mesaj-zaman {
@@ -252,15 +252,15 @@
 /* SOHBET INPUT */
 .sohbet-input-alan {
   padding: 12px 20px;
-  border-top: 1px solid #e2e8f0;
-  background: #fff;
+  border-top: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #fff);
   display: flex;
   gap: 8px;
   align-items: flex-end;
 }
 .sohbet-input {
   flex: 1;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
   padding: 10px 14px;
   font-size: 14px;
@@ -270,6 +270,8 @@
   min-height: 42px;
   font-family: inherit;
   line-height: 1.4;
+  background: var(--bg-input, #fff);
+  color: var(--text-primary, #0f172a);
 }
 .sohbet-input:focus { border-color: #16a34a; }
 .sohbet-gonder {
