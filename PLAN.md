@@ -423,17 +423,15 @@ Emlakçının söyleyebileceği 10.000+ konuyu anlamak:
 
 ### Admin Panel (Platform Yönetimi)
 - [x] AI eğitim istatistikleri + pattern yönetimi + maliyet raporu
-- [ ] Fiyatlandırma parametreleri yönetimi (kredi fiyatı, paket tanımları)
-- [ ] Platform geneli kullanıcı/gelir/maliyet dashboard
-- [ ] Fatura kesme ve takip sistemi (platform → müşteri)
+- [x] Fiyatlandırma parametreleri GET/PUT API
+- [x] Platform dashboard API (kullanıcı, müşteri, mülk, lead, diyalog, kredi)
+- [x] Kullanıcı listesi + kredi ekleme API
+- [ ] Admin frontend dashboard sayfası (ayrı panel)
 
 ### Maliyet Merkezi (Tüm Dış Servisler)
-Tüm dış servis maliyetlerini tek noktadan yönet:
 - [x] AI token maliyeti → kredi dönüşümü
-- [ ] SMS maliyeti → kredi karşılığı tanımlama
-- [ ] WhatsApp mesaj maliyeti → kredi
-- [ ] Telefon hizmeti maliyeti → kredi
-- [ ] Tüm dış servis fiyatlarını admin panelden değiştirme
+- [x] Kredi fiyat tablosu admin API'den yönetilebilir
+- [ ] SMS/WhatsApp/telefon maliyeti → kredi (dış servis entegre olunca)
 
 ### Sağ Panel İyileştirme ✅
 - [x] 12 kategori anlamlı gruplama

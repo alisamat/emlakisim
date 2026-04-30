@@ -84,11 +84,61 @@ _PATTERNS = [
     # ── Performans ──
     (r'(?:performans|kpi|verimlilik|ozet\s*rapor|nasil\s*gidiyorum)', 'performans'),
     # ── Yardım ──
-    # Yardım & Yetenek
+    # ── Müşteri detay ──
+    (r'(?:musteri|müşteri).*(?:bilgi|detay|profil)',          'musteri_liste'),
+    (r'(?:musteri|müşteri).*(?:ara|bul|sec|seç)',             'musteri_liste'),
+    (r'(?:musteri|müşteri).*(?:grup|etiket|filtre)',          'musteri_liste'),
+    (r'(?:musteri|müşteri).*(?:mail|email|gonder)',           'musteri_liste'),
+    (r'(?:telefon\s*rehber|rehber.*ekle)',                    'musteri_ekle'),
+    (r'(?:excel.*musteri|excel.*müşteri)',                    'musteri_ekle'),
+    # ── Portföy detay ──
+    (r'(?:mulk|mülk|emlak).*(?:detay|bilgi|özellik)',        'mulk_liste'),
+    (r'(?:mulk|mülk).*(?:brosur|broşür|pdf)',                'mulk_liste'),
+    (r'(?:mulk|mülk).*(?:mail|email|gonder|paylas)',         'mulk_liste'),
+    (r'(?:excel.*(?:mulk|mülk|portfoy|portföy))',            'mulk_ekle'),
+    (r'(?:sahibinden|hepsiemlak).*(?:ekle|import|aktar)',     'mulk_ekle'),
+    # ── Belge detay ──
+    (r'(?:pdf|belge|evrak)\s*(?:olustur|hazirla|indir)',     'rapor'),
+    (r'(?:yer\s*gosterme|yer\s*gösterme)',                   'rapor'),
+    (r'(?:kira\s*kontrat|kira\s*sozlesme|kira\s*sözleşme)',  'rapor'),
+    (r'(?:yonlendirme|yönlendirme)\s*(?:belgesi|formu)',     'rapor'),
+    # ── Muhasebe detay ──
+    (r'(?:fis|fiş)\s*(?:oku|tara|okut)',                     'muhasebe_rapor'),
+    (r'(?:banka.*excel|hesap\s*ozeti|hesap\s*özeti)',         'muhasebe_rapor'),
+    (r'(?:butce|bütçe)\s*(?:planla|hazirla|göster)',          'muhasebe_rapor'),
+    (r'(?:ne\s*kadar\s*(?:kazandim|kazandım|harcadim|harcadım))', 'muhasebe_rapor'),
+    # ── Planlama detay ──
+    (r'(?:plan|planlama)\s*(?:yap|göster|listele)',           'gorev_liste'),
+    (r'(?:takvim|ajanda)\s*(?:göster|aç)',                    'gorev_liste'),
+    (r'(?:ne\s*zaman|saat\s*kac|saat\s*kaç)',                'bugun_ozet'),
+    (r'(?:bu\s*hafta|gelecek\s*hafta)\s*(?:ne\s*var|plan)',   'bugun_ozet'),
+    # ── Lead detay ──
+    (r'(?:lead|potansiyel)\s*(?:ekle|listele|göster|kac)',    'eslestirme'),
+    (r'(?:yeni\s*lead|yeni\s*potansiyel)',                    'eslestirme'),
+    (r'(?:kacirilmis|kaçırılmış)\s*(?:cagri|çağrı|arama)',   'eslestirme'),
+    # ── Hesaplama detay ──
+    (r'(?:ne\s*kadar\s*vergi|vergi\s*ne\s*kadar)',           'rapor'),
+    (r'(?:kira\s*ne\s*kadar|kira\s*fiyat)',                  'sektor_bilgi'),
+    (r'(?:m2|metrekare)\s*(?:fiyat|ne\s*kadar)',             'sektor_bilgi'),
+    # ── Envanter ──
+    (r'(?:malzeme|envanter|stok)\s*(?:ekle|listele|kontrol)', 'rapor'),
+    # ── Ekip ──
+    (r'(?:danisman|danışman)\s*(?:ekle|listele|göster)',      'rapor'),
+    (r'(?:ekip|takim|takım)\s*(?:göster|listele)',            'rapor'),
+    # ── Yedek ──
+    (r'(?:yedek|backup)\s*(?:al|indir|gonder)',               'rapor'),
+    (r'(?:veri.*(?:export|indir|gonder))',                    'rapor'),
+    # ── Ayarlar ──
+    (r'(?:ayar|setting|profil)\s*(?:degistir|değiştir|güncelle)', 'rapor'),
+    (r'(?:sifre|şifre)\s*(?:degistir|değiştir)',              'rapor'),
+    (r'(?:logo)\s*(?:degistir|değiştir|yukle|yükle)',         'rapor'),
+    (r'(?:karanlik|karanlık|gece)\s*(?:mod|tema)',            'rapor'),
+    # ── Yardım & Yetenek ──
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
     (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
     (r'(?:ne\s*yapabilirsin|yeteneklerin|ozelliklerin|özellikler)', 'yardim'),
     (r'(?:nasil\s*kullan|nasıl\s*kullan|nasil\s*yap|nasıl\s*yap)', 'yardim'),
+    (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'yardim'),
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):

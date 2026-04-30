@@ -95,5 +95,40 @@ def kredi_ekle(uid):
     d = request.get_json() or {}
     miktar = float(d.get('miktar', 0))
     e.kredi = (e.kredi or 0) + miktar
+    # Son kullanma tarihini 1 yıl uzat
+    from datetime import datetime, timedelta
+    e.kredi_son_kullanma = datetime.utcnow() + timedelta(days=366)
     db.session.commit()
-    return jsonify({'ok': True, 'yeni_kredi': e.kredi})
+
+    # İşlem log
+    log = IslemLog(emlakci_id=uid, islem_tipi='kredi_yukleme',
+                   kredi_tutar=miktar, aciklama=f'Admin kredi yükleme: {miktar}')
+    db.session.add(log); db.session.commit()
+
+    return jsonify({'ok': True, 'yeni_kredi': e.kredi, 'son_kullanma': e.kredi_son_kullanma.isoformat()})
+
+
+# ── Platform Faturaları ──────────────────────────────────
+@bp.route('/fatura-kes', methods=['POST'])
+@jwt_required()
+def fatura_kes():
+    """Platform faturaları — kullanıcıya fatura kes."""
+    d = request.get_json() or {}
+    from app.models.fatura import Fatura
+    from datetime import datetime
+
+    f = Fatura(
+        emlakci_id=d.get('kullanici_id'),
+        fatura_no=f'PLT-{datetime.now().strftime("%Y%m%d%H%M")}',
+        tip='platform',
+        alici_ad=d.get('alici_ad', ''),
+        alici_adres=d.get('alici_adres', ''),
+        tutar=float(d.get('tutar', 0)),
+        kdv_oran=20,
+        kdv_tutar=round(float(d.get('tutar', 0)) * 0.2, 2),
+        toplam=round(float(d.get('tutar', 0)) * 1.2, 2),
+        kalemler=d.get('kalemler', [{'aciklama': d.get('paket', 'Kredi Paketi'), 'tutar': d.get('tutar', 0)}]),
+        durum='odendi',
+    )
+    db.session.add(f); db.session.commit()
+    return jsonify({'ok': True, 'fatura_no': f.fatura_no}), 201
