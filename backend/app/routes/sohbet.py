@@ -102,6 +102,13 @@ def mesaj_gonder():
                 kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model='gpt-4o-mini')
                 kullanilan_model = 'openai'
 
+    # Zeka motoru — cevabı zenginleştir
+    try:
+        from app.services.zeka import mesaj_zenginlestir
+        cevap = mesaj_zenginlestir(emlakci, metin, cevap)
+    except Exception:
+        pass
+
     # Diyaloğu kaydet (eğitim verisi)
     islem_adi = 'ai_sohbet'
     if kullanilan_model == 'pattern':

@@ -925,6 +925,13 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
                             kullanilan_model = 'claude'
                         kullanilan_islem = 'ai_sohbet'
 
+        # Zeka motoru — cevabı zenginleştir
+        try:
+            from app.services.zeka import mesaj_zenginlestir
+            cevap = mesaj_zenginlestir(emlakci, metin, cevap)
+        except Exception:
+            pass
+
         # Diyaloğu kaydet (eğitim verisi)
         diyalog_kaydet(emlakci.id, metin, metin_norm, kullanilan_islem or 'bilinmeyen', model=kullanilan_model)
 

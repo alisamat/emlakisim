@@ -10,6 +10,7 @@ from app.services.sektorel import sektor_haberleri, piyasa_analizi
 from app.services.ilan import ilan_metni_olustur
 from app.services.reklam import reklam_metni_olustur, sunum_pdf
 from app.services.ilan_ocr import ilan_fotograf_oku, ilanlari_karsilastir
+from app.services.zeka import proaktif_oneriler, musteri_analiz, gunluk_zeka_raporu
 import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
@@ -149,6 +150,32 @@ def iletisim_gecmisi(musteri_id):
     kayitlar = IletisimKayit.query.filter_by(
         emlakci_id=int(get_jwt_identity()), musteri_id=musteri_id
     ).order_by(IletisimKayit.olusturma.desc()).limit(30).all()
+# ── Zeka Motoru ──────────────────────────────────────────
+@bp.route('/zeka/oneriler', methods=['GET'])
+@jwt_required()
+def zeka_oneriler():
+    """Proaktif akıllı öneriler."""
+    from app.models import Emlakci
+    emlakci = Emlakci.query.get(int(get_jwt_identity()))
+    return jsonify({'oneriler': proaktif_oneriler(emlakci)})
+
+
+@bp.route('/zeka/musteri-analiz/<int:mid>', methods=['GET'])
+@jwt_required()
+def zeka_musteri(mid):
+    """Müşteri davranış analizi."""
+    return jsonify(musteri_analiz(int(get_jwt_identity()), mid))
+
+
+@bp.route('/zeka/gunluk-rapor', methods=['GET'])
+@jwt_required()
+def zeka_rapor():
+    """Günlük zeka raporu."""
+    from app.models import Emlakci
+    emlakci = Emlakci.query.get(int(get_jwt_identity()))
+    return jsonify(gunluk_zeka_raporu(emlakci))
+
+
 # ── İlan OCR & Karşılaştırma ──────────────────────────────
 # Hafızadaki ilanlar (kullanıcı bazlı, max 20)
 _ilan_hafiza: dict = {}  # emlakci_id → [ilan1, ilan2, ...]
