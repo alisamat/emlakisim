@@ -99,6 +99,14 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
             <div className="sohbet-hosgeldin-aciklama">
               Emlakisim AI Asistanınız hazır. Müşteri ekle, portföy yönet, belge oluştur — her şeyi buradan yapabilirsiniz.
             </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              {['müşteri ekle', 'portföy listele', 'bugün özet', 'rapor', 'yardım'].map(cmd => (
+                <button key={cmd} onClick={() => { setGirdi(cmd); }}
+                  style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '6px 14px', fontSize: 12, color: '#16a34a', cursor: 'pointer', fontWeight: 600 }}>
+                  {cmd}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           mesajlar.map((m, i) => (

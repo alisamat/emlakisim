@@ -418,7 +418,7 @@ Kullanıcı mesaj gönderir
 - [x] Hafıza motoru (bağlam, müşteri tanıma, alışkanlık)
 - [x] Komut öğrenme: "bunu yapabilir misin?" → yetenek listesi
 - [x] 91 pattern = neredeyse her endpoint 3+ varyasyon
-- [ ] AI pipeline: anlaşılamayan → otomatik pattern öneri (ileri seviye)
+- [x] AI pipeline: otomatik pattern öneri API (tekrar eden mesajlar → öneri)
 
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
@@ -478,20 +478,32 @@ Kullanıcı mesaj gönderir
 
 ---
 
-## MEVCUT DURUM (2026-04-30)
+## MEVCUT DURUM (2026-05-01)
+
+### Proje İstatistikleri
+- **40 frontend component**
+- **130+ API endpoint**
+- **91 asistan pattern** (sıfır maliyet)
+- **20 danışmanlık konusu**
+- **64+ commit**
+- **130+ tamamlanan özellik**
+- **9 bekleyen** (hepsi dış servis)
+- **0 hata** (syntax + CI build)
 
 ### Altyapı
 - GitHub: alisamat/emlakisim
-- Backend: backend-production-9ffc.up.railway.app (Online, 72 endpoint)
+- Backend: backend-production-9ffc.up.railway.app (Online)
 - Frontend: emlakisim.com (Aktif, GitHub auto-deploy)
 - Meta: Emlakisim (Published, webhook subscribed)
 - AI: Gemini Flash + GPT-4o mini + Claude Haiku
-- 17 faz backend API tamamlandı
-- Syntax hatası: 0
-- Build hatası: 0
+- APScheduler: 5 otomatik görev (hatırlatma, günlük özet, yedek, lead, kredi)
 
-### Bekleyen
-- WhatsApp numara taşıma: Meta Policy 1.4 (2026-04-29 gönderildi)
+### Bekleyen (Dış Servis)
+- WhatsApp numara taşıma: Meta Policy 1.4 (2026-04-29)
+- Kuveyttürk ödeme entegrasyonu
+- SMS API (Netgsm/Twilio)
+- Fotoğraf storage (Supabase/S3)
+- Google Drive OAuth
 
 ---
 

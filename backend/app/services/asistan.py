@@ -292,7 +292,23 @@ def _yardim_mesaji(emlakci):
     except:
         pass
 
-    return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n{ozet_ek}\n'
+    # Proaktif uyarılar
+    uyarilar = ''
+    try:
+        from app.models.lead import Lead
+        from app.services.yedekleme import yedek_durumu
+        soguk_lead = Lead.query.filter_by(emlakci_id=emlakci.id, durum='yeni').count()
+        yd = yedek_durumu(emlakci)
+        if soguk_lead > 0:
+            uyarilar += f'\n⚠️ *{soguk_lead} yeni lead* — dönüş yapılmadı!'
+        if yd.get('uyari'):
+            uyarilar += f'\n💾 {yd["mesaj"]}'
+        if emlakci.kredi and emlakci.kredi < 5:
+            uyarilar += f'\n💎 Krediniz düşük: *{emlakci.kredi}*'
+    except:
+        pass
+
+    return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n{ozet_ek}{uyarilar}\n'
             'Ben Emlakisim AI Asistanınızım. İşte yapabileceklerim:\n\n'
             '👥 *Müşteri:* "müşteri ekle", "müşteri listele"\n'
             '🏢 *Portföy:* "mülk ekle", "portföy listele"\n'
