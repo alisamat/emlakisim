@@ -36,6 +36,7 @@ const MENU = [
       { ikon: '📈', ad: 'Kâr/Zarar', tab: 'karzarar' },
       { ikon: '📒', ad: 'Cari Hesaplar', tab: 'cariler' },
       { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar' },
+      { ikon: '📊', ad: 'Muhasebe Raporu', tab: 'muhrapor' },
     ],
   },
   {

@@ -24,6 +24,7 @@ import Cagrilar from './Cagrilar';
 import KarZarar from './KarZarar';
 import Cariler from './Cariler';
 import Ayarlar from './Ayarlar';
+import MuhasebeRapor from './MuhasebeRapor';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -99,6 +100,7 @@ export default function SohbetArayuz() {
       case 'karzarar':     return <div className="sayfa-icerik"><KarZarar /></div>;
       case 'cariler':      return <div className="sayfa-icerik"><Cariler /></div>;
       case 'ayarlar':      return <div className="sayfa-icerik"><Ayarlar /></div>;
+      case 'muhrapor':     return <div className="sayfa-icerik"><MuhasebeRapor /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (
