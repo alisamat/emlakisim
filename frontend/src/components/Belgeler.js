@@ -4,6 +4,8 @@ import api from '../api';
 const BELGE_TIPLERI = {
   'yer-gosterme': { label: 'Yer Gösterme Tutanağı', ikon: '📋', endpoint: '/api/panel/belge/yer-gosterme' },
   'kira-kontrati': { label: 'Kira Sözleşmesi', ikon: '📄', endpoint: '/api/panel/belge/kira-kontrati' },
+  'yonlendirme-alici': { label: 'Alıcı Yönlendirme', ikon: '📝', endpoint: '/api/panel/belge/yonlendirme', extra: { taraf: 'alici' } },
+  'yonlendirme-satici': { label: 'Satıcı Yönlendirme', ikon: '📝', endpoint: '/api/panel/belge/yonlendirme', extra: { taraf: 'satici' } },
 };
 
 // Kira kontratı detay alanları
@@ -41,7 +43,8 @@ export default function Belgeler() {
     if (!belgeTip) return;
     setYuk(true);
     try {
-      const r = await api.post(BELGE_TIPLERI[belgeTip].endpoint, form, { responseType: 'blob' });
+      const payload = { ...form, ...(BELGE_TIPLERI[belgeTip].extra || {}) };
+      const r = await api.post(BELGE_TIPLERI[belgeTip].endpoint, payload, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([r.data], { type: 'application/pdf' }));
       const a = document.createElement('a');
       a.href = url;

@@ -130,6 +130,51 @@ def yer_gosterme_pdf(emlakci, musteri, mulk, tarih=None):
     return pdf.output()
 
 
+# ── Yönlendirme Belgesi ───────────────────────────────────
+def yonlendirme_belgesi_pdf(emlakci, musteri, mulk, taraf='alici'):
+    """Alıcı veya satıcı yönlendirme belgesi PDF."""
+    pdf = TurkPDF()
+    tarih = datetime.now()
+
+    taraf_baslik = 'ALICI YONLENDIRME BELGESI' if taraf == 'alici' else 'SATICI YONLENDIRME BELGESI'
+    pdf.baslik(taraf_baslik)
+    pdf.set_font('Helvetica', '', 9)
+    pdf.cell(0, 6, f'Tarih: {tarih.strftime("%d.%m.%Y")}', ln=True, align='C')
+    pdf.ln(8)
+
+    pdf.alt_baslik('EMLAK DANISMANI')
+    pdf.satir('Ad Soyad', emlakci.ad_soyad)
+    pdf.satir('Acente', emlakci.acente_adi or '-')
+    pdf.satir('Telefon', emlakci.telefon)
+    pdf.bos_satir()
+
+    taraf_label = 'ALICI' if taraf == 'alici' else 'SATICI'
+    pdf.alt_baslik(f'{taraf_label} BILGILERI')
+    if musteri:
+        pdf.satir('Ad Soyad', musteri.ad_soyad)
+        pdf.satir('TC Kimlik', musteri.tc_kimlik or '-')
+    pdf.bos_satir()
+
+    if mulk:
+        pdf.alt_baslik('TASINMAZ')
+        pdf.satir('Baslik', mulk.baslik or '-')
+        pdf.satir('Adres', mulk.adres or '-')
+        if mulk.fiyat:
+            pdf.satir('Fiyat', f'{int(mulk.fiyat):,} TL'.replace(',', '.'))
+        pdf.bos_satir()
+
+    pdf.alt_baslik('SARTLAR')
+    pdf.set_font('Helvetica', '', 8)
+    pdf.multi_cell(0, 5,
+        f'{taraf_label}, belirtilen tasinmaz icin emlak danismani {emlakci.ad_soyad} '
+        f'tarafindan yonlendirilmistir. Islemin baska bir aracı ile gerceklesmesi '
+        f'durumunda komisyon bedeli odenecektir.')
+    pdf.bos_satir()
+
+    pdf.imza_alani('Emlak Danismani', taraf_label)
+    return pdf.output()
+
+
 # ── Kira Kontratı ─────────────────────────────────────────
 def kira_kontrati_pdf(emlakci, kiraci, mulk, detaylar=None):
     """Basit kira sözleşmesi PDF → bytes."""

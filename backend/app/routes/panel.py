@@ -181,6 +181,54 @@ def belge_kira_kontrati():
     )
 
 
+@bp.route('/belge/yonlendirme', methods=['POST'])
+@jwt_required()
+def belge_yonlendirme():
+    """Alıcı/satıcı yönlendirme belgesi PDF."""
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    musteri = Musteri.query.filter_by(id=d.get('musteri_id'), emlakci_id=_eid()).first() if d.get('musteri_id') else None
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=_eid()).first() if d.get('mulk_id') else None
+    taraf = d.get('taraf', 'alici')
+
+    from app.services.belge import yonlendirme_belgesi_pdf
+    pdf_bytes = yonlendirme_belgesi_pdf(emlakci, musteri, mulk, taraf)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf', as_attachment=True,
+                     download_name=f'yonlendirme_{taraf}_{emlakci.id}.pdf')
+
+
+# ── Müşteri Kartı Gönderme ────────────────────────────────────────────────────
+@bp.route('/musteriler/<int:mid>/kart-gonder', methods=['POST'])
+@jwt_required()
+def musteri_kart_gonder(mid):
+    """Müşteri kartını email ile gönder."""
+    m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    d = request.get_json() or {}
+    alici = d.get('email', '').strip()
+    if not alici:
+        return jsonify({'message': 'Email adresi gerekli'}), 400
+
+    emlakci = Emlakci.query.get(_eid())
+    html = f"""
+    <div style="font-family:sans-serif;max-width:500px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+        <div style="background:#16a34a;color:#fff;padding:16px 20px"><strong>Müşteri Kartı</strong></div>
+        <div style="padding:20px">
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px">{m.ad_soyad}</div>
+            <div style="color:#64748b;font-size:14px">📞 {m.telefon or '-'}</div>
+            <div style="color:#64748b;font-size:14px">🏷 {'Kiralık' if m.islem_turu == 'kira' else 'Satılık'}</div>
+            {'<div style="color:#64748b;font-size:14px">💰 ' + str(m.butce_min or '') + ' - ' + str(m.butce_max or '') + ' TL</div>' if m.butce_min or m.butce_max else ''}
+            {'<div style="color:#94a3b8;font-size:13px;margin-top:8px">' + m.tercih_notlar + '</div>' if m.tercih_notlar else ''}
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
+            <div style="font-size:12px;color:#94a3b8">{emlakci.ad_soyad} · {emlakci.acente_adi or ''}</div>
+        </div>
+    </div>"""
+
+    basarili, sonuc = email_gonder(alici, f'Müşteri Kartı: {m.ad_soyad}', html, gonderen_ad=emlakci.ad_soyad)
+    if basarili:
+        return jsonify({'ok': True, 'mesaj': f'{m.ad_soyad} kartı {alici} adresine gönderildi'})
+    return jsonify({'message': f'Gönderim hatası: {sonuc}'}), 500
+
+
 # ── Email ─────────────────────────────────────────────────────────────────────
 @bp.route('/email/gonder', methods=['POST'])
 @jwt_required()

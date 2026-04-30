@@ -218,6 +218,14 @@ function MusteriKarti({ m, onDuzenle, onSil }) {
                 display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
                 textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#374151',
               }}>✏️ Düzenle</button>
+              <button onClick={() => {
+                setMenuAcik(false);
+                const email = window.prompt('Kartı gönderilecek email:');
+                if (email) api.post(`/api/panel/musteriler/${m.id}/kart-gonder`, { email }).catch(() => {});
+              }} style={{
+                display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
+                textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#1d4ed8',
+              }}>📧 Kart Gönder</button>
               <button onClick={() => { setMenuAcik(false); onSil(m.id); }} style={{
                 display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
                 textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626',

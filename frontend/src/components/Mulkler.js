@@ -247,6 +247,7 @@ function MulkKarti({ m, onDuzenle, onSil }) {
           {menuAcik && (
             <div style={{ position: 'absolute', right: 0, top: 28, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 10, minWidth: 140 }}>
               <button onClick={() => { setMenuAcik(false); onDuzenle(m); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#374151' }}>✏️ Düzenle</button>
+              <button onClick={() => { setMenuAcik(false); navigator.clipboard.writeText(`${window.location.origin}/e/${m.emlakci_id || ''}`); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#1d4ed8' }}>🔗 Link Kopyala</button>
               <button onClick={() => { setMenuAcik(false); onSil(m.id); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626' }}>🗑 Sil</button>
             </div>
           )}

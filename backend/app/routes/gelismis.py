@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Mulk
 from app.services.gelismis import web_arama, metin_analiz, sosyal_medya_icerik
+from app.services.pdf_okuyucu import pdf_metin_cikar, pdf_analiz
 
 bp = Blueprint('gelismis', __name__, url_prefix='/api/panel/gelismis')
 
@@ -43,4 +44,16 @@ def sosyal_medya():
     if not mulk:
         return jsonify({'message': 'Mülk bulunamadı'}), 404
     sonuc = sosyal_medya_icerik(mulk, platform)
+    return jsonify(sonuc)
+
+
+@bp.route('/pdf-oku', methods=['POST'])
+@jwt_required()
+def pdf_oku():
+    """PDF dosyasını oku ve analiz et."""
+    if 'file' not in request.files:
+        return jsonify({'message': 'PDF dosyası gerekli'}), 400
+    pdf_bytes = request.files['file'].read()
+    soru = request.form.get('soru', '')
+    sonuc = pdf_analiz(pdf_bytes, soru)
     return jsonify(sonuc)
