@@ -87,7 +87,7 @@ def mesaj_gonder():
                         'kredi_yetersiz': True,
                     }), 200
 
-                sistem = _sistem_prompt(emlakci)
+                sistem = _sistem_prompt(emlakci, metin)
                 try:
                     openai_key = os.environ.get('OPENAI_API_KEY', '')
                     if openai_key:

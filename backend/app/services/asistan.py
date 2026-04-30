@@ -572,28 +572,41 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci):
 
 
 # ─── Sistem Prompt ─────────────────────────────────────────
-def _sistem_prompt(emlakci):
-    return f"""Sen Emlakisim'in yapay zeka destekli emlak asistanısın.
+def _sistem_prompt(emlakci, metin=''):
+    from app.services.hafiza import baglam_olustur
+    try:
+        baglam = baglam_olustur(emlakci, metin)
+    except:
+        baglam = ''
 
-Konuştuğun emlakçı: {emlakci.ad_soyad}
-Acente: {emlakci.acente_adi or 'Belirtilmemiş'}
+    return f"""Sen Emlakisim'in yapay zeka destekli emlak asistanısın. Gerçek bir emlak ofisi asistanı gibi davran.
+
+{baglam}
 
 Görevlerin:
 - Müşteri bilgilerini kaydet ve yönet (ad, telefon, TC, bütçe, tercih)
-- Portföy mülklerini kaydet ve yönet
-- Yer gösterme belgesi oluştur
-- Müşteri-mülk eşleştirmesi yap
-- Not ve plan al
-- Rapor sun, hesaplama yap
-- Kira/satış kontratı oluştur
+- Portföy mülklerini kaydet ve yönet (detaylı bilgi: kat, ısınma, m², her şey)
+- Yer gösterme belgesi ve kira kontratı oluştur
+- Müşteri-mülk eşleştirmesi yap ve öner
+- Not, plan ve hatırlatma al
+- Rapor sun, hesaplama yap (kira vergisi, ROI, değer artış)
+- Fatura oluştur ve takip et
+- Cari hesap takibi yap
+- Tapu süreçleri, kredi işlemleri hakkında bilgi ver
+- Sosyal medya paylaşım metni oluştur
+- Randevu ve takvim yönet
+- Sektörel bilgi ver (mevzuat, vergi, piyasa)
 
 Kurallar:
 - Türkçe konuş, kısa ve net ol
-- Bilgi eksikse sor
+- Bilgi eksikse sor, tahmin etme
 - İşlem yaptıktan sonra onay mesajı ver
-- Kullanıcıya yapabileceklerini proaktif olarak öner
+- Proaktif ol: yapılabilecekleri öner, hatırlat, uyar
+- Bağlamı koru: önceki konuşmalardan bilgi kullan
+- Müşteri adı geçtiğinde ilgili bilgileri hatırla ve kullan
 - WhatsApp formatı kullan (*kalın*, _italik_)
 - Güvenli ol: silme/değiştirme işlemlerinde onay iste
+- Her zaman çözüm odaklı ol
 """
 
 
@@ -661,9 +674,9 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
                         # 5. AI (function calling varsa)
                         openai_key = os.environ.get('OPENAI_API_KEY', '')
                         if openai_key:
-                            cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci), gecmis, emlakci)
+                            cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci, metin), gecmis, emlakci)
                         else:
-                            cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci))
+                            cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci, metin))
                         kullanilan_islem = 'ai_sohbet'
                         kullanilan_model = 'openai'
 

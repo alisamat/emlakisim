@@ -9,6 +9,7 @@ from app.models.egitim import DiyalogKayit, OgrenilenPattern
 from app.models.lead import Lead, CagriKayit
 from app.models.bildirim import Bildirim
 from app.models.fatura import Fatura
+from app.models.islem_takip import SurecTakip, Evrak
 
 
 class Emlakci(db.Model):

@@ -32,7 +32,7 @@ def create_app(env='production'):
     except ImportError:
         pass
 
-    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis, bildirim, fatura
+    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis, bildirim, fatura, islem_takip
     app.register_blueprint(auth.bp)
     app.register_blueprint(webhook.bp)
     app.register_blueprint(panel.bp)
@@ -48,6 +48,7 @@ def create_app(env='production'):
     app.register_blueprint(gelismis.bp)
     app.register_blueprint(bildirim.bp)
     app.register_blueprint(fatura.bp)
+    app.register_blueprint(islem_takip.bp)
 
     from flask import render_template_string
     @app.route('/gizlilik')

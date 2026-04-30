@@ -122,6 +122,52 @@ BILGI_BANKASI = {
             '_1319 sayılı Emlak Vergisi Kanunu_'
         ),
     },
+    'tapu_sureci': {
+        'anahtar': ['tapu süreci', 'tapu sureci', 'tapu nasıl', 'tapu devir', 'tapu devri nasıl'],
+        'cevap': (
+            '*📋 Tapu Devir Süreci*\n\n'
+            '1. Satış sözleşmesi imzalama\n'
+            '2. Kapora/kaparo alımı\n'
+            '3. DASK poliçesi\n'
+            '4. Ekspertiz raporu (kredi varsa)\n'
+            '5. Kredi onayı (varsa)\n'
+            '6. Tapu müdürlüğü randevusu\n'
+            '7. Tapu devri (her iki taraf hazır)\n'
+            '8. Anahtar teslimi\n\n'
+            '• Süre: Ortalama 2-4 hafta\n'
+            '• Masraf: %4 tapu harcı + döner sermaye + DASK\n\n'
+            '_"Tapu takibi oluştur" yazarak süreci takip edebilirsiniz._'
+        ),
+    },
+    'kredi_sureci': {
+        'anahtar': ['kredi süreci', 'kredi sureci', 'konut kredisi', 'mortgage', 'kredi nasıl'],
+        'cevap': (
+            '*🏦 Konut Kredisi Süreci*\n\n'
+            '1. Banka başvurusu (gelir belgesi, kimlik)\n'
+            '2. Gelir değerlendirme\n'
+            '3. Ekspertiz (banka görevlisi gelir)\n'
+            '4. Kredi onayı\n'
+            '5. Sözleşme imzası\n'
+            '6. Tapu devri ile eş zamanlı ödeme\n\n'
+            '• Süre: 1-2 hafta\n'
+            '• LTV: Genellikle %80 (konut değerinin)\n'
+            '• Gerekli: Maaş bordrosu, SGK dökümü, kimlik\n\n'
+            '_"Kredi takibi oluştur" yazarak süreci takip edebilirsiniz._'
+        ),
+    },
+    'ekspertiz': {
+        'anahtar': ['ekspertiz', 'değerleme', 'degerleme', 'ekspertiz raporu'],
+        'cevap': (
+            '*📊 Ekspertiz (Değerleme) Raporu*\n\n'
+            '• Bankanın görevlendirdiği SPK lisanslı değerleme şirketi yapar\n'
+            '• Süre: 2-5 iş günü\n'
+            '• Ücret: ₺3.000-5.000 (alıcı öder)\n'
+            '• İçerik: konum, m², yaş, emsal, imar, piyasa değeri\n'
+            '• Kredi tutarı ekspertiz değerine göre belirlenir\n'
+            '• Ekspertiz < satış fiyatı ise kredi düşük çıkar\n\n'
+            '_Ekspertiz raporu 3 ay geçerlidir._'
+        ),
+    },
     'vergi_muafiyeti': {
         'anahtar': ['vergi muafiyet', 'kira vergi istisna', 'vergi istisnası'],
         'cevap': (

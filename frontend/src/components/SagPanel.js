@@ -64,6 +64,12 @@ const MENU = [
     ],
   },
   {
+    baslik: '📋 Süreç Takip',
+    items: [
+      { ikon: '📋', ad: 'Tapu/Kredi Takip', tab: 'surec' },
+    ],
+  },
+  {
     baslik: '🔗 Eşleştirme',
     items: [
       { ikon: '🔗', ad: 'Müşteri-Mülk Eşleştir', tab: 'eslestirme' },
