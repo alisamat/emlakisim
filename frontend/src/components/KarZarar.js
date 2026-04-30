@@ -4,11 +4,9 @@ import api from '../api';
 export default function KarZarar() {
   const [kayitlar, setKayitlar] = useState([]);
   const [donem, setDonem] = useState('ay'); // ay, yil, tum
-  const [yuk, setYuk] = useState(false);
 
   useEffect(() => {
-    setYuk(true);
-    api.get('/api/panel/muhasebe/gelir-gider').then(r => setKayitlar(r.data.kayitlar || [])).catch(() => {}).finally(() => setYuk(false));
+    api.get('/api/panel/muhasebe/gelir-gider').then(r => setKayitlar(r.data.kayitlar || [])).catch(() => {});
   }, []);
 
   const simdi = new Date();
