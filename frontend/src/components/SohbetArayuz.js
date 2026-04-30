@@ -30,6 +30,7 @@ import SurecTakip from './SurecTakip';
 import Talepler from './Talepler';
 import Ekip from './Ekip';
 import Performans from './Performans';
+import IletisimGecmisi from './IletisimGecmisi';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -111,6 +112,7 @@ export default function SohbetArayuz() {
       case 'talepler':     return <div className="sayfa-icerik"><Talepler /></div>;
       case 'ekip':         return <div className="sayfa-icerik"><Ekip /></div>;
       case 'performans':   return <div className="sayfa-icerik"><Performans /></div>;
+      case 'iletisim':     return <div className="sayfa-icerik"><IletisimGecmisi /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (
