@@ -48,6 +48,8 @@ _PATTERNS = [
     # Fatura
     (r'(?:fatura)\s*(?:olustur|ekle|kaydet)',                 'fatura_ekle'),
     (r'(?:fatura)\s*(?:listele|göster)',                      'fatura_liste'),
+    # İlan
+    (r'(?:ilan)\s*(?:metni|yaz|olustur|hazirla)',             'ilan_olustur'),
     # Sektörel
     (r'(?:sektor|sektör|haber|piyasa|trend|gelisme|gelişme)', 'sektor_bilgi'),
     # Performans
@@ -117,6 +119,12 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'ilan_olustur':
+        return ('📝 *İlan metni oluşturmak için:*\n\n'
+                'Portföy sayfasında mülkün ⋮ menüsünden *"İlan Metni"* butonuna tıklayın.\n'
+                'AI otomatik olarak profesyonel ilan metni oluşturup kopyalayacak.\n\n'
+                '_Veya doğrudan hangi mülk için ilan istediğinizi yazın._')
 
     if komut == 'sektor_bilgi':
         return ('📰 *Sektörel bilgi için:*\n\n'

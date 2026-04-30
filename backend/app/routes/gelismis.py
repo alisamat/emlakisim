@@ -7,6 +7,9 @@ from app.models import Mulk
 from app.services.gelismis import web_arama, metin_analiz, sosyal_medya_icerik
 from app.services.pdf_okuyucu import pdf_metin_cikar, pdf_analiz
 from app.services.sektorel import sektor_haberleri, piyasa_analizi
+from app.services.ilan import ilan_metni_olustur
+from app.models import Mulk
+from app.models.iletisim_gecmisi import IletisimKayit
 
 bp = Blueprint('gelismis', __name__, url_prefix='/api/panel/gelismis')
 
@@ -74,3 +77,46 @@ def piyasa():
     d = request.get_json() or {}
     sonuc = piyasa_analizi(d.get('sehir', 'İstanbul'), d.get('tip', 'daire'))
     return jsonify(sonuc)
+
+
+@bp.route('/ilan-metni', methods=['POST'])
+@jwt_required()
+def ilan_metni():
+    """Mülk için ilan metni oluştur."""
+    d = request.get_json() or {}
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=int(get_jwt_identity())).first()
+    if not mulk:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    platform = d.get('platform', 'sahibinden')
+    metin = ilan_metni_olustur(mulk, platform)
+    return jsonify({'ilan': metin, 'platform': platform})
+
+
+# ── İletişim Geçmişi ─────────────────────────────────────
+@bp.route('/iletisim-kayit', methods=['POST'])
+@jwt_required()
+def iletisim_kayit_ekle():
+    d = request.get_json() or {}
+    from app import db
+    k = IletisimKayit(
+        emlakci_id=int(get_jwt_identity()),
+        musteri_id=d.get('musteri_id'),
+        tip=d.get('tip', 'telefon'),
+        yon=d.get('yon', 'giden'),
+        ozet=d.get('ozet', ''),
+        detaylar=d.get('detaylar', {}),
+    )
+    db.session.add(k); db.session.commit()
+    return jsonify({'ok': True}), 201
+
+
+@bp.route('/iletisim-gecmisi/<int:musteri_id>', methods=['GET'])
+@jwt_required()
+def iletisim_gecmisi(musteri_id):
+    kayitlar = IletisimKayit.query.filter_by(
+        emlakci_id=int(get_jwt_identity()), musteri_id=musteri_id
+    ).order_by(IletisimKayit.olusturma.desc()).limit(30).all()
+    return jsonify({'kayitlar': [{
+        'id': k.id, 'tip': k.tip, 'yon': k.yon,
+        'ozet': k.ozet, 'olusturma': k.olusturma.isoformat(),
+    } for k in kayitlar]})
