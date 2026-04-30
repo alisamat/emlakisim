@@ -89,6 +89,46 @@ def anlasilamayan_listele(limit=50):
     return kayitlar
 
 
+def otomatik_ogren():
+    """3+ kez aynı mesaj AI'ya gitmiş → otomatik pattern ekle."""
+    from sqlalchemy import func
+    tekrarlar = db.session.query(
+        DiyalogKayit.mesaj_norm,
+        DiyalogKayit.islem,
+        func.count(DiyalogKayit.id).label('sayi')
+    ).filter(
+        DiyalogKayit.model.in_(['openai', 'gemini', 'claude']),
+        DiyalogKayit.basarili == True,
+        DiyalogKayit.mesaj_norm.isnot(None),
+    ).group_by(DiyalogKayit.mesaj_norm, DiyalogKayit.islem).having(
+        func.count(DiyalogKayit.id) >= 3
+    ).all()
+
+    eklenen = 0
+    for mesaj_norm, islem, sayi in tekrarlar:
+        if not mesaj_norm or len(mesaj_norm) < 3 or islem == 'ai_sohbet':
+            continue
+        # Zaten var mı?
+        zaten = OgrenilenPattern.query.filter_by(pattern=mesaj_norm, aktif=True).first()
+        if zaten:
+            continue
+        # Otomatik ekle
+        p = OgrenilenPattern(
+            pattern=mesaj_norm.replace(' ', '\\s*'),
+            islem=islem,
+            kaynak='otomatik',
+        )
+        db.session.add(p)
+        eklenen += 1
+
+    if eklenen:
+        db.session.commit()
+        cache_yenile()
+        logger.info(f'[Egitim] {eklenen} pattern otomatik öğrenildi')
+
+    return eklenen
+
+
 def otomatik_pattern_oner(limit=10):
     """AI'ya giden mesajlardan tekrar edenleri bulup pattern önerisi oluştur."""
     from sqlalchemy import func

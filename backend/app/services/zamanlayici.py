@@ -31,8 +31,11 @@ def zamanlayici_baslat(app):
         # Her gün 18:00 — kredi düşük uyarısı
         _scheduler.add_job(lambda: _with_app(app, _kredi_kontrol), 'cron', hour=18, id='kredi_uyari')
 
+        # Her gün 03:00 — otomatik pattern öğrenme
+        _scheduler.add_job(lambda: _with_app(app, _otomatik_ogren), 'cron', hour=3, id='ogren')
+
         _scheduler.start()
-        logger.info('[Zamanlayıcı] Başlatıldı — 5 görev aktif')
+        logger.info('[Zamanlayıcı] Başlatıldı — 6 görev aktif')
     except ImportError:
         logger.warning('[Zamanlayıcı] apscheduler yüklü değil, atlanıyor')
     except Exception as e:
@@ -149,3 +152,11 @@ def _kredi_kontrol():
             'AI asistan kullanmaya devam etmek için kredi ekleyin.')
 
     logger.info('[Zamanlayıcı] Kredi kontrolleri yapıldı')
+
+
+def _otomatik_ogren():
+    """Otomatik pattern öğrenme — 3+ kez tekrarlanan mesajlar."""
+    from app.services.egitim import otomatik_ogren
+    eklenen = otomatik_ogren()
+    if eklenen:
+        logger.info(f'[Zamanlayıcı] {eklenen} pattern otomatik öğrenildi')

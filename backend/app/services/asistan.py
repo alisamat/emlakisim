@@ -364,7 +364,20 @@ def _musteri_kaydet(emlakci, metin):
     db.session.add(musteri)
     db.session.commit()
 
-    # Zincirleme işlemler
+    # Konuşma state güncelle
+    from app.services.hafiza import state_guncelle_islem
+    state_guncelle_islem(emlakci.id, 'musteri_ekle', musteri_id=musteri.id)
+
+    # Akıllı eşleştirme
+    from app.services.eslestirme import eslesdir
+    eslesimler = eslesdir(emlakci.id, musteri_id=musteri.id, limit=3)
+    eslesme_mesaj = ''
+    if eslesimler:
+        eslesme_mesaj = f'\n\n🔗 *{len(eslesimler)} uygun mülk bulundu:*'
+        for e in eslesimler[:3]:
+            eslesme_mesaj += f'\n  • {e["baslik"]} — {e["fiyat_str"]} (%{e["puan"]})'
+
+    # Zincirleme
     from app.services.zincirleme import musteri_eklendi_sonrasi
     try:
         zincir = musteri_eklendi_sonrasi(emlakci, musteri)
@@ -372,7 +385,7 @@ def _musteri_kaydet(emlakci, metin):
     except:
         zincir_mesaj = ''
 
-    return f'✅ *Müşteri eklendi!*\n\n👤 {ad}\n📞 {telefon or "—"}\n🏷 {islem.capitalize()}' + (f'\n\n{zincir_mesaj}' if zincir_mesaj else '')
+    return f'✅ *Müşteri eklendi!*\n\n👤 {ad}\n📞 {telefon or "—"}\n🏷 {islem.capitalize()}' + eslesme_mesaj + (f'\n\n{zincir_mesaj}' if zincir_mesaj else '')
 
 
 def _mulk_kaydet(emlakci, metin):
@@ -713,6 +726,38 @@ def _gemini(api_key, sistem, gecmis):
     return chat.send_message(gecmis[-1]['content']).text
 
 
+def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
+    """Gemini ile function calling — AI doğrudan DB işlemi yapar."""
+    import google.generativeai as genai
+    import json as _json
+    genai.configure(api_key=api_key)
+
+    # Gemini function declarations
+    tools = [{
+        'function_declarations': [{
+            'name': f['name'],
+            'description': f['description'],
+            'parameters': f['parameters'],
+        } for f in _FUNCTIONS]
+    }]
+
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=sistem, tools=tools)
+    history = [{'role': 'user' if m['role'] == 'user' else 'model', 'parts': [m['content']]} for m in gecmis[:-1]]
+    chat = model.start_chat(history=history)
+    response = chat.send_message(gecmis[-1]['content'])
+
+    # Function call kontrolü
+    for part in response.parts:
+        if hasattr(part, 'function_call') and part.function_call:
+            fc = part.function_call
+            args = dict(fc.args) if fc.args else {}
+            sonuc = _ai_function_call(fc.name, args, emlakci)
+            if sonuc:
+                return sonuc
+
+    return response.text
+
+
 def _openai(api_key, sistem, gecmis):
     from openai import OpenAI
     client = OpenAI(api_key=api_key)
@@ -861,14 +906,24 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
                         kullanilan_islem = komut
                         kullanilan_model = 'pattern'
                     else:
-                        # 5. AI (function calling varsa)
+                        # 5. AI (function calling — tüm modellerde)
+                        sistem = _sistem_prompt(emlakci, metin)
                         openai_key = os.environ.get('OPENAI_API_KEY', '')
+                        gemini_key = os.environ.get('GEMINI_API_KEY', '')
                         if openai_key:
-                            cevap = _openai_with_functions(openai_key, _sistem_prompt(emlakci, metin), gecmis, emlakci)
+                            cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
+                            kullanilan_model = 'openai'
+                        elif gemini_key:
+                            try:
+                                cevap = _gemini_with_functions(gemini_key, sistem, gecmis, emlakci)
+                                kullanilan_model = 'gemini'
+                            except Exception:
+                                cevap = _ai_cevap(metin, gecmis, sistem)
+                                kullanilan_model = 'gemini'
                         else:
-                            cevap = _ai_cevap(metin, gecmis, _sistem_prompt(emlakci, metin))
+                            cevap = _ai_cevap(metin, gecmis, sistem)
+                            kullanilan_model = 'claude'
                         kullanilan_islem = 'ai_sohbet'
-                        kullanilan_model = 'openai'
 
         # Diyaloğu kaydet (eğitim verisi)
         diyalog_kaydet(emlakci.id, metin, metin_norm, kullanilan_islem or 'bilinmeyen', model=kullanilan_model)

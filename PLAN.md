@@ -420,6 +420,40 @@ Kullanıcı mesaj gönderir
 - [x] 91 pattern = neredeyse her endpoint 3+ varyasyon
 - [x] AI pipeline: otomatik pattern öneri API (tekrar eden mesajlar → öneri)
 
+### GERÇEK ZEKA KATMANI (Çılgın Seviye)
+
+#### 1. Kalıcı Müşteri Hafızası
+Müşteri bazlı tercih/karar/geçmiş kalıcı saklanır. Günler arası bağlam korunur.
+- [ ] MusteriHafiza modeli (musteri_id → tercihler, kararlar, geçmiş özetler)
+- [ ] Her müşteri etkileşiminde hafıza güncellenir
+- [ ] AI'ya her mesajda ilgili müşteri hafızası enjekte edilir
+- [ ] "Ahmet bey geçen hafta ne istemişti?" sorusuna cevap verebilir
+
+#### 2. Konuşma Sürekliliği (Multi-turn)
+"Daha ucuz göster" deyince önceki aramayı hatırlar.
+- [ ] Konuşma state'i DB'ye kaydedilir (son arama, son işlem, beklenen adım)
+- [ ] Zamirler çözülür ("onu ara" → son bahsedilen müşteri)
+- [ ] Zincirleme komutlar ("ekle ve sonra eşleştir")
+
+#### 3. Akıllı Eşleştirme (Gerçek Puanlama)
+Lokasyon + fiyat + m² + oda + detay bazlı çok boyutlu puanlama.
+- [ ] Eşleştirme skoru: tip(%15) + fiyat(%25) + lokasyon(%25) + oda(%15) + detay(%20)
+- [ ] Tercih notlarından anahtar kelime eşleşmesi
+- [ ] Sonuçlar sıralı, neden puanı açıklamalı
+
+#### 4. Kendi Kendine Öğrenme
+Pattern'lar otomatik büyür, admin'e gerek kalmaz.
+- [ ] Başarılı AI→DB işlemleri otomatik pattern'a dönüşür
+- [ ] 3+ kez aynı mesaj → otomatik pattern eklenir
+- [ ] Başarısız pattern'lar otomatik devre dışı
+- [ ] Öğrenme metrikleri (pattern hit oranı trendi)
+
+#### 5. Tüm Model'lerde Function Calling
+Gemini ve Claude'da da function calling aktif.
+- [ ] Gemini function calling entegrasyonu
+- [ ] Claude tool use entegrasyonu
+- [ ] OpenAI yoksa bile DB işlemleri yapılabilir
+
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
 
