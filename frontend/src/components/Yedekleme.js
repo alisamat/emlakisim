@@ -48,6 +48,34 @@ export default function Yedekleme() {
         </div>
       </div>
 
+      {/* Depolama durumu */}
+      {ozet?.depolama && (
+        <div style={{
+          background: ozet.depolama.kritik ? '#fef2f2' : ozet.depolama.uyari ? '#fffbeb' : '#f0fdf4',
+          borderRadius: 12, padding: 14, marginBottom: 16,
+          border: `1px solid ${ozet.depolama.kritik ? '#fecaca' : ozet.depolama.uyari ? '#fde68a' : '#bbf7d0'}`,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontWeight: 700, fontSize: 13 }}>💾 Depolama: {ozet.depolama.tahmini_mb} MB / {ozet.depolama.limit_mb} MB</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: ozet.depolama.kritik ? '#dc2626' : ozet.depolama.uyari ? '#f59e0b' : '#16a34a' }}>
+              %{ozet.depolama.doluluk_yuzde}
+            </span>
+          </div>
+          <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: ozet.depolama.kritik ? '#dc2626' : ozet.depolama.uyari ? '#f59e0b' : '#16a34a', width: `${ozet.depolama.doluluk_yuzde}%`, borderRadius: 4 }} />
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4, color: '#64748b' }}>{ozet.depolama.mesaj}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{ozet.depolama.toplam_kayit} toplam kayıt</div>
+        </div>
+      )}
+
+      {/* Yedek durumu */}
+      {ozet?.yedek_durumu && ozet.yedek_durumu.uyari && (
+        <div style={{ background: '#fef2f2', borderRadius: 12, padding: 12, marginBottom: 16, border: '1px solid #fecaca' }}>
+          <span style={{ fontWeight: 700, color: '#dc2626', fontSize: 13 }}>⚠️ {ozet.yedek_durumu.mesaj}</span>
+        </div>
+      )}
+
       {/* Veri özeti */}
       {ozet && (
         <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #e2e8f0' }}>

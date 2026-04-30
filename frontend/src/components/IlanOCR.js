@@ -89,9 +89,14 @@ export default function IlanOCR() {
               }}>Ara</a>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <button onClick={() => portfoyeEkle(sonuc)} className="btn-yesil" style={{ fontSize: 12 }}>🏢 Portföye Ekle</button>
-            <button onClick={() => navigator.clipboard.writeText(JSON.stringify(sonuc, null, 2))} className="btn-gri" style={{ fontSize: 12 }}>📋 Kopyala</button>
+            <button onClick={() => {
+              const metin = `📌 ${sonuc.baslik || '—'}\n📍 ${sonuc.adres || ''} ${sonuc.sehir || ''}\n💰 ${f(sonuc.fiyat)} TL\n🛏 ${sonuc.oda_sayisi || ''} · ${sonuc.brut_m2 || ''} m²\n📞 ${sonuc.emlakci_telefon || '—'}`;
+              if (navigator.share) navigator.share({ text: metin });
+              else navigator.clipboard.writeText(metin);
+            }} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '4px 12px', fontSize: 12, cursor: 'pointer', color: '#1d4ed8', fontWeight: 600 }}>📤 Paylaş</button>
+            <button onClick={() => navigator.clipboard.writeText(JSON.stringify(sonuc, null, 2))} className="btn-gri" style={{ fontSize: 12 }}>📋 JSON Kopyala</button>
           </div>
         </div>
       )}

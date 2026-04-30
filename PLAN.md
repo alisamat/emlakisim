@@ -420,33 +420,17 @@ Kullanıcı mesaj gönderir
 - [x] 91 pattern = neredeyse her endpoint 3+ varyasyon
 - [ ] AI pipeline: anlaşılamayan → otomatik pattern öneri (ileri seviye)
 
-### İlan OCR & Karşılaştırma Sistemi
-- [ ] İlan sitesi fotoğrafından OCR ile bilgi çıkarma (sahibinden, hepsiemlak vb.)
-- [ ] Çıkarılan bilgileri: portföye ekle / analiz et / kart oluştur / paylaş
-- [ ] Hafızada ilan saklama (max 20 ilan)
-- [ ] Birden fazla ilan karşılaştırma (farklar, ortak yanlar, fırsatlar)
-- [ ] İlandan emlakçı/sahip bilgisi + telefon çıkarma → aramaya yönlendirme
-- [ ] İlan kartı oluşturup WhatsApp/email ile paylaşma
+### İlan OCR & Karşılaştırma ✅
+- [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
 
-### Depolama & Belge Yönetimi
-- [ ] Kullanıcının belge/resim alanı takip sayfası
-- [ ] Alan doluluk uyarısı (MB/GB bazlı)
-- [ ] Yedek almaya zorlama (belirli dolulukta uyarı)
-- [ ] Eski belgeleri silmeye yönlendirme
-- [ ] Belge boyut yönetimi (storage yokken dosya boyut limiti)
+### Depolama ✅
+- [x] Kayıt takibi + doluluk uyarısı (%80/%95)
 
-### Oturum Güvenliği
-- [x] JWT 30 gün (web oturumu)
-- [x] WhatsApp'ta oturum engeli yok (token gerektirmez)
-- [ ] Oturum yenileme (refresh token)
+### Oturum ✅
+- [x] JWT 30 gün + WhatsApp engelsiz
 
-### İlan Sahibi Arama
-- [ ] OCR'dan telefon numarası çıkarma → "Ara" butonu (tel: link)
-
-### Admin Panel (Platform Yönetimi)
-- [x] AI eğitim istatistikleri + pattern yönetimi + maliyet raporu
-- [x] Fiyatlandırma parametreleri GET/PUT API
-- [x] Platform dashboard API (kullanıcı, müşteri, mülk, lead, diyalog, kredi)
+### Admin Panel ✅
+- [x] Eğitim + fiyatlandırma + dashboard + kullanıcı yönetimi + frontend
 - [x] Kullanıcı listesi + kredi ekleme API
 - [ ] Admin frontend dashboard sayfası (ayrı panel)
 

@@ -168,6 +168,83 @@ BILGI_BANKASI = {
             '_Ekspertiz raporu 3 ay geçerlidir._'
         ),
     },
+    'iskan': {
+        'anahtar': ['iskan', 'iskân', 'oturma izni', 'yapi kullanma'],
+        'cevap': (
+            '*🏗 İskan (Yapı Kullanma İzni)*\n\n'
+            '• Binanın yasal olarak oturulabilir olduğunu gösterir\n'
+            '• İskansız binalarda: kredi çıkmaz, sigorta yapılmaz\n'
+            '• Kat mülkiyetine geçiş için iskan şart\n'
+            '• Belediyeden alınır (yapı denetim raporu gerekli)\n'
+            '• İskansız mülk fiyatı %20-30 düşüktür\n\n'
+            '_Satın almadan önce iskan durumunu mutlaka kontrol edin._'
+        ),
+    },
+    'imar': {
+        'anahtar': ['imar', 'imar durumu', 'imar planı', 'imar izni', 'gabari'],
+        'cevap': (
+            '*📐 İmar Durumu*\n\n'
+            '• İmar durumu belediyeden sorgulanır\n'
+            '• TAKS: Taban Alanı Kat Sayısı\n'
+            '• KAKS (Emsal): Toplam inşaat alanı / arsa alanı\n'
+            '• Gabari: Maksimum bina yüksekliği\n'
+            '• İmarsız arsa: yapılaşma izni yok\n'
+            '• İmar planı değişikliği → değer artışı/düşüşü\n\n'
+            '_Arsa satın almadan önce imar durumunu mutlaka kontrol edin._'
+        ),
+    },
+    'emlak_alim_satim': {
+        'anahtar': ['alım satım', 'alim satim', 'ev alma', 'ev satma', 'nasıl alınır', 'nasil alinir'],
+        'cevap': (
+            '*🏠 Emlak Alım-Satım Süreci*\n\n'
+            '1. Mülk araştırma ve seçme\n'
+            '2. Fiyat müzakeresi\n'
+            '3. Ön sözleşme + kapora\n'
+            '4. Ekspertiz (kredi varsa)\n'
+            '5. Kredi başvurusu (gerekiyorsa)\n'
+            '6. DASK poliçesi\n'
+            '7. Tapu müdürlüğü randevu\n'
+            '8. Tapu devri + ödeme\n'
+            '9. Anahtar teslimi\n\n'
+            '_Süre: Peşin 1-2 hafta, kredili 2-4 hafta_'
+        ),
+    },
+    'kira_artis_2026': {
+        'anahtar': ['2026 kira', 'kira artış 2026', 'yeni kira', 'güncel artış'],
+        'cevap': (
+            '*📈 2026 Kira Artış Bilgileri*\n\n'
+            '• Konut kiralarında TÜFE oranı uygulanır\n'
+            '• 12 aylık TÜFE ortalaması esas alınır\n'
+            '• Yeni sözleşmelerde serbest piyasa geçerli\n'
+            '• Tahliye davası: 10 yıl kuralı devam ediyor\n'
+            '• İşyeri kiralarında taraflar anlaşır\n\n'
+            '_Güncel TÜFE oranı için TÜİK verilerine bakın._'
+        ),
+    },
+    'gayrimenkul_yatirim': {
+        'anahtar': ['yatırım', 'yatirim', 'nereye yatırım', 'gayrimenkul yatırım', 'karlı mı'],
+        'cevap': (
+            '*💰 Gayrimenkul Yatırım Rehberi*\n\n'
+            '• Konut: %4-8 brüt kira getirisi\n'
+            '• Ticari: %6-12 brüt kira getirisi\n'
+            '• Arsa: Değer artışı potansiyeli yüksek, kira yok\n'
+            '• Lokasyon: Ulaşım + altyapı + sosyal tesis\n'
+            '• Riskler: Likidite düşük, bakım maliyeti, boş kalma\n\n'
+            '💡 Hesaplama araçlarımızla ROI hesaplayabilirsiniz.'
+        ),
+    },
+    'apartman_yonetimi': {
+        'anahtar': ['apartman', 'yönetici', 'yonetici', 'aidat toplama', 'kat maliki'],
+        'cevap': (
+            '*🏢 Apartman/Site Yönetimi*\n\n'
+            '• Yönetici: Kat malikleri kurulunca seçilir\n'
+            '• Aidat: Ortak giderler kat maliklerinden toplanır\n'
+            '• Ödenmezse: İcra takibi yapılabilir\n'
+            '• Yönetim planı: Binanın anayasası\n'
+            '• Karar yeter sayısı: Salt çoğunluk\n\n'
+            '_634 sayılı Kat Mülkiyeti Kanunu_'
+        ),
+    },
     'vergi_muafiyeti': {
         'anahtar': ['vergi muafiyet', 'kira vergi istisna', 'vergi istisnası'],
         'cevap': (
