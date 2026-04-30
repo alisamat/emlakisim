@@ -34,6 +34,7 @@ import IletisimGecmisi from './IletisimGecmisi';
 import EnvanterYonetimi from './EnvanterYonetimi';
 import AdminPanel from './AdminPanel';
 import KrediPanel from './KrediPanel';
+import AdminDashboard from './AdminDashboard';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -119,6 +120,7 @@ export default function SohbetArayuz() {
       case 'iletisim':     return <div className="sayfa-icerik"><IletisimGecmisi /></div>;
       case 'envanter':     return <div className="sayfa-icerik"><EnvanterYonetimi /></div>;
       case 'admin':        return <div className="sayfa-icerik"><AdminPanel /></div>;
+      case 'admin_dash':   return <div className="sayfa-icerik"><AdminDashboard /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

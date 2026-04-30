@@ -89,6 +89,34 @@ def anlasilamayan_listele(limit=50):
     return kayitlar
 
 
+def otomatik_pattern_oner(limit=10):
+    """AI'ya giden mesajlardan tekrar edenleri bulup pattern önerisi oluştur."""
+    from sqlalchemy import func
+    tekrarlar = db.session.query(
+        DiyalogKayit.mesaj_norm, func.count(DiyalogKayit.id).label('sayi')
+    ).filter(
+        DiyalogKayit.model.in_(['openai', 'gemini', 'claude']),
+        DiyalogKayit.basarili == True,
+    ).group_by(DiyalogKayit.mesaj_norm).having(
+        func.count(DiyalogKayit.id) >= 2
+    ).order_by(func.count(DiyalogKayit.id).desc()).limit(limit).all()
+
+    oneriler = []
+    for mesaj_norm, sayi in tekrarlar:
+        if not mesaj_norm or len(mesaj_norm) < 3:
+            continue
+        # Mevcut pattern'larda var mı kontrol et
+        zaten_var = OgrenilenPattern.query.filter_by(pattern=mesaj_norm, aktif=True).first()
+        if not zaten_var:
+            oneriler.append({
+                'mesaj': mesaj_norm,
+                'tekrar': sayi,
+                'oneri_pattern': mesaj_norm.replace(' ', '\\s*'),
+            })
+
+    return oneriler
+
+
 def istatistik():
     """Eğitim istatistikleri."""
     toplam = DiyalogKayit.query.count()

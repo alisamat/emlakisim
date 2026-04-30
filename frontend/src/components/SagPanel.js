@@ -90,7 +90,8 @@ const MENU = [
     baslik: '⚙️ Yönetim',
     items: [
       { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar', aciklama: 'Profil, logo, tema, şifre değiştirme' },
-      { ikon: '🛠', ad: 'Admin Panel', tab: 'admin', aciklama: 'AI eğitim, pattern yönetimi, maliyet raporu' },
+      { ikon: '🛡', ad: 'Platform Admin', tab: 'admin_dash', aciklama: 'Kullanıcılar, gelir, fiyatlandırma, kredi yönetimi' },
+      { ikon: '🛠', ad: 'AI & Pattern', tab: 'admin', aciklama: 'AI eğitim, pattern yönetimi, maliyet raporu' },
       { ikon: '👤', ad: 'Profil', tab: 'profil', aciklama: 'Kişisel bilgiler' },
     ],
   },

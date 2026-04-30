@@ -371,7 +371,7 @@ Kullanıcı mesaj gönderir
 ### Faz 3 — Kredi Sistemi ✅
 - [x] IslemLog modeli, kredi düşme, AI maliyet hesaplama, yetersiz bakiye kontrolü
 - [ ] Kredi satın alma sayfası (ödeme entegrasyonu)
-- [ ] Admin panel: maliyet raporlama
+- [x] Admin panel: maliyet raporlama (API + frontend)
 
 ### Faz 4 — Gelişmiş CRM ✅
 - [x] Müşteri CRUD + gruplama + arama + filtre + dinamik detay
@@ -411,15 +411,14 @@ Kullanıcı mesaj gönderir
 ## YAPILACAKLAR — Güncel
 
 ### Komut Zekası (10.000+ Diyalog Vizyonu)
-Emlakçının söyleyebileceği 10.000+ konuyu anlamak:
-- [x] 30+ sabit pattern (sıfır maliyet)
+- [x] 91 sabit pattern (sıfır maliyet)
 - [x] Öğrenilen pattern DB (büyüyen havuz)
 - [x] Function calling (AI doğrudan DB işlemi)
-- [x] Danışmanlık bilgi bankası (14 konu, pattern matching)
+- [x] Danışmanlık bilgi bankası (14 konu)
 - [x] Hafıza motoru (bağlam, müşteri tanıma, alışkanlık)
-- [ ] Komut havuzunu 100+ pattern'a genişletme (her endpoint için en az 3 pattern)
-- [ ] Doğal dil → işlem dönüştürme AI pipeline geliştirme
-- [ ] Komut öğrenme: kullanıcı "bunu yapabilir misin?" deyince yeni pattern öner
+- [x] Komut öğrenme: "bunu yapabilir misin?" → yetenek listesi
+- [x] 91 pattern = neredeyse her endpoint 3+ varyasyon
+- [ ] AI pipeline: anlaşılamayan → otomatik pattern öneri (ileri seviye)
 
 ### Admin Panel (Platform Yönetimi)
 - [x] AI eğitim istatistikleri + pattern yönetimi + maliyet raporu
@@ -444,7 +443,7 @@ Emlakçının söyleyebileceği 10.000+ konuyu anlamak:
 - [x] Fatura bilgileri formu
 - [x] Header'da kredi tıklanınca panel açılır
 - [ ] Kuveyttürk ödeme entegrasyonu (dış servis)
-- [ ] Son kullanma tarihi sistemi
+- [x] Son kullanma tarihi sistemi (model + kredi yükleme uzatma)
 
 ### Tamamlanan
 - [x] Reklam metni + sunum PDF + ilan metni

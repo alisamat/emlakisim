@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app import db
 from app.models.egitim import DiyalogKayit, OgrenilenPattern
-from app.services.egitim import istatistik, cache_yenile
+from app.services.egitim import istatistik, cache_yenile, otomatik_pattern_oner
 from app.models import IslemLog, Emlakci
 
 bp = Blueprint('egitim', __name__, url_prefix='/api/panel/egitim')
@@ -55,6 +55,14 @@ def pattern_ekle():
     db.session.commit()
     cache_yenile()
     return jsonify({'ok': True, 'id': p.id}), 201
+
+
+@bp.route('/pattern-oner', methods=['GET'])
+@jwt_required()
+def pattern_oner():
+    """Tekrar eden AI mesajlarından pattern önerisi."""
+    oneriler = otomatik_pattern_oner()
+    return jsonify({'oneriler': oneriler})
 
 
 @bp.route('/maliyet-rapor', methods=['GET'])
