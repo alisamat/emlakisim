@@ -470,44 +470,31 @@ Kullanıcı mesaj gönderir
 - [x] Müşteri gruplama (form + filtre)
 - [x] Sohbet arama + silme (sol panel)
 - [x] "Unutma" komutu + hatırlatma listele
+- [x] Güvenlik: Rate limiting (flask-limiter)
+- [x] Sohbet: dosya ekleme, kamera, sesli yazma, input yukarı
+- [x] Bildirim: bell icon, badge, dropdown panel, 60sn kontrol
+- [x] Fatura modülü (CRUD + PDF + durum takibi)
+- [x] Çağrı kayıtları frontend
+- [x] Yedekleme takip (son yedek tarihi, uyarı)
 
-### Yapılacak — Güvenlik Denetimi
-- [ ] Tüm endpoint'lerde JWT auth kontrolü
-- [ ] SQL injection koruması (SQLAlchemy parametrik sorgular)
-- [ ] XSS koruması (React varsayılan escape)
-- [ ] CORS ayarları kontrolü
-- [ ] Rate limiting (brute force koruması)
-- [ ] Hassas veri loglanmaması (TC, şifre)
-- [ ] Input validasyonu (max uzunluk, tip kontrolü)
+### Yapılacak — Muhasebe Genişletme
+- [ ] Kâr/Zarar sayfası (gelirler - giderler, dönemsel karşılaştırma, grafik)
+- [ ] KDE (Kar-Değer-Etki) durumu sayfası
+- [ ] Cari hesap frontend sayfası (müşterilerden alacak/borç takibi)
+- [ ] Muhasebe raporları (aylık/yıllık gelir-gider raporu, AI özetli)
+- [ ] Banka Excel'den masraf çıkarma (banka hesap özeti import → gider kaydı)
 
-### Yapılacak — Sohbet Geliştirmeleri
-- [ ] Dosya ekleme butonu (sohbet inputunda)
-- [ ] Fotoğraf çekme butonu (kamera)
-- [ ] Sesli mesaj / konuşarak yazma (Web Speech API)
-- [ ] Sohbet input pozisyonu yukarı taşıma
+### Yapılacak — Ayarlar & Kişiselleştirme
+- [ ] Ayarlar sayfası (profil ayarları + uygulama ayarları ayrı)
+- [ ] Logo yükleme (hoşgeldin ekranında ve header'da kendi logosunu gösterme)
+- [ ] Tema ayarı: Gece modu (dark mode) desteği
+- [ ] Tüm sayfalarda dark mode uyumlu renklendirme (CSS variables ile)
 
-### Yapılacak — Bildirim Modülü
-- [ ] Uygulama içi bildirim sistemi (bell icon + badge)
-- [ ] Bildirim listesi (okundu/okunmadı)
-- [ ] Bildirim türleri: yeni lead, hatırlatma, yedek, görev, kredi düşük
-- [ ] Push notification (Service Worker — ileri seviye)
-
-### Yapılacak — Otomatik Yedekleme & Hatırlatma
-- [ ] Otomatik yedek alma modülü (zamanlayıcı ile)
-- [ ] Yedekleme takip sistemi (son yedek tarihi, durum)
-- [ ] Hatırlatma modülü: yedek alma, görev, müşteri dönüş, ödeme
-
-### Yapılacak — Emlak Asistanı Tam Yetkinlik Kontrolü
-Gerçek emlak asistanının yaptığı her şeyi yapabilmeli:
-- [x] İdari destek: e-posta yönetme, randevu/takvim, toplantı planlama
-- [x] İlan yönetimi: portföy CRUD, detaylı bilgi, arama/filtre
-- [x] Belge takibi: sözleşme hazırlama (PDF), evrak süreçleri
-- [x] Müşteri iletişimi: CRM, lead yönetimi, sorgu yönetme
-- [x] Pazarlama: sosyal medya içerik üretme (AI)
-- [x] Veri girişi ve CRM: müşteri/portföy veri işleme, eşleştirme
-- [ ] İlan fotoğraflarını düzenleme (fotoğraf storage gerek)
+### Yapılacak — Emlak Asistanı Tam Yetkinlik
+- [x] İdari destek, ilan yönetimi, belge takibi, CRM, pazarlama, eşleştirme
+- [ ] İlan fotoğraflarını düzenleme (storage gerek)
 - [ ] Sanal tur yönetimi (ileri seviye)
-- [ ] Basılı pazarlama materyali (broşür PDF — ileri seviye)
+- [ ] Basılı pazarlama materyali (broşür PDF)
 
 ### Dış Servis Entegrasyonları (API key/hesap gerekli)
 - [ ] SMS API (Netgsm veya Twilio)
