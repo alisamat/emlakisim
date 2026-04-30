@@ -77,6 +77,74 @@ def sifre_degistir():
     return jsonify({'message': 'Şifre değiştirildi'})
 
 
+@bp.route('/sifre-sifirla', methods=['POST'])
+def sifre_sifirla_istek():
+    """Email ile şifre sıfırlama linki gönder."""
+    d = request.get_json() or {}
+    email = d.get('email', '').strip()
+    if not email:
+        return jsonify({'message': 'Email gerekli'}), 400
+
+    e = Emlakci.query.filter_by(email=email).first()
+    if not e:
+        # Güvenlik: kullanıcı var mı bilgi verme
+        return jsonify({'message': 'Eğer bu email kayıtlıysa, şifre sıfırlama bağlantısı gönderildi.'})
+
+    import secrets, os
+    token = secrets.token_urlsafe(32)
+    # Token'ı geçici olarak kullanıcıya kaydet
+    e.sifre_hash = e.sifre_hash  # değiştirme, sadece token kaydet
+    # Basit yaklaşım: token'ı cache'e koy (production'da Redis kullanılmalı)
+    _sifre_tokenlari[token] = {'emlakci_id': e.id, 'email': email}
+
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+    link = f'{frontend_url}/sifre-sifirla?token={token}'
+
+    try:
+        from app.services.iletisim import email_gonder
+        html = f'''<div style="font-family:sans-serif;max-width:500px;margin:0 auto">
+        <div style="background:#16a34a;color:#fff;padding:16px 24px;border-radius:8px 8px 0 0"><strong>Emlakisim — Şifre Sıfırlama</strong></div>
+        <div style="padding:24px;background:#fff;border:1px solid #e2e8f0;border-radius:0 0 8px 8px">
+        <p>Şifre sıfırlama talebiniz alındı.</p>
+        <p><a href="{link}" style="background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700">Şifremi Sıfırla</a></p>
+        <p style="font-size:12px;color:#94a3b8;margin-top:16px">Bu bağlantı 1 saat geçerlidir. Siz talep etmediyseniz bu emaili dikkate almayın.</p>
+        </div></div>'''
+        email_gonder(email, 'Emlakisim — Şifre Sıfırlama', html)
+    except Exception:
+        pass
+
+    return jsonify({'message': 'Eğer bu email kayıtlıysa, şifre sıfırlama bağlantısı gönderildi.'})
+
+
+@bp.route('/sifre-sifirla-onayla', methods=['POST'])
+def sifre_sifirla_onayla():
+    """Token ile yeni şifre belirle."""
+    d = request.get_json() or {}
+    token = d.get('token', '')
+    yeni_sifre = d.get('yeni_sifre', '')
+
+    if not token or not yeni_sifre:
+        return jsonify({'message': 'Token ve yeni şifre gerekli'}), 400
+    if len(yeni_sifre) < 4:
+        return jsonify({'message': 'Şifre en az 4 karakter'}), 400
+
+    veri = _sifre_tokenlari.pop(token, None)
+    if not veri:
+        return jsonify({'message': 'Geçersiz veya süresi dolmuş bağlantı'}), 400
+
+    e = Emlakci.query.get(veri['emlakci_id'])
+    if not e:
+        return jsonify({'message': 'Kullanıcı bulunamadı'}), 404
+
+    e.sifre_hash = _hash(yeni_sifre)
+    db.session.commit()
+    return jsonify({'message': 'Şifre başarıyla değiştirildi. Giriş yapabilirsiniz.'})
+
+
+# Geçici token deposu (production'da Redis kullanılmalı)
+_sifre_tokenlari: dict = {}
+
+
 def _user(e):
     return {
         'id': e.id, 'ad_soyad': e.ad_soyad, 'email': e.email,

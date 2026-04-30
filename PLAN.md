@@ -408,6 +408,37 @@ Kullanıcı mesaj gönderir
 
 ---
 
+## YAPILACAKLAR (İç)
+
+### Reklam & İlan Tasarımı
+- [ ] AI ile ilan açıklaması + reklam metni oluşturma (portföyden veya müşteri tercihlerinden)
+- [ ] Reklam görseli oluşturma (AI image generation — DALL-E/Gemini Imagen)
+- [ ] Sunum/reklam PDF hazırlama
+- [ ] Maliyet bilgilendirmesi (AI kullanımı öncesi kredi uyarısı)
+
+### Web Sayfası (Public)
+- [ ] Hakkımızda sayfası
+- [ ] Kurumsal bilgi sayfası
+- [ ] Fiyatlar sayfası (kredi paketleri)
+- [ ] İletişim sayfası
+- [ ] KVKK (Kişisel Verilerin Korunması) sayfası
+
+### Şifremi Unuttum
+- [ ] Email ile şifre sıfırlama (token gönder → yeni şifre belirle)
+- [ ] Referans noktası: email (kayıt sırasında zorunlu)
+
+### Kayıt Geliştirme
+- [ ] Kayıt ekranında emlakçı/müşteri seçimi
+- [ ] Cep no zorunlu + WhatsApp doğrulama
+- [ ] WhatsApp doğrulama akışı: numara gönder → 2 dk içinde eşleşirse onay
+- [ ] Doğrulanmamış hesap uyarısı
+
+### Sohbet Geliştirme
+- [ ] Mesaj kopyalama butonu (her mesajda)
+- [ ] Paylaşma butonu (AI üretimlerini WhatsApp/email ile paylaş)
+
+---
+
 ## SADECE DIŞ SERVİS GEREKTIREN EKSİKLER
 
 | Özellik | Gerekli Servis |

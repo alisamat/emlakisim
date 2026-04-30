@@ -52,7 +52,18 @@ export default function Giris() {
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#64748b' }}>
+          <div style={{ textAlign: 'center', marginTop: 12, fontSize: 13 }}>
+            <button onClick={async () => {
+              const email = window.prompt('Şifre sıfırlama için email adresinizi girin:');
+              if (email) {
+                try { await api.post('/api/auth/sifre-sifirla', { email }); alert('Şifre sıfırlama bağlantısı email adresinize gönderildi.'); }
+                catch { alert('Bir hata oluştu.'); }
+              }
+            }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer' }}>
+              Şifremi unuttum
+            </button>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: '#64748b' }}>
             Hesabın yok mu? <Link to="/kayit" style={{ color: '#16a34a', fontWeight: 600 }}>Kayıt Ol</Link>
           </div>
         </div>

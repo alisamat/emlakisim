@@ -104,8 +104,21 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
           mesajlar.map((m, i) => (
             <div key={i} className={`sohbet-mesaj ${m.rol}`}>
               <div style={{ whiteSpace: 'pre-wrap' }}>{m.icerik}</div>
-              <div className="sohbet-mesaj-zaman">
-                {new Date(m.olusturma).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                <span className="sohbet-mesaj-zaman">
+                  {new Date(m.olusturma).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <span style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => navigator.clipboard.writeText(m.icerik)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#94a3b8', padding: '0 2px',
+                  }} title="Kopyala">📋</button>
+                  <button onClick={() => {
+                    if (navigator.share) navigator.share({ text: m.icerik });
+                    else navigator.clipboard.writeText(m.icerik);
+                  }} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#94a3b8', padding: '0 2px',
+                  }} title="Paylaş">📤</button>
+                </span>
               </div>
             </div>
           ))

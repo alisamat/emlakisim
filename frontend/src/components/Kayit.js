@@ -6,7 +6,7 @@ import api from '../api';
 export default function Kayit() {
   const { girisYap } = useAuth();
   const nav = useNavigate();
-  const [form, setForm] = useState({ ad_soyad: '', email: '', telefon: '', acente_adi: '', yetki_no: '', sifre: '' });
+  const [form, setForm] = useState({ ad_soyad: '', email: '', telefon: '', acente_adi: '', yetki_no: '', sifre: '', kullanici_tipi: 'emlakci' });
   const [yukleniyor, setYuk] = useState(false);
   const [hata, setHata] = useState('');
 
@@ -34,7 +34,19 @@ export default function Kayit() {
         </div>
 
         <div className="kart">
-          <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b', marginBottom: 20 }}>Emlakçı Kaydı</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b', marginBottom: 12 }}>Hesap Oluştur</div>
+
+          {/* Kullanıcı tipi seçimi */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {[['emlakci', '🏢 Emlakçı'], ['musteri', '👤 Müşteri']].map(([v, l]) => (
+              <button key={v} type="button" onClick={() => setForm(p => ({ ...p, kullanici_tipi: v }))} style={{
+                flex: 1, padding: '10px', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                background: form.kullanici_tipi === v ? '#f0fdf4' : '#fff',
+                color: form.kullanici_tipi === v ? '#16a34a' : '#374151',
+                border: `2px solid ${form.kullanici_tipi === v ? '#16a34a' : '#e2e8f0'}`,
+              }}>{l}</button>
+            ))}
+          </div>
 
           {hata && <div className="hata" style={{ marginBottom: 14 }}>{hata}</div>}
 
