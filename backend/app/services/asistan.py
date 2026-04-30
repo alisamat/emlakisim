@@ -214,7 +214,16 @@ def _musteri_kaydet(emlakci, metin):
     )
     db.session.add(musteri)
     db.session.commit()
-    return f'✅ *Müşteri eklendi!*\n\n👤 {ad}\n📞 {telefon or "—"}\n🏷 {islem.capitalize()}'
+
+    # Zincirleme işlemler
+    from app.services.zincirleme import musteri_eklendi_sonrasi
+    try:
+        zincir = musteri_eklendi_sonrasi(emlakci, musteri)
+        zincir_mesaj = '\n'.join(zincir) if zincir else ''
+    except:
+        zincir_mesaj = ''
+
+    return f'✅ *Müşteri eklendi!*\n\n👤 {ad}\n📞 {telefon or "—"}\n🏷 {islem.capitalize()}' + (f'\n\n{zincir_mesaj}' if zincir_mesaj else '')
 
 
 def _mulk_kaydet(emlakci, metin):
@@ -238,8 +247,16 @@ def _mulk_kaydet(emlakci, metin):
     )
     db.session.add(mulk)
     db.session.commit()
+
+    from app.services.zincirleme import mulk_eklendi_sonrasi
+    try:
+        zincir = mulk_eklendi_sonrasi(emlakci, mulk)
+        zincir_mesaj = '\n'.join(zincir) if zincir else ''
+    except:
+        zincir_mesaj = ''
+
     fiyat_str = f'{int(fiyat):,}'.replace(',', '.') + ' TL' if fiyat else '—'
-    return f'✅ *Mülk eklendi!*\n\n🏢 {baslik}\n📍 {adres or "—"}\n💰 {fiyat_str}'
+    return f'✅ *Mülk eklendi!*\n\n🏢 {baslik}\n📍 {adres or "—"}\n💰 {fiyat_str}' + (f'\n\n{zincir_mesaj}' if zincir_mesaj else '')
 
 
 def _not_kaydet(emlakci, metin):

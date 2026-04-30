@@ -28,6 +28,7 @@ import MuhasebeRapor from './MuhasebeRapor';
 import Butce from './Butce';
 import SurecTakip from './SurecTakip';
 import Talepler from './Talepler';
+import Ekip from './Ekip';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -107,6 +108,7 @@ export default function SohbetArayuz() {
       case 'butce':        return <div className="sayfa-icerik"><Butce /></div>;
       case 'surec':        return <div className="sayfa-icerik"><SurecTakip /></div>;
       case 'talepler':     return <div className="sayfa-icerik"><Talepler /></div>;
+      case 'ekip':         return <div className="sayfa-icerik"><Ekip /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

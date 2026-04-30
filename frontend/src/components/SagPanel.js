@@ -106,6 +106,12 @@ const MENU = [
     ],
   },
   {
+    baslik: '👔 Ekip',
+    items: [
+      { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip' },
+    ],
+  },
+  {
     baslik: '⚙️ Ayarlar',
     items: [
       { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar' },

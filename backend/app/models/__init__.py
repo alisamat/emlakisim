@@ -11,6 +11,7 @@ from app.models.bildirim import Bildirim
 from app.models.fatura import Fatura
 from app.models.islem_takip import SurecTakip, Evrak
 from app.models.ofis import Envanter, GeriBildirim
+from app.models.ofis_ekip import Danisман, MusteriAtama
 
 
 class Emlakci(db.Model):
