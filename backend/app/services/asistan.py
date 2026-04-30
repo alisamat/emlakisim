@@ -937,6 +937,15 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
         except Exception:
             pass
 
+        # Müşteri hafızasına otomatik kaydet (etkileşim)
+        try:
+            from app.services.hafiza import _musteri_bul, musteri_hafiza_ekle
+            bahsedilen = _musteri_bul(emlakci.id, metin)
+            if bahsedilen and kullanilan_islem not in ('yardim', 'rapor', 'performans'):
+                musteri_hafiza_ekle(emlakci.id, bahsedilen.id, 'etkilesim', metin[:200])
+        except Exception:
+            pass
+
         # Diyaloğu kaydet (eğitim verisi)
         diyalog_kaydet(emlakci.id, metin, metin_norm, kullanilan_islem or 'bilinmeyen', model=kullanilan_model)
 

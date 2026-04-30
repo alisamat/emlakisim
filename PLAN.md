@@ -420,39 +420,29 @@ Kullanıcı mesaj gönderir
 - [x] 91 pattern = neredeyse her endpoint 3+ varyasyon
 - [x] AI pipeline: otomatik pattern öneri API (tekrar eden mesajlar → öneri)
 
-### GERÇEK ZEKA KATMANI (Çılgın Seviye)
+### GERÇEK ZEKA KATMANI ✅ (Çılgın Seviye)
 
-#### 1. Kalıcı Müşteri Hafızası
-Müşteri bazlı tercih/karar/geçmiş kalıcı saklanır. Günler arası bağlam korunur.
-- [ ] MusteriHafiza modeli (musteri_id → tercihler, kararlar, geçmiş özetler)
-- [ ] Her müşteri etkileşiminde hafıza güncellenir
-- [ ] AI'ya her mesajda ilgili müşteri hafızası enjekte edilir
-- [ ] "Ahmet bey geçen hafta ne istemişti?" sorusuna cevap verebilir
+#### Kalıcı Hafıza ✅
+- [x] MusteriHafiza + KonusmaState modelleri
+- [x] Günler arası bağlam + kısmi isim + zamir çözme
 
-#### 2. Konuşma Sürekliliği (Multi-turn)
-"Daha ucuz göster" deyince önceki aramayı hatırlar.
-- [ ] Konuşma state'i DB'ye kaydedilir (son arama, son işlem, beklenen adım)
-- [ ] Zamirler çözülür ("onu ara" → son bahsedilen müşteri)
-- [ ] Zincirleme komutlar ("ekle ve sonra eşleştir")
+#### Konuşma Sürekliliği ✅
+- [x] DB'de kalıcı state (son müşteri/mülk/işlem/arama)
 
-#### 3. Akıllı Eşleştirme (Gerçek Puanlama)
-Lokasyon + fiyat + m² + oda + detay bazlı çok boyutlu puanlama.
-- [ ] Eşleştirme skoru: tip(%15) + fiyat(%25) + lokasyon(%25) + oda(%15) + detay(%20)
-- [ ] Tercih notlarından anahtar kelime eşleşmesi
-- [ ] Sonuçlar sıralı, neden puanı açıklamalı
+#### Akıllı Eşleştirme ✅
+- [x] 5 boyutlu puanlama + tercih + sıcaklık bonusu
 
-#### 4. Kendi Kendine Öğrenme
-Pattern'lar otomatik büyür, admin'e gerek kalmaz.
-- [ ] Başarılı AI→DB işlemleri otomatik pattern'a dönüşür
-- [ ] 3+ kez aynı mesaj → otomatik pattern eklenir
-- [ ] Başarısız pattern'lar otomatik devre dışı
-- [ ] Öğrenme metrikleri (pattern hit oranı trendi)
+#### Otomatik Öğrenme ✅
+- [x] 3+ tekrar → otomatik pattern (gece 03:00)
 
-#### 5. Tüm Model'lerde Function Calling
-Gemini ve Claude'da da function calling aktif.
-- [ ] Gemini function calling entegrasyonu
-- [ ] Claude tool use entegrasyonu
-- [ ] OpenAI yoksa bile DB işlemleri yapılabilir
+#### Function Calling ✅
+- [x] OpenAI FC + Gemini FC + fallback
+
+#### Zeka Motoru ✅
+- [x] Niyet analizi + proaktif öneri + davranış analizi + mesaj zenginleştirme
+
+#### Kişiselleşme ✅
+- [x] Emlakçı profili + kişiselleşmiş prompt + hızlı erişim
 
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama

@@ -2,6 +2,25 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
 
+// Proaktif zeka önerileri
+function ZekaOnerileri() {
+  const [oneriler, setOneriler] = useState([]);
+  useEffect(() => {
+    api.get('/api/panel/gelismis/zeka/oneriler').then(r => setOneriler(r.data.oneriler || [])).catch(() => {});
+  }, []);
+  if (oneriler.length === 0) return null;
+  return (
+    <div style={{ marginTop: 16, width: '100%', maxWidth: 400 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>💡 Akıllı Öneriler</div>
+      {oneriler.slice(0, 3).map((o, i) => (
+        <div key={i} style={{ fontSize: 12, color: '#64748b', padding: '4px 0', borderBottom: '1px solid #f1f5f9' }}>
+          {o.mesaj}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Web Speech API — sesli yazma
 function useSesliYazma(onSonuc) {
   const [dinliyor, setDinliyor] = useState(false);
@@ -107,6 +126,7 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
                 </button>
               ))}
             </div>
+            <ZekaOnerileri />
           </div>
         ) : (
           mesajlar.map((m, i) => (
