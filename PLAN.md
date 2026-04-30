@@ -435,22 +435,18 @@ Tüm dış servis maliyetlerini tek noktadan yönet:
 - [ ] Telefon hizmeti maliyeti → kredi
 - [ ] Tüm dış servis fiyatlarını admin panelden değiştirme
 
-### Sağ Panel İyileştirme
-- [ ] İşlem butonlarını anlamlı gruplama ve sıralama
-- [ ] Her butonun yaptığı işin açıklaması (tooltip/alt açıklama)
-- [ ] İşlem arama özelliğini güçlendirme (açıklama içinde de ara)
+### Sağ Panel İyileştirme ✅
+- [x] 12 kategori anlamlı gruplama
+- [x] Her butonda açıklama (tooltip)
+- [x] İşlem arama açıklamalarda da arar
 
-### Kredi Paneli (OnMuhasebeci Referans)
-OnMuhasebeci kredi sistemi referansı (/Users/mmacac/pc/Github/onmuhFron-web):
-- [ ] Kredi paneli popup (header'daki kredi tıklanınca açılır)
-  - Genel Bakış: kalan kredi, kullanılan, satın alınan, son kullanma tarihi
-  - Kredi Satın Al: paket kartları (Temel/Standart/Profesyonel/Kurumsal)
-  - Fatura Bilgileri: şirket/TC/vergi dairesi/adres formu
-  - Faturalarım: ödeme geçmişi tablosu
-- [ ] Kuveyttürk ödeme entegrasyonu (OnMuhasebeci'den referans)
-- [ ] Paket sistemi: kredi miktarı + TL fiyat + USD + geçerlilik süresi
-- [ ] Kredi satın alma → otomatik fatura oluşturma
-- [ ] Son kullanma tarihi sistemi (paket alımıyla 1 yıl uzama)
+### Kredi Paneli ✅ (ödeme entegrasyonu hariç)
+- [x] Kredi paneli popup (4 tab: genel bakış, satın al, fatura bilgi, faturalarım)
+- [x] Paket kartları (Temel/Standart/Profesyonel/Kurumsal + USD+TRY+KDV)
+- [x] Fatura bilgileri formu
+- [x] Header'da kredi tıklanınca panel açılır
+- [ ] Kuveyttürk ödeme entegrasyonu (dış servis)
+- [ ] Son kullanma tarihi sistemi
 
 ### Tamamlanan
 - [x] Reklam metni + sunum PDF + ilan metni

@@ -84,8 +84,11 @@ _PATTERNS = [
     # ── Performans ──
     (r'(?:performans|kpi|verimlilik|ozet\s*rapor|nasil\s*gidiyorum)', 'performans'),
     # ── Yardım ──
-    # Yardım
+    # Yardım & Yetenek
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
+    (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
+    (r'(?:ne\s*yapabilirsin|yeteneklerin|ozelliklerin|özellikler)', 'yardim'),
+    (r'(?:nasil\s*kullan|nasıl\s*kullan|nasil\s*yap|nasıl\s*yap)', 'yardim'),
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
@@ -149,6 +152,19 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'yetenek_sor':
+        return ('🤖 *Evet, büyük ihtimalle yapabilirim!*\n\n'
+                'Ben 100+ farklı işlem yapabilen AI emlak asistanıyım:\n\n'
+                '👥 Müşteri yönetimi (ekle, düzenle, ara, grupla, eşleştir)\n'
+                '🏢 Portföy yönetimi (ekle, detay, broşür, ilan, reklam)\n'
+                '💰 Muhasebe (gelir/gider, cari, fatura, fiş OCR, banka import)\n'
+                '📋 Planlama (görev, takvim, hatırlatma)\n'
+                '📄 Belgeler (yer gösterme, kontrat, yönlendirme, sunum PDF)\n'
+                '🧮 Hesaplama (kira vergisi, ROI, değer artış)\n'
+                '📊 Rapor & analiz (performans, sektör, piyasa)\n'
+                '📦 Toplu işlem (Excel, OCR, rehber import)\n\n'
+                '_Doğrudan ne istediğinizi yazın, yapayım!_')
 
     if komut == 'ilan_olustur':
         return ('📝 *İlan metni oluşturmak için:*\n\n'

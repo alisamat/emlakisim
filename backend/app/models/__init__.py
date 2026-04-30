@@ -28,6 +28,7 @@ class Emlakci(db.Model):
     acente_adi    = db.Column(db.String(120))
     aktif         = db.Column(db.Boolean, default=True)
     kredi         = db.Column(db.Float, default=10.0)
+    kredi_son_kullanma = db.Column(db.DateTime)    # kredi son kullanma tarihi
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 
     musteriler    = db.relationship('Musteri', backref='emlakci', lazy=True)

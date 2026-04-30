@@ -150,4 +150,5 @@ def _user(e):
         'id': e.id, 'ad_soyad': e.ad_soyad, 'email': e.email,
         'telefon': e.telefon, 'acente_adi': e.acente_adi,
         'yetki_no': e.yetki_no, 'kredi': e.kredi,
+        'kredi_son_kullanma': e.kredi_son_kullanma.isoformat() if e.kredi_son_kullanma else None,
     }

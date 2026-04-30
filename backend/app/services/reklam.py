@@ -6,7 +6,7 @@ import json
 import requests
 import logging
 from datetime import datetime
-from app.services.belge import TurkPDF
+# TurkPDF lazy import in sunum_pdf()
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,7 @@ def _basit_reklam(mulk):
 
 def sunum_pdf(emlakci, mulk, reklam_metin=''):
     """Mülk sunum/reklam PDF."""
+    from app.services.belge import TurkPDF
     pdf = TurkPDF()
     det = mulk.detaylar or {}
     fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') + ' TL' if mulk.fiyat else ''

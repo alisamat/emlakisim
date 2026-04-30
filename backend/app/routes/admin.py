@@ -1,0 +1,99 @@
+"""
+ADMIN — Platform yönetimi, fiyatlandırma, kullanıcı dashboard
+"""
+import os
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app import db
+from app.models import Emlakci, IslemLog
+from app.services.kredi import KREDI_TABLOSU
+
+bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+
+
+# ── Fiyatlandırma ────────────────────────────────────────
+@bp.route('/fiyatlandirma', methods=['GET'])
+@jwt_required()
+def fiyatlandirma_getir():
+    """Mevcut kredi fiyatlandırma tablosunu getir."""
+    paketler = [
+        {'id': 'temel', 'ad': 'Temel', 'kredi': 3000, 'usd': 8},
+        {'id': 'standart', 'ad': 'Standart', 'kredi': 12000, 'usd': 32},
+        {'id': 'profesyonel', 'ad': 'Profesyonel', 'kredi': 30000, 'usd': 80},
+        {'id': 'kurumsal', 'ad': 'Kurumsal', 'kredi': 120000, 'usd': 320},
+    ]
+    return jsonify({
+        'kredi_tablosu': KREDI_TABLOSU,
+        'paketler': paketler,
+        'kur': float(os.environ.get('USD_TRY_KUR', '37.65')),
+        'kdv_oran': 20,
+    })
+
+
+@bp.route('/fiyatlandirma', methods=['PUT'])
+@jwt_required()
+def fiyatlandirma_guncelle():
+    """Kredi fiyatlandırma tablosunu güncelle (memory only — restart'ta sıfırlanır)."""
+    d = request.get_json() or {}
+    if 'kredi_tablosu' in d:
+        for k, v in d['kredi_tablosu'].items():
+            if k in KREDI_TABLOSU:
+                KREDI_TABLOSU[k] = float(v)
+    return jsonify({'ok': True, 'kredi_tablosu': KREDI_TABLOSU})
+
+
+# ── Platform Dashboard ───────────────────────────────────
+@bp.route('/dashboard', methods=['GET'])
+@jwt_required()
+def platform_dashboard():
+    """Platform geneli istatistikler."""
+    from app.models import Musteri, Mulk
+    from app.models.lead import Lead
+    from app.models.egitim import DiyalogKayit
+
+    toplam_kullanici = Emlakci.query.filter_by(aktif=True).count()
+    toplam_musteri = Musteri.query.count()
+    toplam_mulk = Mulk.query.filter_by(aktif=True).count()
+    toplam_lead = Lead.query.count()
+    toplam_diyalog = DiyalogKayit.query.count()
+    toplam_islem = IslemLog.query.count()
+
+    # Toplam kredi kullanımı
+    from sqlalchemy import func
+    toplam_kredi = db.session.query(func.sum(IslemLog.kredi_tutar)).scalar() or 0
+    toplam_usd = db.session.query(func.sum(IslemLog.maliyet_usd)).scalar() or 0
+
+    return jsonify({
+        'kullanicilar': toplam_kullanici,
+        'musteriler': toplam_musteri,
+        'mulkler': toplam_mulk,
+        'leadler': toplam_lead,
+        'diyaloglar': toplam_diyalog,
+        'islemler': toplam_islem,
+        'toplam_kredi_kullanim': round(toplam_kredi, 2),
+        'toplam_ai_maliyet_usd': round(toplam_usd, 6),
+    })
+
+
+# ── Kullanıcı Yönetimi ──────────────────────────────────
+@bp.route('/kullanicilar', methods=['GET'])
+@jwt_required()
+def kullanici_listesi():
+    kullanicilar = Emlakci.query.order_by(Emlakci.olusturma.desc()).all()
+    return jsonify({'kullanicilar': [{
+        'id': e.id, 'ad_soyad': e.ad_soyad, 'email': e.email,
+        'telefon': e.telefon, 'kredi': e.kredi, 'aktif': e.aktif,
+        'olusturma': e.olusturma.isoformat() if e.olusturma else None,
+    } for e in kullanicilar]})
+
+
+@bp.route('/kullanicilar/<int:uid>/kredi', methods=['PUT'])
+@jwt_required()
+def kredi_ekle(uid):
+    """Kullanıcıya kredi ekle (admin)."""
+    e = Emlakci.query.get_or_404(uid)
+    d = request.get_json() or {}
+    miktar = float(d.get('miktar', 0))
+    e.kredi = (e.kredi or 0) + miktar
+    db.session.commit()
+    return jsonify({'ok': True, 'yeni_kredi': e.kredi})
