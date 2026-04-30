@@ -48,6 +48,10 @@ _PATTERNS = [
     # Fatura
     (r'(?:fatura)\s*(?:olustur|ekle|kaydet)',                 'fatura_ekle'),
     (r'(?:fatura)\s*(?:listele|göster)',                      'fatura_liste'),
+    # Sektörel
+    (r'(?:sektor|sektör|haber|piyasa|trend|gelisme|gelişme)', 'sektor_bilgi'),
+    # Performans
+    (r'(?:performans|kpi|verimlilik|ozet\s*rapor)',           'performans'),
     # Yardım
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
 ]
@@ -113,6 +117,16 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'sektor_bilgi':
+        return ('📰 *Sektörel bilgi için:*\n\n'
+                '• Uygulama menüsünden *Performans & Analiz* sayfasını açın\n'
+                '• "Sektör Haberleri" veya "Piyasa Analizi" butonuna tıklayın\n'
+                '• AI güncel bilgileri özetleyecek\n\n'
+                '_Veya doğrudan sorunuzu yazın, AI cevaplasın._')
+
+    if komut == 'performans':
+        return _performans_ozet(emlakci)
 
     if komut == 'not_ekle':
         session['bekleyen_islem'] = 'not_ekle'
@@ -296,6 +310,30 @@ def _cari_rapor(emlakci):
             f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
             f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
             + '\n'.join(satirlar))
+
+
+def _performans_ozet(emlakci):
+    """Genel performans özeti."""
+    from app.models.muhasebe import GelirGider
+    from app.models.lead import Lead
+    m_sayi = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
+    p_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+    yg_sayi = YerGosterme.query.filter_by(emlakci_id=emlakci.id).count()
+    lead_yeni = Lead.query.filter_by(emlakci_id=emlakci.id, durum='yeni').count()
+    kayitlar = GelirGider.query.filter_by(emlakci_id=emlakci.id).all()
+    gelir = sum(k.tutar for k in kayitlar if k.tip == 'gelir')
+    gider = sum(k.tutar for k in kayitlar if k.tip == 'gider')
+    f = lambda v: f'{int(v):,}'.replace(',', '.')
+
+    return (f'🏆 *Performans Özeti*\n\n'
+            f'👥 Müşteri: *{m_sayi}*\n'
+            f'🏢 Portföy: *{p_sayi}*\n'
+            f'📋 Yer gösterme: *{yg_sayi}*\n'
+            f'🎯 Yeni lead: *{lead_yeni}*\n'
+            f'📈 Gelir: *{f(gelir)} TL*\n'
+            f'📉 Gider: *{f(gider)} TL*\n'
+            f'{"🟢" if gelir >= gider else "🔴"} Net: *{f(gelir - gider)} TL*\n'
+            f'💎 Kredi: *{emlakci.kredi}*')
 
 
 def _gorev_listele(emlakci):

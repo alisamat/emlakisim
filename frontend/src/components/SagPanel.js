@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 
 const MENU = [
   {
+    baslik: '🏆 Performans',
+    acik: false,
+    items: [
+      { ikon: '🏆', ad: 'Performans & Analiz', tab: 'performans' },
+      { ikon: '📰', ad: 'Sektör Haberleri', mesaj: 'Emlak sektöründeki son gelişmeler neler?' },
+    ],
+  },
+  {
     baslik: '⚡ Hızlı İşlem',
     acik: true,
     items: [

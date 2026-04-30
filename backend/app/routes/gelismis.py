@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Mulk
 from app.services.gelismis import web_arama, metin_analiz, sosyal_medya_icerik
 from app.services.pdf_okuyucu import pdf_metin_cikar, pdf_analiz
+from app.services.sektorel import sektor_haberleri, piyasa_analizi
 
 bp = Blueprint('gelismis', __name__, url_prefix='/api/panel/gelismis')
 
@@ -56,4 +57,20 @@ def pdf_oku():
     pdf_bytes = request.files['file'].read()
     soru = request.form.get('soru', '')
     sonuc = pdf_analiz(pdf_bytes, soru)
+    return jsonify(sonuc)
+
+
+@bp.route('/sektor-haberleri', methods=['POST'])
+@jwt_required()
+def sektor():
+    d = request.get_json() or {}
+    sonuc = sektor_haberleri(d.get('konu', 'emlak piyasası'))
+    return jsonify(sonuc)
+
+
+@bp.route('/piyasa-analizi', methods=['POST'])
+@jwt_required()
+def piyasa():
+    d = request.get_json() or {}
+    sonuc = piyasa_analizi(d.get('sehir', 'İstanbul'), d.get('tip', 'daire'))
     return jsonify(sonuc)
