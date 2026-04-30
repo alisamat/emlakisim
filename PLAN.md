@@ -408,34 +408,27 @@ Kullanıcı mesaj gönderir
 
 ---
 
-## YAPILACAKLAR (İç)
+## YAPILACAKLAR (İç) — Güncel
 
 ### Reklam & İlan Tasarımı
-- [ ] AI ile ilan açıklaması + reklam metni oluşturma (portföyden veya müşteri tercihlerinden)
+- [x] AI ile ilan metni oluşturma (portföyden)
 - [ ] Reklam görseli oluşturma (AI image generation — DALL-E/Gemini Imagen)
-- [ ] Sunum/reklam PDF hazırlama
-- [ ] Maliyet bilgilendirmesi (AI kullanımı öncesi kredi uyarısı)
+- [ ] Sunum/reklam PDF hazırlama (detaylı broşür)
+- [x] Maliyet bilgilendirmesi (kredi yetersiz uyarısı)
 
 ### Web Sayfası (Public)
-- [ ] Hakkımızda sayfası
-- [ ] Kurumsal bilgi sayfası
-- [ ] Fiyatlar sayfası (kredi paketleri)
-- [ ] İletişim sayfası
-- [ ] KVKK (Kişisel Verilerin Korunması) sayfası
+- [x] Hakkımızda, Fiyatlar, İletişim, KVKK, Gizlilik sayfaları
 
 ### Şifremi Unuttum
-- [ ] Email ile şifre sıfırlama (token gönder → yeni şifre belirle)
-- [ ] Referans noktası: email (kayıt sırasında zorunlu)
+- [x] Email ile şifre sıfırlama (token + email)
+- [x] Giriş sayfasında "Şifremi unuttum" linki
 
 ### Kayıt Geliştirme
-- [ ] Kayıt ekranında emlakçı/müşteri seçimi
-- [ ] Cep no zorunlu + WhatsApp doğrulama
-- [ ] WhatsApp doğrulama akışı: numara gönder → 2 dk içinde eşleşirse onay
-- [ ] Doğrulanmamış hesap uyarısı
+- [x] Emlakçı / müşteri seçim butonları
+- [ ] WhatsApp doğrulama akışı (numara taşıma sonrası)
 
-### Sohbet Geliştirme
-- [ ] Mesaj kopyalama butonu (her mesajda)
-- [ ] Paylaşma butonu (AI üretimlerini WhatsApp/email ile paylaş)
+### Sohbet
+- [x] Mesaj kopyalama + paylaşma butonları
 
 ---
 

@@ -6,6 +6,7 @@ export default function AdminPanel() {
   const [patterns, setPatterns] = useState([]);
   const [anlasilamayan, setAnlasilamayan] = useState([]);
   const [yeniPattern, setYeniPattern] = useState({ pattern: '', islem: '' });
+  const [maliyet, setMaliyet] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -17,6 +18,7 @@ export default function AdminPanel() {
       setPatterns(p.data.patterns || []);
       setAnlasilamayan(a.data.kayitlar || []);
     }).catch(() => {});
+    api.get('/api/panel/egitim/maliyet-rapor').then(r => setMaliyet(r.data)).catch(() => {});
   }, []);
 
   const patternEkle = async () => {
@@ -59,6 +61,33 @@ export default function AdminPanel() {
           </div>
         </div>
       </div>
+
+      {/* Maliyet Raporu */}
+      {maliyet && (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid var(--border)' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>💰 Maliyet Raporu</div>
+          <div className="grid-3" style={{ gap: 8, marginBottom: 12 }}>
+            <div style={{ background: '#f0fdf4', borderRadius: 8, padding: 10, textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>{maliyet.toplam_kredi}</div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>Harcanan Kredi</div>
+            </div>
+            <div style={{ background: '#eff6ff', borderRadius: 8, padding: 10, textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#3b82f6' }}>${maliyet.toplam_usd?.toFixed(4)}</div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>AI Maliyeti</div>
+            </div>
+            <div style={{ background: '#f8fafc', borderRadius: 8, padding: 10, textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#475569' }}>{maliyet.islem_sayisi}</div>
+              <div style={{ fontSize: 11, color: '#64748b' }}>Toplam İşlem</div>
+            </div>
+          </div>
+          {maliyet.tip_bazli && Object.entries(maliyet.tip_bazli).sort((a, b) => b[1].sayi - a[1].sayi).slice(0, 8).map(([tip, v]) => (
+            <div key={tip} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 12, borderBottom: '1px solid var(--border-light, #f1f5f9)' }}>
+              <span>{tip}</span>
+              <span style={{ color: 'var(--text-muted)' }}>{v.sayi}x · {v.kredi.toFixed(1)} kredi</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Pattern Ekleme */}
       <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid var(--border)' }}>

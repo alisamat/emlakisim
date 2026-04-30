@@ -8,6 +8,7 @@ from app.services.gelismis import web_arama, metin_analiz, sosyal_medya_icerik
 from app.services.pdf_okuyucu import pdf_metin_cikar, pdf_analiz
 from app.services.sektorel import sektor_haberleri, piyasa_analizi
 from app.services.ilan import ilan_metni_olustur
+from app.services.reklam import reklam_metni_olustur, sunum_pdf
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
 
@@ -90,6 +91,36 @@ def ilan_metni():
     platform = d.get('platform', 'sahibinden')
     metin = ilan_metni_olustur(mulk, platform)
     return jsonify({'ilan': metin, 'platform': platform})
+
+
+@bp.route('/reklam-metni', methods=['POST'])
+@jwt_required()
+def reklam_metni():
+    """Mülk için reklam metni oluştur."""
+    d = request.get_json() or {}
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=int(get_jwt_identity())).first()
+    if not mulk:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    metin = reklam_metni_olustur(mulk, d.get('hedef', 'alici'), d.get('stil', 'profesyonel'))
+    return jsonify({'reklam': metin})
+
+
+@bp.route('/sunum-pdf', methods=['POST'])
+@jwt_required()
+def sunum_pdf_endpoint():
+    """Mülk sunum PDF oluştur."""
+    d = request.get_json() or {}
+    mulk = Mulk.query.filter_by(id=d.get('mulk_id'), emlakci_id=int(get_jwt_identity())).first()
+    if not mulk:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    from app.models import Emlakci
+    emlakci = Emlakci.query.get(int(get_jwt_identity()))
+    reklam = d.get('reklam_metin', '')
+    import io
+    from flask import send_file
+    pdf_bytes = sunum_pdf(emlakci, mulk, reklam)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf', as_attachment=True,
+                     download_name=f'sunum_{mulk.id}.pdf')
 
 
 # ── İletişim Geçmişi ─────────────────────────────────────
