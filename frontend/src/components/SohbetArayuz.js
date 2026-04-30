@@ -32,6 +32,7 @@ import Ekip from './Ekip';
 import Performans from './Performans';
 import IletisimGecmisi from './IletisimGecmisi';
 import EnvanterYonetimi from './EnvanterYonetimi';
+import AdminPanel from './AdminPanel';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -115,6 +116,7 @@ export default function SohbetArayuz() {
       case 'performans':   return <div className="sayfa-icerik"><Performans /></div>;
       case 'iletisim':     return <div className="sayfa-icerik"><IletisimGecmisi /></div>;
       case 'envanter':     return <div className="sayfa-icerik"><EnvanterYonetimi /></div>;
+      case 'admin':        return <div className="sayfa-icerik"><AdminPanel /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

@@ -125,6 +125,7 @@ const MENU = [
     baslik: '⚙️ Ayarlar',
     items: [
       { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar' },
+      { ikon: '🛠', ad: 'Admin Panel', tab: 'admin' },
       { ikon: '👤', ad: 'Profil', tab: 'profil' },
     ],
   },

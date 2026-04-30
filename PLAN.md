@@ -374,130 +374,53 @@ Kullanıcı mesaj gönderir
 - [ ] Admin panel: maliyet raporlama
 
 ### Faz 4 — Gelişmiş CRM ✅
-- [x] Müşteri düzenleme, silme, arama, filtre, dinamik detay (JSON)
-- [ ] Müşteri gruplama ve grup bazlı toplu işlemler
-- [ ] Müşteri talep listesi frontend sayfası
-- [ ] Müşteri kartı mail/WhatsApp ile gönderme
+- [x] Müşteri CRUD + gruplama + arama + filtre + dinamik detay
+- [x] Talepler & geri bildirim sayfası + iletişim geçmişi
+- [x] Müşteri kartı email + WhatsApp gönderme
 
 ### Faz 5 — Gelişmiş Portföy ✅
-- [x] Düzenleme, silme, arama, filtre, tip bazlı dinamik detay (JSON)
+- [x] CRUD + gruplama + arama + filtre + dinamik detay (tip bazlı 22+ alan)
+- [x] Broşür PDF + ilan metni (AI) + link paylaşım + eşleştirme
 - [ ] Fotoğraf yükleme (Supabase/S3 storage gerek)
-- [ ] Emlak gruplama ve alarm
-- [ ] Portföy-talep eşleştirme frontend sayfası
 
 ### Faz 6 — Belgeler & PDF ✅
-- [x] Yer gösterme tutanağı PDF, kira kontratı PDF
-- [ ] Yönlendirme belgeleri (alıcı/satıcı) PDF şablonu
-- [ ] PDF okuma ve içerik çıkarma
-- [ ] Fatura PDF oluşturma
+- [x] Yer gösterme + kira kontratı + yönlendirme (alıcı/satıcı) + broşür + fatura PDF
+- [x] PDF okuma ve analiz (pypdf + Gemini OCR)
 
 ### Faz 7 — İletişim ✅
-- [x] Email gönderme (SMTP), müşteri/portföy email şablonları
-- [ ] SMS gönderme (Netgsm/Twilio entegrasyonu)
-- [ ] Planlı SMS/email zamanlama (scheduler/cron gerek)
-- [ ] Mesai dışı WhatsApp AI otomatik yanıt
+- [x] Email gönderme + mesai dışı WhatsApp otomatik yanıt + WA mesaj gönderme
+- [ ] SMS gönderme (Netgsm/Twilio API gerek)
 
 ### Faz 8 — Muhasebe ✅
-- [x] Gelir/gider, cari hesap, OCR fiş okuma (Gemini+OpenAI)
-- [ ] Bütçe hazırlama frontend
-- [ ] Fatura oluşturma ve takibi (L modülü)
-- [ ] Ofis yönetimi/personel (M modülü)
-- [ ] Muhasebe raporları (aylık/yıllık)
+- [x] Gelir/gider + cari + kâr/zarar + bütçe + fatura + OCR fiş + banka Excel + AI rapor
 
-### Faz 9 — Hesaplamalar ✅
-- [x] Kira vergisi, değer artış, ROI, aidat analizi + frontend
+### Faz 9-10 — Hesaplamalar + Planlama ✅
+- [x] Kira vergisi, değer artış, ROI, aidat + takvim + görev + zamanlayıcı (APScheduler)
 
-### Faz 10 — Planlama ✅
-- [x] Görev CRUD, 4 tip, 4 öncelik, bugün/yaklaşan özet
-- [ ] Takvim görünümü (calendar component)
-- [ ] Günlük/haftalık özet diyalog (scheduler gerek)
-- [ ] Proaktif hatırlatmalar (cron job)
+### Faz 11-13 — Eğitim + Yedekleme + Toplu ✅
+- [x] Diyalog eğitim + Excel export + yedek takip + toplu import (Excel/OCR/rehber/banka)
 
-### Faz 11 — Diyalog Eğitim ✅
-- [x] DiyalogKayit, OgrenilenPattern, cache, istatistik, admin API
+### Faz 14-15 — Tanıtım + Lead ✅
+- [x] Tanıtım sayfası + 14 danışmanlık konusu + lead CRUD + çağrı + sektörel haber + piyasa
 
-### Faz 12 — Yedekleme ✅
-- [x] Excel export, email ile gönderim, veri özeti
-- [ ] Google Drive entegrasyonu (OAuth)
-- [ ] Haftalık otomatik yedekleme hatırlatması (scheduler)
-
-### Faz 13 — Toplu İşlemler ✅
-- [x] Excel müşteri/portföy import, OCR portföy, rehber import
-- [ ] Toplu SMS/email gönderim (SMS API gerek)
-
-### Faz 14 — Tanıtım & Danışmanlık ✅
-- [x] Public profil API, danışmanlık bilgi bankası (8 konu)
-- [ ] Tanıtım frontend sayfası (public)
-- [ ] Özelleştirilebilir tasarım (logo, renk)
-
-### Faz 15 — Lead & Çağrı ✅
-- [x] Lead CRUD + istatistik, çağrı kaydı API
-- [ ] Lead frontend sayfası
-- [ ] Çağrı frontend sayfası
-- [ ] Otomatik hatırlatma (scheduler)
-
-### Faz 16 — Alıcı/Satıcı Portalı ✅
-- [x] Belge onay (TC kimlik), müşteri talep gönderme → Lead
-- [ ] WhatsApp üzerinden hesap açma
-- [ ] WhatsApp davet sistemi
-
-### Faz 17 — İleri Seviye ✅
-- [x] Web arama (Gemini), metin analiz, sosyal medya içerik üretme (AI)
-- [ ] Sesli arama: AI telefon (Twilio)
-- [ ] Sesli not → metin çevirisi
-- [ ] FSBO otomatik tarama
+### Faz 16-17 — Portal + İleri ✅
+- [x] Belge onay + müşteri talep + ilan metni + performans + ekip + envanter + bildirim + hafıza
 
 ---
 
-## KALAN EKSİKLER
+## SADECE DIŞ SERVİS GEREKTIREN EKSİKLER
 
-### Tamamlanan (bu turda)
-- [x] Lead frontend sayfası
-- [x] Eşleştirme frontend sayfası
-- [x] Takvim görünümü
-- [x] Tanıtım & sosyal medya sayfası
-- [x] Müşteri gruplama (form + filtre)
-- [x] Sohbet arama + silme (sol panel)
-- [x] "Unutma" komutu + hatırlatma listele
-- [x] Güvenlik: Rate limiting (flask-limiter)
-- [x] Sohbet: dosya ekleme, kamera, sesli yazma, input yukarı
-- [x] Bildirim: bell icon, badge, dropdown panel, 60sn kontrol
-- [x] Fatura modülü (CRUD + PDF + durum takibi)
-- [x] Çağrı kayıtları frontend
-- [x] Yedekleme takip (son yedek tarihi, uyarı)
-
-### Yapılacak — Muhasebe Genişletme
-- [ ] Kâr/Zarar sayfası (gelirler - giderler, dönemsel karşılaştırma, grafik)
-- [ ] KDE (Kar-Değer-Etki) durumu sayfası
-- [ ] Cari hesap frontend sayfası (müşterilerden alacak/borç takibi)
-- [ ] Muhasebe raporları (aylık/yıllık gelir-gider raporu, AI özetli)
-- [ ] Banka Excel'den masraf çıkarma (banka hesap özeti import → gider kaydı)
-
-### Yapılacak — Ayarlar & Kişiselleştirme
-- [ ] Ayarlar sayfası (profil ayarları + uygulama ayarları ayrı)
-- [ ] Logo yükleme (hoşgeldin ekranında ve header'da kendi logosunu gösterme)
-- [ ] Tema ayarı: Gece modu (dark mode) desteği
-- [ ] Tüm sayfalarda dark mode uyumlu renklendirme (CSS variables ile)
-
-### Yapılacak — Emlak Asistanı Tam Yetkinlik
-- [x] İdari destek, ilan yönetimi, belge takibi, CRM, pazarlama, eşleştirme
-- [ ] İlan fotoğraflarını düzenleme (storage gerek)
-- [ ] Sanal tur yönetimi (ileri seviye)
-- [ ] Basılı pazarlama materyali (broşür PDF)
-
-### Dış Servis Entegrasyonları (API key/hesap gerekli)
-- [ ] SMS API (Netgsm veya Twilio)
-- [ ] Fotoğraf storage (Supabase veya S3)
-- [ ] Google Drive OAuth (yedekleme)
-- [ ] Scheduler/Cron (hatırlatma, planlı gönderim)
-- [ ] Twilio (sesli arama — ileri seviye)
-- [ ] Kredi satın alma (ödeme entegrasyonu)
-
-### WhatsApp (numara taşıma bekleniyor)
-- [ ] Numara taşıma (Meta Policy 1.4 onayı bekleniyor)
-- [ ] WhatsApp'tan kayıt akışı
-- [ ] Mesai dışı otomatik yanıt
-- [ ] WhatsApp davet sistemi
+| Özellik | Gerekli Servis |
+|---------|---------------|
+| SMS gönderme | Netgsm veya Twilio API |
+| Fotoğraf yükleme | Supabase veya S3 |
+| Google Drive yedekleme | Google OAuth |
+| Sesli AI telefon | Twilio Voice |
+| Sesli not → metin | Web Speech (frontend var, backend yok) |
+| Kredi satın alma | Ödeme entegrasyonu (iyzico/stripe) |
+| WhatsApp numara taşıma | Meta Policy 1.4 onay |
+| WhatsApp'tan kayıt | Numara taşıma sonrası |
+| Sanal tur | 360° çekim servisi |
 
 ---
 
