@@ -73,6 +73,7 @@ class Mulk(db.Model):
     parsel        = db.Column(db.String(20))
     notlar        = db.Column(db.Text)
     detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
+    grup          = db.Column(db.String(50))              # kullanıcı tanımlı grup
     aktif         = db.Column(db.Boolean, default=True)
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -39,6 +39,15 @@ _PATTERNS = [
     # Muhasebe
     (r'(?:kar\s*zarar|kâr\s*zarar|kar.zarar|gelir\s*gider)',  'muhasebe_rapor'),
     (r'(?:cari|alacak|borc|borç)',                            'cari_rapor'),
+    # Planlama
+    (r'(?:gorev|görev)\s*(?:ekle|olustur|kaydet)',            'gorev_ekle'),
+    (r'(?:gorev|görev)\s*(?:listele|göster)',                 'gorev_liste'),
+    (r'(?:bugun|bugün|gunluk|günlük)\s*(?:plan|görev|ozet)', 'bugun_ozet'),
+    # Eşleştirme
+    (r'(?:esles|eşleş|eslestir|eşleştir|uygun\s*mulk)',      'eslestirme'),
+    # Fatura
+    (r'(?:fatura)\s*(?:olustur|ekle|kaydet)',                 'fatura_ekle'),
+    (r'(?:fatura)\s*(?:listele|göster)',                      'fatura_liste'),
     # Yardım
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
 ]
@@ -84,6 +93,26 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'cari_rapor':
         return _cari_rapor(emlakci)
+
+    if komut == 'gorev_ekle':
+        session['bekleyen_islem'] = 'gorev_ekle'
+        return '*Görev başlığını yazın:*\n\n_Örnek: "Ahmet beye yarın saat 3te dönüş yap"_'
+
+    if komut == 'gorev_liste':
+        return _gorev_listele(emlakci)
+
+    if komut == 'bugun_ozet':
+        return _bugun_ozet(emlakci)
+
+    if komut == 'eslestirme':
+        return _eslestirme_ozet(emlakci)
+
+    if komut == 'fatura_ekle':
+        session['bekleyen_islem'] = 'fatura_ekle'
+        return '*Fatura bilgileri:*\n\nAlıcı adı, tutar (TL), açıklama\n_Örnek: "Ali Yılmaz, 15000, komisyon"_'
+
+    if komut == 'fatura_liste':
+        return _fatura_listele(emlakci)
 
     if komut == 'not_ekle':
         session['bekleyen_islem'] = 'not_ekle'
@@ -137,9 +166,12 @@ def _yardim_mesaji(emlakci):
             '📋 *Belgeler:* "yer gösterme oluştur"\n'
             '📊 *Rapor:* "rapor", "özet"\n'
             '📝 *Not:* "not ekle"\n'
-            '🧠 *Unutma:* "unutma: Ahmet bey\'e yarın dönüş yap"\n'
-            '📋 *Hatırlatmalar:* "hatırlatmalar"\n'
-            '💰 *Hesaplama:* "kira vergisi hesapla"\n\n'
+            '📅 *Planlama:* "görev ekle", "bugün özet"\n'
+            '🔗 *Eşleştirme:* "eşleştir"\n'
+            '🧾 *Fatura:* "fatura ekle", "fatura listele"\n'
+            '💰 *Muhasebe:* "kar zarar", "cari"\n'
+            '🧠 *Unutma:* "unutma: Ahmet beye yarın dönüş yap"\n'
+            '💡 *Hesaplama:* "kira vergisi hesapla"\n\n'
             '💡 *İpucu:* Excel\'den toplu müşteri/portföy ekleyebilirsiniz!\n'
             'Fotoğraf çekerek sahibinden ilanlarını portföye aktarabilirsiniz!\n\n'
             '_Doğal dille yazın, anlayacağım._')
@@ -160,6 +192,10 @@ def _bekleyen_isle(session, emlakci, metin):
         return _not_kaydet(emlakci, metin)
     if islem == 'unutma':
         return _unutma_kaydet(emlakci, metin)
+    if islem == 'gorev_ekle':
+        return _gorev_kaydet(emlakci, metin)
+    if islem == 'fatura_ekle':
+        return _fatura_kaydet(emlakci, metin)
     return None
 
 
@@ -243,6 +279,89 @@ def _cari_rapor(emlakci):
             f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
             f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
             + '\n'.join(satirlar))
+
+
+def _gorev_listele(emlakci):
+    from app.models.planlama import Gorev
+    gorevler = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').order_by(Gorev.olusturma.desc()).limit(10).all()
+    if not gorevler:
+        return '📅 Aktif görev yok.\n\n_"Görev ekle" yazarak yeni görev ekleyebilirsiniz._'
+    satirlar = [f'*{i+1}.* {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik}' for i, g in enumerate(gorevler)]
+    return f'📅 *Görevleriniz* ({len(gorevler)})\n\n' + '\n'.join(satirlar)
+
+
+def _bugun_ozet(emlakci):
+    from app.models.planlama import Gorev
+    from datetime import datetime, timedelta
+    bugun = datetime.utcnow().replace(hour=0, minute=0, second=0)
+    yarin = bugun + timedelta(days=1)
+    gorevler = Gorev.query.filter(Gorev.emlakci_id == emlakci.id, Gorev.baslangic >= bugun, Gorev.baslangic < yarin, Gorev.durum != 'iptal').all()
+    m_sayi = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
+    p_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+    mesaj = f'☀️ *Günlük Özet*\n\n👥 {m_sayi} müşteri · 🏢 {p_sayi} mülk\n'
+    if gorevler:
+        mesaj += f'\n📅 *Bugünkü görevler ({len(gorevler)}):*\n'
+        for g in gorevler:
+            saat = g.baslangic.strftime('%H:%M') if g.baslangic else ''
+            mesaj += f'  • {g.baslik} {saat}\n'
+    else:
+        mesaj += '\n📅 Bugün planlanmış görev yok.'
+    return mesaj
+
+
+def _eslestirme_ozet(emlakci):
+    musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).all()
+    mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
+    eslesme = 0
+    for m in musteriler:
+        for p in mulkler:
+            if m.islem_turu == p.islem_turu:
+                if m.butce_max and p.fiyat and p.fiyat <= m.butce_max:
+                    eslesme += 1
+    return (f'🔗 *Eşleştirme Özeti*\n\n'
+            f'👥 {len(musteriler)} müşteri · 🏢 {len(mulkler)} mülk\n'
+            f'✅ {eslesme} potansiyel eşleşme\n\n'
+            f'_Detaylı eşleştirme için uygulama menüsünden "Eşleştirme" sayfasını açın._')
+
+
+def _gorev_kaydet(emlakci, metin):
+    from app.models.planlama import Gorev
+    g = Gorev(emlakci_id=emlakci.id, baslik=metin[:200], tip='gorev')
+    db.session.add(g)
+    db.session.commit()
+    return f'✅ *Görev eklendi!*\n\n📌 {metin[:100]}'
+
+
+def _fatura_kaydet(emlakci, metin):
+    from app.models.fatura import Fatura
+    parcalar = [p.strip() for p in metin.replace(';', ',').split(',')]
+    alici = parcalar[0] if parcalar else ''
+    tutar = 0
+    if len(parcalar) > 1:
+        try: tutar = float(re.sub(r'[^\d.]', '', parcalar[1]))
+        except: pass
+    aciklama = parcalar[2] if len(parcalar) > 2 else 'hizmet'
+
+    from datetime import datetime
+    f = Fatura(
+        emlakci_id=emlakci.id,
+        fatura_no=f'F-{datetime.now().strftime("%Y%m%d%H%M")}',
+        tip='hizmet', alici_ad=alici, tutar=tutar,
+        kdv_oran=20, kdv_tutar=round(tutar * 0.2, 2),
+        toplam=round(tutar * 1.2, 2),
+    )
+    db.session.add(f)
+    db.session.commit()
+    return f'✅ *Fatura oluşturuldu!*\n\n🧾 {f.fatura_no}\n👤 {alici}\n💰 {int(f.toplam):,} TL (KDV dahil)'.replace(',', '.')
+
+
+def _fatura_listele(emlakci):
+    from app.models.fatura import Fatura
+    faturalar = Fatura.query.filter_by(emlakci_id=emlakci.id).order_by(Fatura.olusturma.desc()).limit(10).all()
+    if not faturalar:
+        return '🧾 Henüz fatura yok.'
+    satirlar = [f'*{f.fatura_no}* — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for f in faturalar]
+    return f'🧾 *Son Faturalar*\n\n' + '\n'.join(satirlar)
 
 
 def _unutma_kaydet(emlakci, metin):

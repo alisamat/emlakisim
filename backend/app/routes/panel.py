@@ -103,7 +103,7 @@ def mulk_ekle():
 def mulk_guncelle(mid):
     m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
-    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar']:
+    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar', 'grup']:
         if f in d:
             setattr(m, f, d[f])
     if 'detaylar' in d:
@@ -382,7 +382,7 @@ def _mulk(m):
         'id': m.id, 'baslik': m.baslik, 'adres': m.adres, 'sehir': m.sehir,
         'ilce': m.ilce, 'tip': m.tip, 'islem_turu': m.islem_turu,
         'fiyat': m.fiyat, 'metrekare': m.metrekare, 'oda_sayisi': m.oda_sayisi,
-        'ada': m.ada, 'parsel': m.parsel, 'notlar': m.notlar,
+        'ada': m.ada, 'parsel': m.parsel, 'notlar': m.notlar, 'grup': m.grup,
         'detaylar': m.detaylar or {},
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }

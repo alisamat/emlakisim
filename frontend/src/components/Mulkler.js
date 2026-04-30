@@ -162,6 +162,10 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
           <div><label className="etiket">Fiyat (TL)</label><input className="input" name="fiyat" type="number" value={form.fiyat || ''} onChange={d} /></div>
           <div><label className="etiket">Oda Sayısı</label><input className="input" name="oda_sayisi" value={form.oda_sayisi || ''} onChange={d} placeholder="3+1" /></div>
         </div>
+        <div style={{ marginBottom: 12 }}>
+          <label className="etiket">Grup</label>
+          <input className="input" name="grup" value={form.grup || ''} onChange={d} placeholder="Premium, Acil Satılık, Yatırımlık..." />
+        </div>
 
         {/* Dinamik detay alanları */}
         <button type="button" onClick={() => setDetayAcik(p => !p)} style={{
@@ -265,6 +269,7 @@ export default function Mulkler() {
   const [arama, setArama]       = useState('');
   const [filtreTip, setFiltreTip]     = useState('');
   const [filtreIslem, setFiltreIslem] = useState('');
+  const [filtreGrup, setFiltreGrup]   = useState('');
 
   const yukle = useCallback(async () => {
     setYuk(true);
@@ -285,9 +290,12 @@ export default function Mulkler() {
     try { await api.delete(`/api/panel/mulkler/${id}`); setMulkler(p => p.filter(x => x.id !== id)); } catch {}
   };
 
+  const gruplar = [...new Set(mulkler.map(m => m.grup).filter(Boolean))];
+
   let liste = mulkler;
   if (filtreIslem) liste = liste.filter(m => m.islem_turu === filtreIslem);
   if (filtreTip) liste = liste.filter(m => m.tip === filtreTip);
+  if (filtreGrup) liste = liste.filter(m => m.grup === filtreGrup);
   if (arama.trim()) {
     const q = arama.toLowerCase();
     liste = liste.filter(m => (m.baslik || '').toLowerCase().includes(q) || (m.adres || '').toLowerCase().includes(q) || (m.sehir || '').toLowerCase().includes(q) || (m.ilce || '').toLowerCase().includes(q));
@@ -323,6 +331,23 @@ export default function Mulkler() {
           }}>{l}</button>
         ))}
       </div>
+
+      {gruplar.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <button onClick={() => setFiltreGrup('')} style={{
+            padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            background: !filtreGrup ? '#475569' : '#fff', color: !filtreGrup ? '#fff' : '#64748b',
+            border: `1px solid ${!filtreGrup ? '#475569' : '#e2e8f0'}`,
+          }}>Tüm Gruplar</button>
+          {gruplar.map(g => (
+            <button key={g} onClick={() => setFiltreGrup(filtreGrup === g ? '' : g)} style={{
+              padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: filtreGrup === g ? '#475569' : '#fff', color: filtreGrup === g ? '#fff' : '#64748b',
+              border: `1px solid ${filtreGrup === g ? '#475569' : '#e2e8f0'}`,
+            }}>🏷 {g}</button>
+          ))}
+        </div>
+      )}
 
       {yukleniyor ? (
         <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>Yükleniyor…</div>
