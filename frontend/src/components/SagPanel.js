@@ -30,6 +30,7 @@ const MENU = [
     baslik: '🏢 Portföy',
     items: [
       { ikon: '🏠', ad: 'Mülk Listesi', tab: 'mulkler', aciklama: 'Portföyü yönet, ara, filtrele' },
+      { ikon: '📸', ad: 'İlan OCR & Karşılaştır', tab: 'ilan_ocr', aciklama: 'İlan fotoğrafı çek → bilgi çıkar → karşılaştır → portföye ekle' },
       { ikon: '📄', ad: 'Belge Oluştur', tab: 'belgeler', aciklama: 'Yer gösterme, kontrat, yönlendirme PDF' },
     ],
   },

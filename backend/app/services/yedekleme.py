@@ -104,6 +104,43 @@ def yedek_logla(emlakci):
     db.session.commit()
 
 
+def depolama_durumu(emlakci):
+    """Kullanıcının veri alanı kullanımı (tahmini)."""
+    from app.models import Musteri, Mulk, Not
+    from app.models.muhasebe import GelirGider
+    from app.models.planlama import Gorev
+    from app.models.islem_takip import Evrak
+
+    sayilar = {
+        'musteri': Musteri.query.filter_by(emlakci_id=emlakci.id).count(),
+        'mulk': Mulk.query.filter_by(emlakci_id=emlakci.id).count(),
+        'muhasebe': GelirGider.query.filter_by(emlakci_id=emlakci.id).count(),
+        'gorev': Gorev.query.filter_by(emlakci_id=emlakci.id).count(),
+        'evrak': Evrak.query.filter_by(emlakci_id=emlakci.id).count(),
+        'not': Not.query.filter_by(emlakci_id=emlakci.id).count(),
+    }
+
+    # Tahmini boyut (kayıt başına ~1KB)
+    toplam_kayit = sum(sayilar.values())
+    tahmini_kb = toplam_kayit * 1
+    tahmini_mb = round(tahmini_kb / 1024, 2)
+
+    # Limit: 50MB (ücretsiz)
+    limit_mb = 50
+    doluluk_yuzde = round(tahmini_mb / limit_mb * 100, 1)
+
+    return {
+        'sayilar': sayilar,
+        'toplam_kayit': toplam_kayit,
+        'tahmini_mb': tahmini_mb,
+        'limit_mb': limit_mb,
+        'doluluk_yuzde': min(doluluk_yuzde, 100),
+        'uyari': doluluk_yuzde > 80,
+        'kritik': doluluk_yuzde > 95,
+        'mesaj': 'Normal' if doluluk_yuzde < 80 else 'Yedek alın, alan dolmak üzere!' if doluluk_yuzde < 95 else 'KRİTİK: Alan dolu! Eski belgeleri silin.',
+    }
+
+
 def yedek_ozeti(emlakci):
     """Yedek için veri özeti."""
     from app.models import Musteri, Mulk, Not

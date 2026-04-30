@@ -9,6 +9,8 @@ from app.services.pdf_okuyucu import pdf_metin_cikar, pdf_analiz
 from app.services.sektorel import sektor_haberleri, piyasa_analizi
 from app.services.ilan import ilan_metni_olustur
 from app.services.reklam import reklam_metni_olustur, sunum_pdf
+from app.services.ilan_ocr import ilan_fotograf_oku, ilanlari_karsilastir
+import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
 
@@ -147,6 +149,88 @@ def iletisim_gecmisi(musteri_id):
     kayitlar = IletisimKayit.query.filter_by(
         emlakci_id=int(get_jwt_identity()), musteri_id=musteri_id
     ).order_by(IletisimKayit.olusturma.desc()).limit(30).all()
+# ── İlan OCR & Karşılaştırma ──────────────────────────────
+# Hafızadaki ilanlar (kullanıcı bazlı, max 20)
+_ilan_hafiza: dict = {}  # emlakci_id → [ilan1, ilan2, ...]
+
+
+@bp.route('/ilan-ocr', methods=['POST'])
+@jwt_required()
+def ilan_ocr():
+    """İlan fotoğrafından bilgi çıkar."""
+    if 'image' in request.files:
+        img = request.files['image'].read()
+        img_b64 = base64.b64encode(img).decode()
+    elif request.is_json and request.json.get('image_base64'):
+        img_b64 = request.json['image_base64']
+    else:
+        return jsonify({'message': 'Fotoğraf gerekli'}), 400
+
+    sonuc = ilan_fotograf_oku(img_b64)
+    if sonuc.get('hata'):
+        return jsonify(sonuc), 500
+
+    # Hafızaya ekle (max 20)
+    eid = int(get_jwt_identity())
+    if eid not in _ilan_hafiza:
+        _ilan_hafiza[eid] = []
+    _ilan_hafiza[eid].append(sonuc)
+    if len(_ilan_hafiza[eid]) > 20:
+        _ilan_hafiza[eid] = _ilan_hafiza[eid][-20:]
+
+    return jsonify({
+        'ilan': sonuc,
+        'hafiza_sayisi': len(_ilan_hafiza[eid]),
+        'telefon': sonuc.get('emlakci_telefon'),
+    })
+
+
+@bp.route('/ilan-hafiza', methods=['GET'])
+@jwt_required()
+def ilan_hafiza_listele():
+    """Hafızadaki ilanları listele."""
+    eid = int(get_jwt_identity())
+    ilanlar = _ilan_hafiza.get(eid, [])
+    return jsonify({'ilanlar': ilanlar, 'sayisi': len(ilanlar)})
+
+
+@bp.route('/ilan-hafiza', methods=['DELETE'])
+@jwt_required()
+def ilan_hafiza_temizle():
+    """Hafızadaki ilanları temizle."""
+    eid = int(get_jwt_identity())
+    idx = request.args.get('index')
+    if idx is not None:
+        try:
+            _ilan_hafiza.get(eid, []).pop(int(idx))
+        except (IndexError, ValueError):
+            pass
+    else:
+        _ilan_hafiza[eid] = []
+    return jsonify({'ok': True})
+
+
+@bp.route('/ilan-karsilastir', methods=['POST'])
+@jwt_required()
+def ilan_karsilastir():
+    """Hafızadaki ilanları karşılaştır."""
+    eid = int(get_jwt_identity())
+    d = request.get_json() or {}
+    indexler = d.get('indexler', [])
+
+    ilanlar = _ilan_hafiza.get(eid, [])
+    if indexler:
+        secili = [ilanlar[i] for i in indexler if i < len(ilanlar)]
+    else:
+        secili = ilanlar[:5]  # max 5 karşılaştır
+
+    if len(secili) < 2:
+        return jsonify({'message': 'En az 2 ilan gerekli'}), 400
+
+    sonuc = ilanlari_karsilastir(secili)
+    return jsonify(sonuc)
+
+
     return jsonify({'kayitlar': [{
         'id': k.id, 'tip': k.tip, 'yon': k.yon,
         'ozet': k.ozet, 'olusturma': k.olusturma.isoformat(),
