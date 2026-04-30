@@ -33,9 +33,9 @@ const MENU = [
     baslik: '💰 Muhasebe',
     items: [
       { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe' },
+      { ikon: '📈', ad: 'Kâr/Zarar', tab: 'karzarar' },
+      { ikon: '📒', ad: 'Cari Hesaplar', tab: 'cariler' },
       { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar' },
-      { ikon: '📈', ad: 'Gelir Ekle', mesaj: 'Gelir eklemek istiyorum' },
-      { ikon: '📉', ad: 'Gider Ekle', mesaj: 'Gider eklemek istiyorum' },
     ],
   },
   {
@@ -97,9 +97,10 @@ const MENU = [
     ],
   },
   {
-    baslik: '⚙️ Profil',
+    baslik: '⚙️ Ayarlar',
     items: [
-      { ikon: '👤', ad: 'Profil Ayarları', tab: 'profil' },
+      { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar' },
+      { ikon: '👤', ad: 'Profil', tab: 'profil' },
     ],
   },
 ];

@@ -1,5 +1,15 @@
+:root, [data-tema="acik"] {
+  --bg-main: #f8fafc; --bg-card: #fff; --bg-input: #fff;
+  --text-primary: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+}
+[data-tema="karanlik"] {
+  --bg-main: #0f172a; --bg-card: #1e293b; --bg-input: #334155;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+  --border: #334155; --border-light: #1e293b;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-primary); }
 a { text-decoration: none; color: inherit; }
 
 .layout-main { padding-bottom: 76px; }
@@ -30,8 +40,8 @@ a { text-decoration: none; color: inherit; }
   .show-mobile { display: block; }
 }
 
-.kart { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 20px; }
-.input { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; background: #fff; }
+.kart { background: var(--bg-card); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 20px; }
+.input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; background: var(--bg-input); color: var(--text-primary); }
 .input:focus { border-color: #16a34a; }
 .btn-yesil { background: #16a34a; color: #fff; border: none; border-radius: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-yesil:disabled { opacity: 0.6; cursor: not-allowed; }

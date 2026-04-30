@@ -90,7 +90,11 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
       <div className="sohbet-mesajlar" ref={mesajlarRef}>
         {mesajlar.length === 0 ? (
           <div className="sohbet-hosgeldin">
-            <div className="sohbet-hosgeldin-ikon">🏠</div>
+            {localStorage.getItem('emlakisim_logo') ? (
+              <img src={localStorage.getItem('emlakisim_logo')} alt="Logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'contain' }} />
+            ) : (
+              <div className="sohbet-hosgeldin-ikon">🏠</div>
+            )}
             <div className="sohbet-hosgeldin-baslik">Merhaba, {user?.ad_soyad?.split(' ')[0]}!</div>
             <div className="sohbet-hosgeldin-aciklama">
               Emlakisim AI Asistanınız hazır. Müşteri ekle, portföy yönet, belge oluştur — her şeyi buradan yapabilirsiniz.

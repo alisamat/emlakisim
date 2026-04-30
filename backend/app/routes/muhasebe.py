@@ -7,6 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.muhasebe import GelirGider, Cari, CariHareket
 from app.services.ocr import fis_oku
+from app.services.banka import banka_excel_import
 from datetime import datetime
 
 bp = Blueprint('muhasebe', __name__, url_prefix='/api/panel/muhasebe')
@@ -177,6 +178,46 @@ def _kategori_esle(ocr_kategori):
         'fatura': 'Fatura', 'reklam': 'Reklam', 'diğer': 'Diğer Gider',
     }
     return eslesme.get(ocr_kategori, 'Diğer Gider')
+
+
+# ── Banka Excel Import ───────────────────────────────────
+@bp.route('/banka-import', methods=['POST'])
+@jwt_required()
+def banka_import():
+    """Banka hesap özeti Excel'den masraf çıkar."""
+    if 'file' not in request.files:
+        return jsonify({'message': 'Excel dosyası gerekli'}), 400
+    data = request.files['file'].read()
+    sonuc = banka_excel_import(_eid(), data)
+    return jsonify(sonuc), 201 if not sonuc.get('hata') else 400
+
+
+# ── Muhasebe Raporu ──────────────────────────────────────
+@bp.route('/rapor', methods=['GET'])
+@jwt_required()
+def muhasebe_raporu():
+    """Aylık/yıllık muhasebe raporu."""
+    kayitlar = GelirGider.query.filter_by(emlakci_id=_eid()).order_by(GelirGider.tarih).all()
+
+    aylik = {}
+    for k in kayitlar:
+        if not k.tarih:
+            continue
+        ay_key = k.tarih.strftime('%Y-%m')
+        if ay_key not in aylik:
+            aylik[ay_key] = {'gelir': 0, 'gider': 0}
+        aylik[ay_key][k.tip] += k.tutar
+
+    rapor = []
+    for ay, veri in sorted(aylik.items()):
+        rapor.append({
+            'ay': ay,
+            'gelir': round(veri['gelir'], 2),
+            'gider': round(veri['gider'], 2),
+            'kar': round(veri['gelir'] - veri['gider'], 2),
+        })
+
+    return jsonify({'rapor': rapor})
 
 
 # ── Serializers ──────────────────────────────────────────
