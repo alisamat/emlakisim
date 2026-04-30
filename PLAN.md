@@ -191,130 +191,119 @@ Asistan her şeyi yapabilmeli — gerçek bir dijital çalışan gibi:
 ## MODÜLLER VE ÖZELLİKLER
 
 ### A. Kayıt & Giriş
-- [ ] WhatsApp'tan kayıt olabilme (sohbet üzerinden tüm süreç)
-- [ ] Uygulama üzerinden kayıt
-- [ ] Giriş (email + şifre)
-- [ ] WhatsApp'tan ilk mesaj → kayıtsızsa kayıt akışı başlat
+- [x] Uygulama üzerinden kayıt + giriş (email + şifre)
+- [x] Şifre değiştirme
+- [ ] WhatsApp'tan kayıt akışı (numara taşıma bekleniyor)
 
 ### B. Müşteri Yönetimi (CRM)
-- [ ] Yeni müşteri oluştur (WhatsApp + uygulama)
-- [ ] Müşteri listesi görüntüleme
-- [ ] Müşteri bilgilerini düzenleme
-- [ ] Müşteri silme / gizleme
-- [ ] Müşteri arama (isim, telefon, talep)
-- [ ] Müşteri talepleri listesi
-- [ ] Taleplere not ekleme
-- [ ] Hatırlatma ekleme (müşteri bazlı)
-- [ ] Otomatik SMS gönderme
-- [ ] Otomatik e-mail gönderme
-- [ ] Planlı SMS/email zamanlama
-- [ ] Kendine hatırlatma kurma
-- [ ] Müşteri gruplama (gruplar oluştur, yönet)
-- [ ] Grup bazlı toplu işlemler
-- [ ] Müşteri kartı mail/WhatsApp ile gönderme
-- [ ] Müşteri bazlı para hareketi kaydı
-- [ ] Para hareketi sorgulama
+- [x] CRUD (ekle, düzenle, sil, listele)
+- [x] Arama (isim, telefon, tercih) + sıcaklık filtresi
+- [x] Müşteri gruplama + grup filtresi
+- [x] Dinamik detay alanları (JSON, işlem türüne göre)
+- [x] Müşteri kartı email ile gönderme
+- [x] Müşteri'ye WhatsApp mesaj gönderme
+- [x] Talepler & geri bildirim sayfası
+- [x] İletişim geçmişi (telefon/whatsapp/email/yüz yüze)
+- [x] Hatırlatma ekleme ("unutma" komutu)
+- [x] Email gönderme (SMTP)
+- [ ] SMS gönderme (Netgsm/Twilio API gerek)
+- [x] Para hareketi: cari hesap takibi
 
 ### C. Portföy (Emlak) Yönetimi
-- [ ] Yeni emlak girişi (kolay form + WhatsApp)
-- [ ] Emlak düzenleme
-- [ ] Emlak silme
-- [ ] Emlak gruplama
-- [ ] Alarm/bildirim kurma (portföy bazlı)
-- [ ] Emlak bilgisi mail ile gönderme
-- [ ] Emlak fotoğraf yönetimi
-- [ ] Emlak detay sayfası
+- [x] CRUD (ekle, düzenle, sil, listele)
+- [x] Arama + tip filtresi + işlem filtresi + grup filtresi
+- [x] Dinamik detay (tip bazlı JSON — 22+ alan)
+- [x] Emlak gruplama
+- [x] Broşür PDF
+- [x] İlan metni oluşturma (AI)
+- [x] Link kopyalama (paylaşım)
+- [x] Portföy email gönderme
+- [x] Zincirleme: mülk ekle → uygun müşteri bildirimi
+- [ ] Fotoğraf yükleme (storage gerek)
 
 ### D. Eşleştirme & Analiz
-- [ ] Portföy-talep otomatik eşleştirme
-- [ ] Puanlama sistemi (uygunluk skoru)
-- [ ] Planlama yapabilme
-- [ ] Rapor sunma (eşleşme raporu)
-- [ ] AI destekli karşılaştırma
+- [x] Portföy-talep otomatik eşleştirme + puanlama
+- [x] Eşleştirme frontend sayfası
+- [x] Zincirleme: müşteri ekle → uygun mülk bildirimi
 
 ### E. Muhasebe
-- [ ] Gelir/gider kaydı
-- [ ] Bütçe hazırlama
-- [ ] KDE (Kar-Değer-Etki) gelir hesapları
-- [ ] Raporlar (aylık, yıllık, dönemsel)
-- [ ] Cari hesap tutma
-- [ ] Cari hesap ekstresi mail/WhatsApp gönderme
+- [x] Gelir/gider kaydı + kategori + silme
+- [x] Kâr/Zarar sayfası (dönemsel, kategori dağılımı)
+- [x] Cari hesap (borç/alacak takibi + hareket)
+- [x] Bütçe planlama (kategori bazlı, gerçekleşen karşılaştırma)
+- [x] Fatura CRUD + durum takibi + PDF
+- [x] OCR fiş okuma (Gemini + OpenAI)
+- [x] Banka Excel import (otomatik kategori tahmin)
+- [x] Muhasebe raporu (aylık tablo + AI özet)
 
 ### F. Planlama
-- [ ] Günlük/haftalık/aylık planlama
-- [ ] Takvim görünümü
-- [ ] Hatırlatıcılar
-- [ ] Görev yönetimi
+- [x] Görev CRUD (4 tip, 4 öncelik, checkbox)
+- [x] Takvim görünümü (aylık grid)
+- [x] Bugün/yaklaşan özet
+- [x] Otomatik hatırlatma (APScheduler)
 
-### G. Notlar
-- [ ] Serbest not oluşturma
-- [ ] Müşteri/emlak ile ilişkilendirme
-- [ ] Not arama
-- [ ] Sesli not → metin çevirisi (ileri aşama)
+### G. Notlar & Hatırlatma
+- [x] Not CRUD
+- [x] "Unutma" komutu (sohbetten hatırlatma kaydet)
+- [x] Hatırlatma listele
 
 ### H. Belgeler & Formlar
-- [ ] Yer gösterme belgesi (PDF)
-- [ ] Kira kontratı oluşturma
-- [ ] Diğer evraklar (şablonlar)
-- [ ] Alıcı onay linki + TC kimlik doğrulama
+- [x] Yer gösterme belgesi PDF
+- [x] Kira kontratı PDF
+- [x] Yönlendirme belgeleri (alıcı + satıcı) PDF
+- [x] Broşür PDF
+- [x] Fatura PDF
+- [x] PDF okuma ve analiz (pypdf + Gemini OCR)
+- [x] Alıcı onay linki + TC kimlik doğrulama
 
-### I. Hesaplamalar & Raporlar
-- [ ] Kira vergisi hesaplama
-- [ ] Değer artış kazanç vergisi hesaplama
-- [ ] Kira getirisi hesaplama (ROI)
-- [ ] Emlak piyasa raporları
-- [ ] Genel emlak sektörü analizleri
+### I. Hesaplamalar
+- [x] Kira vergisi (dilimli)
+- [x] Değer artış kazancı
+- [x] Kira getirisi (ROI)
+- [x] Aidat analizi
+- [x] Hesaplamalar frontend sayfası
 
-### J. Yönlendirme Belgeleri
-- [ ] Alıcı yönlendirme belgesi
-- [ ] Satıcı yönlendirme belgesi
-- [ ] Dijital onay süreci
+### J-K. Tanıtım & Paylaşım
+- [x] Public emlakçı profil API
+- [x] Tanıtım sayfası (link + profil + sosyal medya)
+- [x] Paylaşılabilir portföy linki
+- [x] Logo yükleme (Ayarlar)
+- [x] Sosyal medya içerik üretme (Instagram/Facebook/WhatsApp — AI)
+- [x] İlan metni oluşturma (AI)
 
-### K. Emlakçı Tanıtım Sayfası
-- [ ] Her emlakçıya özel web tanıtım sayfası (emlakisim.com/emlakci/xxx)
-- [ ] Alıcı/satıcıya gösterilecek profil, portföy, iletişim bilgileri
-- [ ] Paylaşılabilir portföy linki (tek emlak veya liste)
-- [ ] Özelleştirilebilir tasarım (logo, renk, açıklama)
+### L. Lead & Çağrı
+- [x] Lead CRUD + istatistik + durum değiştirme
+- [x] Çağrı kayıtları (gelen/giden/kaçırılmış)
+- [x] Lead soğuma uyarısı (3+ gün → bildirim, APScheduler)
+- [x] Mesai dışı WhatsApp otomatik yanıt
 
-### L. Fatura & Satın Alma
-- [ ] Fatura oluşturma (satış, kiralama, hizmet)
-- [ ] Fatura takibi (ödendi/bekliyor/gecikmiş)
-- [ ] Satın alma kaydı
-- [ ] Fatura PDF oluşturma ve gönderme (mail/WhatsApp)
+### M. Ofis & Ekip
+- [x] Envanter takibi (ofis malzeme, min miktar uyarı)
+- [x] Danışman yönetimi (ekip)
+- [x] Müşteri → danışman atama
+- [x] Geri bildirim (yer gösterme sonrası)
 
-### M. Ofis Yönetimi & Muhasebe
-- [ ] Ofis gider takibi (kira, faturalar, personel)
-- [ ] Personel yönetimi
-- [ ] Ofis bütçesi ve raporları
-- [ ] Genel muhasebe defteri
-- [ ] Vergi raporları
+### N. Danışmanlık
+- [x] 14 konu bilgi bankası (tapu, kira, vergi, kredi, ekspertiz...)
+- [x] Sektörel haber takibi (AI)
+- [x] Piyasa analizi (şehir bazlı)
 
-### N. Sosyal Medya Paylaşım
-- [ ] Facebook için portföy paylaşım mesajı hazırlama
-- [ ] WhatsApp için portföy bildirim mesajı hazırlama
-- [ ] Instagram için portföy paylaşım içeriği hazırlama
-- [ ] Şablonlar ve otomatik metin oluşturma (AI destekli)
-- [ ] Toplu paylaşım planlama
-
-### O. Akıllı Çağrı Yönetimi
-- [ ] Gelen çağrıları dijitalleştirme (müşteri görüşme kaydı)
-- [ ] Meşgulken kaçırılan önemli çağrı bildirimi
-- [ ] Çağrı sonrası otomatik not oluşturma (AI destekli)
-- [ ] Müşteri arama geçmişi ve takibi
-
-### P. Otomatik Lead Yönetimi
-- [ ] Lead'lere anında otomatik yanıt (ilk saat kuralı)
-- [ ] FSBO (satıcı tarafından satılık) listelerini otomatik tarama
-- [ ] Mesai dışı WhatsApp sorularına AI otomatik yanıt
-- [ ] Lead sıcaklık takibi ve otomatik hatırlatma
-- [ ] Lead kaynağı analizi (WhatsApp, web, telefon)
-
-### Q. Emlak Danışmanlığı Modülü
-- [ ] Müşteri sorularına AI destekli emlak danışmanlığı cevapları
-- [ ] Emlak mevzuatı bilgi bankası (kira hukuku, tapu işlemleri, vergi)
-- [ ] Bölge bazlı piyasa analizi ve fiyat tavsiyesi
-- [ ] Yatırım danışmanlığı (getiri hesaplama, karşılaştırma)
-- [ ] Sık sorulan sorular ve hazır cevap şablonları
+### O. Sistem
+- [x] Kredi sistemi + işlem log
+- [x] Diyalog eğitim (pattern öğrenme)
+- [x] Hafıza motoru (bağlam, güncel durum, müşteri tanıma)
+- [x] Bildirim sistemi (bell + badge + panel)
+- [x] Yedekleme (Excel export + email + takip)
+- [x] Toplu işlem (Excel/OCR/rehber import)
+- [x] Dark mode
+- [x] Ayarlar (profil + logo + tema + şifre)
+- [x] Performans dashboard
+- [x] Süreç takip (tapu/kredi adımları)
+- [x] Evrak arşivi
+- [x] Zamanlayıcı (5 otomatik görev)
+- [x] İşlem zincirleme (proaktif bildirim)
+- [x] Rate limiting (güvenlik)
+- [x] 30+ asistan pattern komutu
 
 ---
 

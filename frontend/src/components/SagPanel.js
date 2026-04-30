@@ -115,9 +115,10 @@ const MENU = [
     ],
   },
   {
-    baslik: '👔 Ekip',
+    baslik: '🏢 Ofis & Ekip',
     items: [
       { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip' },
+      { ikon: '📦', ad: 'Ofis Envanter', tab: 'envanter' },
     ],
   },
   {

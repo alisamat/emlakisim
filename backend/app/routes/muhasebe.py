@@ -236,6 +236,45 @@ def _cari(c):
         'detaylar': c.detaylar or {},
     }
 
+@bp.route('/cariler/<int:cid>/ekstre-email', methods=['POST'])
+@jwt_required()
+def cari_ekstre_email(cid):
+    """Cari hesap ekstresini email ile gönder."""
+    c = Cari.query.filter_by(id=cid, emlakci_id=_eid()).first_or_404()
+    d = request.get_json() or {}
+    alici = d.get('email', '').strip()
+    if not alici:
+        return jsonify({'message': 'Email gerekli'}), 400
+
+    hareketler = CariHareket.query.filter_by(cari_id=cid).order_by(CariHareket.tarih.desc()).all()
+    from app.models import Emlakci
+    emlakci = Emlakci.query.get(_eid())
+
+    satirlar = ''.join([f'<tr><td>{h.tarih.strftime("%d.%m.%Y") if h.tarih else "-"}</td>'
+                        f'<td>{h.aciklama or "-"}</td>'
+                        f'<td style="color:{"#16a34a" if h.tip == "alacak" else "#dc2626"}">'
+                        f'{"+" if h.tip == "alacak" else "-"}{h.tutar:,.2f} TL</td></tr>' for h in hareketler])
+
+    html = f'''<div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+    <div style="background:#16a34a;color:#fff;padding:16px 24px;border-radius:8px 8px 0 0">
+        <strong>Cari Hesap Ekstresi — {c.ad}</strong>
+    </div>
+    <div style="padding:20px;background:#fff;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px">
+        <p><strong>Bakiye:</strong> <span style="color:{"#16a34a" if c.bakiye >= 0 else "#dc2626"}">{c.bakiye:,.2f} TL</span></p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="border-bottom:2px solid #e2e8f0"><th>Tarih</th><th>Açıklama</th><th>Tutar</th></tr>
+        {satirlar}
+        </table>
+        <hr style="margin:16px 0"><p style="font-size:12px;color:#94a3b8">{emlakci.ad_soyad} · {emlakci.acente_adi or ""}</p>
+    </div></div>'''
+
+    from app.services.iletisim import email_gonder
+    ok, msg = email_gonder(alici, f'Cari Ekstre: {c.ad}', html)
+    if ok:
+        return jsonify({'ok': True, 'mesaj': f'Ekstre {alici} adresine gönderildi'})
+    return jsonify({'message': f'Hata: {msg}'}), 500
+
+
 def _ch(h):
     return {
         'id': h.id, 'tip': h.tip, 'tutar': h.tutar,
