@@ -12,6 +12,7 @@ from app.services.reklam import reklam_metni_olustur, sunum_pdf
 from app.services.ilan_ocr import ilan_fotograf_oku, ilanlari_karsilastir
 from app.services.zeka import proaktif_oneriler, musteri_analiz, gunluk_zeka_raporu
 from app.services.kisisellesme import profil_cikart, hizli_erisim_onerileri
+from app.services.akilli_arama import genel_arama
 import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
@@ -189,6 +190,16 @@ def zeka_profil():
 def zeka_hizli():
     """En çok kullanılan komutlar — hızlı erişim."""
     return jsonify({'oneriler': hizli_erisim_onerileri(int(get_jwt_identity()))})
+
+
+# ── Akıllı Arama ─────────────────────────────────────────
+@bp.route('/arama', methods=['GET'])
+@jwt_required()
+def akilli_ara():
+    """Tüm verilerde tek sorgu ile arama."""
+    q = request.args.get('q', '').strip()
+    sonuc = genel_arama(int(get_jwt_identity()), q)
+    return jsonify(sonuc)
 
 
 # ── İlan OCR & Karşılaştırma ──────────────────────────────

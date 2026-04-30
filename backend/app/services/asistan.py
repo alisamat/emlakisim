@@ -133,6 +133,8 @@ _PATTERNS = [
     (r'(?:sifre|şifre)\s*(?:degistir|değiştir)',              'rapor'),
     (r'(?:logo)\s*(?:degistir|değiştir|yukle|yükle)',         'rapor'),
     (r'(?:karanlik|karanlık|gece)\s*(?:mod|tema)',            'rapor'),
+    # ── Genel arama ──
+    (r'(?:ara|bul)\s+(.+)',                                   'genel_ara'),
     # ── Yardım & Yetenek ──
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
     (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
@@ -202,6 +204,9 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'genel_ara':
+        return _genel_ara(emlakci, metin)
 
     if komut == 'yetenek_sor':
         return ('🤖 *Evet, büyük ihtimalle yapabilirim!*\n\n'
@@ -458,6 +463,19 @@ def _cari_rapor(emlakci):
             f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
             f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
             + '\n'.join(satirlar))
+
+
+def _genel_ara(emlakci, metin):
+    """Sohbetten genel arama."""
+    import re as _re
+    m = _re.search(r'(?:ara|bul)\s+(.+)', metin.lower())
+    sorgu = m.group(1).strip() if m else metin.strip()
+    from app.services.akilli_arama import genel_arama
+    sonuc = genel_arama(emlakci.id, sorgu)
+    if not sonuc['sonuclar']:
+        return f'🔍 "{sorgu}" için sonuç bulunamadı.'
+    satirlar = [f'{s["ikon"]} *{s["baslik"]}* — {s["detay"]}' for s in sonuc['sonuclar'][:8]]
+    return f'🔍 *"{sorgu}" arama sonuçları:*\n\n' + '\n'.join(satirlar)
 
 
 def _performans_ozet(emlakci):

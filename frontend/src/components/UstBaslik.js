@@ -7,6 +7,7 @@ export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit
   const [bildirimler, setBildirimler] = useState([]);
   const [okunmamis, setOkunmamis] = useState(0);
   const [panelAcik, setPanelAcik] = useState(false);
+  const [aramaSonuc, setAramaSonuc] = useState([]);
 
   const yukle = useCallback(async () => {
     try {
@@ -40,6 +41,30 @@ export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit
         <button className="mobil-hamburger" onClick={onSolToggle}>☰</button>
         <div className="ust-baslik-logo" onClick={onSohbetGit}>🏠 Emlakisim AI</div>
       </div>
+      {/* Global Arama */}
+      <div style={{ position: 'relative', flex: '0 1 300px' }} className="hide-mobile">
+        <input
+          placeholder="🔍 Ara (müşteri, mülk, görev...)"
+          onChange={async e => {
+            const q = e.target.value;
+            if (q.length < 2) { setAramaSonuc([]); return; }
+            try { const r = await api.get(`/api/panel/gelismis/arama?q=${q}`); setAramaSonuc(r.data.sonuclar || []); } catch {}
+          }}
+          style={{ width: '100%', padding: '6px 12px', border: '1px solid var(--border, #e2e8f0)', borderRadius: 8, fontSize: 12, outline: 'none', background: 'var(--bg-input, #fff)', color: 'var(--text-primary)' }}
+        />
+        {aramaSonuc.length > 0 && (
+          <div style={{ position: 'absolute', top: 36, left: 0, right: 0, background: 'var(--bg-card, #fff)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, maxHeight: 300, overflowY: 'auto' }}>
+            {aramaSonuc.map((s, i) => (
+              <div key={i} onClick={() => { if (s.tab && onOpenTab) onOpenTab(s.tab); setAramaSonuc([]); }}
+                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-light, #f1f5f9)', fontSize: 12 }}>
+                <span>{s.ikon} <strong>{s.baslik}</strong></span>
+                <span style={{ marginLeft: 8, color: 'var(--text-muted)' }}>{s.detay}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="ust-baslik-sag">
         <div className="ust-baslik-kredi" onClick={onKrediTikla} style={{ ...((kredi ?? 0) < 3 ? { background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' } : {}), cursor: 'pointer' }}>💎 {kredi ?? 0} Kredi</div>
 

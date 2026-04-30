@@ -456,7 +456,7 @@ Kullanıcı mesaj gönderir
 ### Admin Panel ✅
 - [x] Eğitim + fiyatlandırma + dashboard + kullanıcı yönetimi + frontend
 - [x] Kullanıcı listesi + kredi ekleme API
-- [ ] Admin frontend dashboard sayfası (ayrı panel)
+- [x] Admin frontend dashboard (AdminDashboard.js)
 
 ### Maliyet Merkezi (Tüm Dış Servisler)
 - [x] AI token maliyeti → kredi dönüşümü
