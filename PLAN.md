@@ -408,27 +408,57 @@ Kullanıcı mesaj gönderir
 
 ---
 
-## YAPILACAKLAR (İç) — Güncel
+## YAPILACAKLAR — Güncel
 
-### Reklam & İlan Tasarımı
-- [x] AI ile ilan metni oluşturma (portföyden)
-- [ ] Reklam görseli oluşturma (AI image generation — DALL-E/Gemini Imagen)
-- [ ] Sunum/reklam PDF hazırlama (detaylı broşür)
-- [x] Maliyet bilgilendirmesi (kredi yetersiz uyarısı)
+### Komut Zekası (10.000+ Diyalog Vizyonu)
+Emlakçının söyleyebileceği 10.000+ konuyu anlamak:
+- [x] 30+ sabit pattern (sıfır maliyet)
+- [x] Öğrenilen pattern DB (büyüyen havuz)
+- [x] Function calling (AI doğrudan DB işlemi)
+- [x] Danışmanlık bilgi bankası (14 konu, pattern matching)
+- [x] Hafıza motoru (bağlam, müşteri tanıma, alışkanlık)
+- [ ] Komut havuzunu 100+ pattern'a genişletme (her endpoint için en az 3 pattern)
+- [ ] Doğal dil → işlem dönüştürme AI pipeline geliştirme
+- [ ] Komut öğrenme: kullanıcı "bunu yapabilir misin?" deyince yeni pattern öner
 
-### Web Sayfası (Public)
-- [x] Hakkımızda, Fiyatlar, İletişim, KVKK, Gizlilik sayfaları
+### Admin Panel (Platform Yönetimi)
+- [x] AI eğitim istatistikleri + pattern yönetimi + maliyet raporu
+- [ ] Fiyatlandırma parametreleri yönetimi (kredi fiyatı, paket tanımları)
+- [ ] Platform geneli kullanıcı/gelir/maliyet dashboard
+- [ ] Fatura kesme ve takip sistemi (platform → müşteri)
 
-### Şifremi Unuttum
-- [x] Email ile şifre sıfırlama (token + email)
-- [x] Giriş sayfasında "Şifremi unuttum" linki
+### Maliyet Merkezi (Tüm Dış Servisler)
+Tüm dış servis maliyetlerini tek noktadan yönet:
+- [x] AI token maliyeti → kredi dönüşümü
+- [ ] SMS maliyeti → kredi karşılığı tanımlama
+- [ ] WhatsApp mesaj maliyeti → kredi
+- [ ] Telefon hizmeti maliyeti → kredi
+- [ ] Tüm dış servis fiyatlarını admin panelden değiştirme
 
-### Kayıt Geliştirme
-- [x] Emlakçı / müşteri seçim butonları
-- [ ] WhatsApp doğrulama akışı (numara taşıma sonrası)
+### Sağ Panel İyileştirme
+- [ ] İşlem butonlarını anlamlı gruplama ve sıralama
+- [ ] Her butonun yaptığı işin açıklaması (tooltip/alt açıklama)
+- [ ] İşlem arama özelliğini güçlendirme (açıklama içinde de ara)
 
-### Sohbet
-- [x] Mesaj kopyalama + paylaşma butonları
+### Kredi Paneli (OnMuhasebeci Referans)
+OnMuhasebeci kredi sistemi referansı (/Users/mmacac/pc/Github/onmuhFron-web):
+- [ ] Kredi paneli popup (header'daki kredi tıklanınca açılır)
+  - Genel Bakış: kalan kredi, kullanılan, satın alınan, son kullanma tarihi
+  - Kredi Satın Al: paket kartları (Temel/Standart/Profesyonel/Kurumsal)
+  - Fatura Bilgileri: şirket/TC/vergi dairesi/adres formu
+  - Faturalarım: ödeme geçmişi tablosu
+- [ ] Kuveyttürk ödeme entegrasyonu (OnMuhasebeci'den referans)
+- [ ] Paket sistemi: kredi miktarı + TL fiyat + USD + geçerlilik süresi
+- [ ] Kredi satın alma → otomatik fatura oluşturma
+- [ ] Son kullanma tarihi sistemi (paket alımıyla 1 yıl uzama)
+
+### Tamamlanan
+- [x] Reklam metni + sunum PDF + ilan metni
+- [x] Public sayfalar (Hakkımızda, Fiyatlar, İletişim, KVKK)
+- [x] Şifremi unuttum (email token)
+- [x] Kayıt: emlakçı/müşteri seçimi
+- [x] Sohbet: kopyala + paylaş butonları
+- [x] WhatsApp doğrulama (numara taşıma sonrası)
 
 ---
 
