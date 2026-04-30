@@ -33,6 +33,7 @@ import Performans from './Performans';
 import IletisimGecmisi from './IletisimGecmisi';
 import EnvanterYonetimi from './EnvanterYonetimi';
 import AdminPanel from './AdminPanel';
+import KrediPanel from './KrediPanel';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -43,6 +44,7 @@ export default function SohbetArayuz() {
   const [kredi, setKredi] = useState(user?.kredi ?? 10);
   const [solAcik, setSolAcik] = useState(false);
   const [sagAcik, setSagAcik] = useState(false);
+  const [krediPanelAcik, setKrediPanelAcik] = useState(false);
 
   const sohbetGit = useCallback(() => {
     setActiveTab('chat');
@@ -139,7 +141,10 @@ export default function SohbetArayuz() {
         onSagToggle={() => { setSagAcik(p => !p); setSolAcik(false); }}
         onSohbetGit={sohbetGit}
         onOpenTab={openTab}
+        onKrediTikla={() => setKrediPanelAcik(true)}
       />
+
+      <KrediPanel acik={krediPanelAcik} onKapat={() => setKrediPanelAcik(false)} kredi={kredi} />
 
       {/* Mobil backdrop */}
       {(solAcik || sagAcik) && (

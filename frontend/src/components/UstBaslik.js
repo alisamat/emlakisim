@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
 
-export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit, onOpenTab }) {
+export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit, onOpenTab, onKrediTikla }) {
   const { user, cikisYap } = useAuth();
   const [bildirimler, setBildirimler] = useState([]);
   const [okunmamis, setOkunmamis] = useState(0);
@@ -41,7 +41,7 @@ export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit
         <div className="ust-baslik-logo" onClick={onSohbetGit}>🏠 Emlakisim AI</div>
       </div>
       <div className="ust-baslik-sag">
-        <div className="ust-baslik-kredi" style={(kredi ?? 0) < 3 ? { background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' } : {}}>💎 {kredi ?? 0} Kredi</div>
+        <div className="ust-baslik-kredi" onClick={onKrediTikla} style={{ ...((kredi ?? 0) < 3 ? { background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' } : {}), cursor: 'pointer' }}>💎 {kredi ?? 0} Kredi</div>
 
         {/* Bildirim */}
         <div style={{ position: 'relative' }}>

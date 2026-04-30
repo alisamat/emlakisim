@@ -3,130 +3,95 @@ import React, { useState } from 'react';
 const MENU = [
   {
     baslik: '🏆 Performans',
-    acik: false,
     items: [
-      { ikon: '🏆', ad: 'Performans & Analiz', tab: 'performans' },
-      { ikon: '📰', ad: 'Sektör Haberleri', mesaj: 'Emlak sektöründeki son gelişmeler neler?' },
+      { ikon: '🏆', ad: 'Performans & Analiz', tab: 'performans', aciklama: 'KPI, gelir, sektör haberleri' },
+      { ikon: '📰', ad: 'Sektör Haberleri', mesaj: 'Emlak sektöründeki son gelişmeler neler?', aciklama: 'AI ile güncel piyasa bilgisi' },
     ],
   },
   {
     baslik: '⚡ Hızlı İşlem',
     acik: true,
     items: [
-      { ikon: '👥', ad: 'Müşteri Ekle', tab: 'musteriler' },
-      { ikon: '🏢', ad: 'Mülk Ekle', tab: 'mulkler' },
-      { ikon: '📋', ad: 'Yer Gösterme', tab: 'kayitlar' },
+      { ikon: '👥', ad: 'Müşteri Ekle', tab: 'musteriler', aciklama: 'Yeni müşteri kaydı oluştur' },
+      { ikon: '🏢', ad: 'Mülk Ekle', tab: 'mulkler', aciklama: 'Portföye yeni mülk ekle' },
+      { ikon: '📋', ad: 'Yer Gösterme', tab: 'kayitlar', aciklama: 'Yer gösterme kayıtları' },
+      { ikon: '📌', ad: 'Görev Ekle', mesaj: 'Yeni görev ekle', aciklama: 'Sohbetten hızlı görev oluştur' },
     ],
   },
   {
     baslik: '👥 Müşteriler',
     items: [
-      { ikon: '📋', ad: 'Müşteri Listesi', tab: 'musteriler' },
-      { ikon: '📝', ad: 'Talepler & Geri Bildirim', tab: 'talepler' },
+      { ikon: '📋', ad: 'Müşteri Listesi', tab: 'musteriler', aciklama: 'Tüm müşterileri görüntüle, ara, filtrele' },
+      { ikon: '📝', ad: 'Talepler & Geri Bildirim', tab: 'talepler', aciklama: 'Müşteri talepleri ve görüşme geri bildirimleri' },
+      { ikon: '🔗', ad: 'Eşleştirme', tab: 'eslestirme', aciklama: 'Müşteri-mülk otomatik eşleştirme ve puanlama' },
     ],
   },
   {
     baslik: '🏢 Portföy',
     items: [
-      { ikon: '🏠', ad: 'Mülk Listesi', tab: 'mulkler' },
+      { ikon: '🏠', ad: 'Mülk Listesi', tab: 'mulkler', aciklama: 'Portföyü yönet, ara, filtrele' },
+      { ikon: '📄', ad: 'Belge Oluştur', tab: 'belgeler', aciklama: 'Yer gösterme, kontrat, yönlendirme PDF' },
     ],
   },
   {
-    baslik: '📄 Belgeler',
+    baslik: '💰 Muhasebe & Finans',
     items: [
-      { ikon: '📋', ad: 'Yer Gösterme Kayıtları', tab: 'kayitlar' },
-      { ikon: '📄', ad: 'Belge Oluştur', tab: 'belgeler' },
-    ],
-  },
-  {
-    baslik: '💰 Muhasebe',
-    items: [
-      { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe' },
-      { ikon: '📈', ad: 'Kâr/Zarar', tab: 'karzarar' },
-      { ikon: '📒', ad: 'Cari Hesaplar', tab: 'cariler' },
-      { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar' },
-      { ikon: '📊', ad: 'Muhasebe Raporu', tab: 'muhrapor' },
-      { ikon: '💼', ad: 'Bütçe Planlama', tab: 'butce' },
-    ],
-  },
-  {
-    baslik: '✉️ İletişim',
-    items: [
-      { ikon: '📞', ad: 'İletişim Geçmişi', tab: 'iletisim' },
-      { ikon: '📧', ad: 'Email Gönder', mesaj: 'Email göndermek istiyorum' },
-      { ikon: '📤', ad: 'Portföy Email', mesaj: 'Portföy listesini email ile gönder' },
+      { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe', aciklama: 'Gelir ve gider kayıtları, fiş OCR' },
+      { ikon: '📈', ad: 'Kâr/Zarar', tab: 'karzarar', aciklama: 'Dönemsel kâr/zarar, kategori dağılımı' },
+      { ikon: '📒', ad: 'Cari Hesaplar', tab: 'cariler', aciklama: 'Müşteri borç/alacak takibi' },
+      { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar', aciklama: 'Fatura oluştur, takip et, PDF indir' },
+      { ikon: '💼', ad: 'Bütçe Planlama', tab: 'butce', aciklama: 'Kategori bazlı bütçe ve gerçekleşen karşılaştırma' },
+      { ikon: '📊', ad: 'Muhasebe Raporu', tab: 'muhrapor', aciklama: 'Aylık tablo + AI analiz raporu' },
     ],
   },
   {
     baslik: '🧮 Hesaplamalar',
     items: [
-      { ikon: '🧮', ad: 'Hesaplama Araçları', tab: 'hesaplamalar' },
-      { ikon: '💰', ad: 'Kira Getirisi Hesapla', mesaj: 'Kira getirisi hesapla' },
-      { ikon: '🧾', ad: 'Kira Vergisi Hesapla', mesaj: 'Kira vergisi hesapla' },
+      { ikon: '🧮', ad: 'Hesaplama Araçları', tab: 'hesaplamalar', aciklama: 'Kira vergisi, ROI, değer artış, aidat analizi' },
     ],
   },
   {
-    baslik: '📅 Planlama',
+    baslik: '📅 Planlama & Takip',
     items: [
-      { ikon: '📋', ad: 'Görevler', tab: 'planlama' },
-      { ikon: '📅', ad: 'Takvim', tab: 'takvim' },
-      { ikon: '📌', ad: 'Görev Ekle', mesaj: 'Yeni görev ekle' },
+      { ikon: '📋', ad: 'Görevler', tab: 'planlama', aciklama: 'Görev yönetimi, öncelik, durum takibi' },
+      { ikon: '📅', ad: 'Takvim', tab: 'takvim', aciklama: 'Aylık takvim görünümü' },
+      { ikon: '📋', ad: 'Süreç Takip', tab: 'surec', aciklama: 'Tapu devri, kredi süreci adım takibi' },
     ],
   },
   {
-    baslik: '📋 Süreç Takip',
+    baslik: '✉️ İletişim & Lead',
     items: [
-      { ikon: '📋', ad: 'Tapu/Kredi Takip', tab: 'surec' },
-    ],
-  },
-  {
-    baslik: '🔗 Eşleştirme',
-    items: [
-      { ikon: '🔗', ad: 'Müşteri-Mülk Eşleştir', tab: 'eslestirme' },
-    ],
-  },
-  {
-    baslik: '🎯 Lead & Çağrı',
-    items: [
-      { ikon: '🎯', ad: 'Lead Listesi', tab: 'leadler' },
-      { ikon: '📞', ad: 'Çağrı Kayıtları', tab: 'cagrilar' },
-      { ikon: '➕', ad: 'Lead Ekle', mesaj: 'Yeni lead ekle' },
-    ],
-  },
-  {
-    baslik: '📦 Toplu İşlem',
-    items: [
-      { ikon: '📦', ad: 'Toplu İşlemler', tab: 'toplu' },
-      { ikon: '📸', ad: 'Fotoğraftan Portföy', tab: 'toplu' },
+      { ikon: '📞', ad: 'İletişim Geçmişi', tab: 'iletisim', aciklama: 'Müşteri bazlı tüm iletişim kayıtları' },
+      { ikon: '🎯', ad: 'Lead Yönetimi', tab: 'leadler', aciklama: 'Potansiyel müşteri takibi ve durum' },
+      { ikon: '📞', ad: 'Çağrı Kayıtları', tab: 'cagrilar', aciklama: 'Gelen/giden/kaçırılmış çağrılar' },
     ],
   },
   {
     baslik: '🌐 Tanıtım & Paylaşım',
     items: [
-      { ikon: '🌐', ad: 'Tanıtım Sayfası', tab: 'tanitim' },
-      { ikon: '📱', ad: 'Sosyal Medya İçerik', tab: 'tanitim' },
+      { ikon: '🌐', ad: 'Tanıtım & Sosyal Medya', tab: 'tanitim', aciklama: 'Portföy linki, sosyal medya içerik üretimi' },
     ],
   },
   {
-    baslik: '💾 Yedekleme',
+    baslik: '📦 Toplu İşlem & Veri',
     items: [
-      { ikon: '📥', ad: 'Veri İndir (Excel)', tab: 'yedekleme' },
-      { ikon: '📧', ad: 'Email ile Gönder', mesaj: 'Verilerimi email ile yedekle' },
+      { ikon: '📦', ad: 'Toplu İşlemler', tab: 'toplu', aciklama: 'Excel/fotoğraf/rehberden toplu veri aktarımı' },
+      { ikon: '💾', ad: 'Yedekleme', tab: 'yedekleme', aciklama: 'Veri export, email ile gönder, yedek takip' },
     ],
   },
   {
     baslik: '🏢 Ofis & Ekip',
     items: [
-      { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip' },
-      { ikon: '📦', ad: 'Ofis Envanter', tab: 'envanter' },
+      { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip', aciklama: 'Ofis danışmanları ve müşteri ataması' },
+      { ikon: '📦', ad: 'Ofis Envanter', tab: 'envanter', aciklama: 'Ofis malzeme takibi, stok uyarısı' },
     ],
   },
   {
-    baslik: '⚙️ Ayarlar',
+    baslik: '⚙️ Yönetim',
     items: [
-      { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar' },
-      { ikon: '🛠', ad: 'Admin Panel', tab: 'admin' },
-      { ikon: '👤', ad: 'Profil', tab: 'profil' },
+      { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar', aciklama: 'Profil, logo, tema, şifre değiştirme' },
+      { ikon: '🛠', ad: 'Admin Panel', tab: 'admin', aciklama: 'AI eğitim, pattern yönetimi, maliyet raporu' },
+      { ikon: '👤', ad: 'Profil', tab: 'profil', aciklama: 'Kişisel bilgiler' },
     ],
   },
 ];
@@ -144,7 +109,10 @@ export default function SagPanel({ onOpenTab, onMesajGonder, acik }) {
   const filtrelenmis = arama.trim()
     ? MENU.map(k => ({
         ...k,
-        items: k.items.filter(it => it.ad.toLowerCase().includes(arama.toLowerCase())),
+        items: k.items.filter(it =>
+          it.ad.toLowerCase().includes(arama.toLowerCase()) ||
+          (it.aciklama || '').toLowerCase().includes(arama.toLowerCase())
+        ),
       })).filter(k => k.items.length > 0)
     : MENU;
 
@@ -171,9 +139,13 @@ export default function SagPanel({ onOpenTab, onMesajGonder, acik }) {
                 if (item.tab) onOpenTab(item.tab);
                 else if (item.mesaj) onMesajGonder(item.mesaj);
               }}
+              title={item.aciklama || ''}
             >
               <span>{item.ikon}</span>
-              <span>{item.ad}</span>
+              <div style={{ flex: 1 }}>
+                <div>{item.ad}</div>
+                {item.aciklama && <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 1 }}>{item.aciklama}</div>}
+              </div>
             </div>
           ))}
         </div>
