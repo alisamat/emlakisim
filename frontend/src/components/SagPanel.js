@@ -14,6 +14,7 @@ const MENU = [
     baslik: '👥 Müşteriler',
     items: [
       { ikon: '📋', ad: 'Müşteri Listesi', tab: 'musteriler' },
+      { ikon: '📝', ad: 'Talepler & Geri Bildirim', tab: 'talepler' },
     ],
   },
   {
