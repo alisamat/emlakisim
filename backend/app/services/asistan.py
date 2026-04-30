@@ -181,7 +181,22 @@ def _rapor(emlakci):
 
 
 def _yardim_mesaji(emlakci):
-    return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n\n'
+    # Proaktif günlük özet
+    ozet_ek = ''
+    try:
+        from app.models.planlama import Gorev
+        from app.models.lead import Lead
+        from datetime import timedelta
+        bugun = datetime.now().replace(hour=0, minute=0, second=0)
+        yarin = bugun + timedelta(days=1)
+        gorev_sayi = Gorev.query.filter(Gorev.emlakci_id == emlakci.id, Gorev.baslangic >= bugun, Gorev.baslangic < yarin, Gorev.durum != 'iptal').count()
+        yeni_lead = Lead.query.filter_by(emlakci_id=emlakci.id, durum='yeni').count()
+        if gorev_sayi or yeni_lead:
+            ozet_ek = f'\n📅 Bugün *{gorev_sayi}* görev · 🎯 *{yeni_lead}* yeni lead\n'
+    except:
+        pass
+
+    return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n{ozet_ek}\n'
             'Ben Emlakisim AI Asistanınızım. İşte yapabileceklerim:\n\n'
             '👥 *Müşteri:* "müşteri ekle", "müşteri listele"\n'
             '🏢 *Portföy:* "mülk ekle", "portföy listele"\n'

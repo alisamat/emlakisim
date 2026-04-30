@@ -52,6 +52,13 @@ def create_app(env='production'):
     app.register_blueprint(ofis.bp)
     app.register_blueprint(ekip.bp)
 
+    # Zamanlayıcı başlat (otomatik hatırlatma, günlük özet, yedek uyarısı)
+    try:
+        from app.services.zamanlayici import zamanlayici_baslat
+        zamanlayici_baslat(app)
+    except Exception:
+        pass
+
     from flask import render_template_string
     @app.route('/gizlilik')
     def gizlilik():
