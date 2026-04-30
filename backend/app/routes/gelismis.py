@@ -11,6 +11,7 @@ from app.services.ilan import ilan_metni_olustur
 from app.services.reklam import reklam_metni_olustur, sunum_pdf
 from app.services.ilan_ocr import ilan_fotograf_oku, ilanlari_karsilastir
 from app.services.zeka import proaktif_oneriler, musteri_analiz, gunluk_zeka_raporu
+from app.services.kisisellesme import profil_cikart, hizli_erisim_onerileri
 import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
@@ -174,6 +175,20 @@ def zeka_rapor():
     from app.models import Emlakci
     emlakci = Emlakci.query.get(int(get_jwt_identity()))
     return jsonify(gunluk_zeka_raporu(emlakci))
+
+
+@bp.route('/zeka/profil', methods=['GET'])
+@jwt_required()
+def zeka_profil():
+    """Kişiselleşmiş çalışma profili."""
+    return jsonify(profil_cikart(int(get_jwt_identity())))
+
+
+@bp.route('/zeka/hizli-erisim', methods=['GET'])
+@jwt_required()
+def zeka_hizli():
+    """En çok kullanılan komutlar — hızlı erişim."""
+    return jsonify({'oneriler': hizli_erisim_onerileri(int(get_jwt_identity()))})
 
 
 # ── İlan OCR & Karşılaştırma ──────────────────────────────

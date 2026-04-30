@@ -809,10 +809,15 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci):
 # ─── Sistem Prompt ─────────────────────────────────────────
 def _sistem_prompt(emlakci, metin=''):
     from app.services.hafiza import baglam_olustur
+    from app.services.kisisellesme import kisisellesmis_prompt_eki
     try:
         baglam = baglam_olustur(emlakci, metin)
     except:
         baglam = ''
+    try:
+        baglam += kisisellesmis_prompt_eki(emlakci.id)
+    except:
+        pass
 
     return f"""Sen Emlakisim'in yapay zeka destekli emlak asistanısın. Gerçek bir emlak ofisi asistanı gibi davran.
 
