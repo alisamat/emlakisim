@@ -37,6 +37,7 @@ const MENU = [
       { ikon: '📒', ad: 'Cari Hesaplar', tab: 'cariler' },
       { ikon: '🧾', ad: 'Faturalar', tab: 'faturalar' },
       { ikon: '📊', ad: 'Muhasebe Raporu', tab: 'muhrapor' },
+      { ikon: '💼', ad: 'Bütçe Planlama', tab: 'butce' },
     ],
   },
   {

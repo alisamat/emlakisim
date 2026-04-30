@@ -85,6 +85,43 @@ BILGI_BANKASI = {
             '_6305 sayılı Afet Sigortaları Kanunu_'
         ),
     },
+    'kat_mulkiyeti': {
+        'anahtar': ['kat mülkiyeti', 'kat irtifakı', 'kat irtifaki', 'tapu türü', 'tapu turu'],
+        'cevap': (
+            '*📄 Kat Mülkiyeti vs Kat İrtifakı*\n\n'
+            '• *Kat Mülkiyeti:* Bina tamamlanmış, iskan alınmış\n'
+            '• *Kat İrtifakı:* İnşaat aşamasında veya iskan yok\n'
+            '• Kat irtifakında kredi almak daha zor\n'
+            '• Kat mülkiyeti fiyatı daha yüksek\n'
+            '• İskan belgesi alındığında irtifak → mülkiyete dönüşür\n\n'
+            '_Kat irtifakı riskli olabilir, iskan durumu mutlaka kontrol edilmeli._'
+        ),
+    },
+    'kira_sozlesmesi': {
+        'anahtar': ['kira sözleşme', 'kira sozlesme', 'kira kontrat', 'kontrat süresi', 'kontrat suresi'],
+        'cevap': (
+            '*📋 Kira Sözleşmesi Bilgileri*\n\n'
+            '• Yazılı sözleşme zorunlu değil ama önerilir\n'
+            '• Standart süre: 1 yıl (otomatik yenilenir)\n'
+            '• Kiracı 15 gün önceden bildirimle çıkabilir\n'
+            '• Ev sahibi 10 yıl sözleşmeyi feshedemez (ihtiyaç hariç)\n'
+            '• Kontrat damga vergisi: %0,189 (genellikle paylaşılır)\n\n'
+            '_TBK md. 339-356 — Konut ve çatılı işyeri kiraları_'
+        ),
+    },
+    'emlak_vergisi': {
+        'anahtar': ['emlak vergisi', 'bina vergisi', 'arsa vergisi', 'vergi oranı'],
+        'cevap': (
+            '*🏛 Emlak Vergisi Oranları*\n\n'
+            '• Konut: *%0,1* (Büyükşehir %0,2)\n'
+            '• İşyeri: *%0,2* (Büyükşehir %0,4)\n'
+            '• Arsa: *%0,3* (Büyükşehir %0,6)\n'
+            '• Arazi: *%0,1* (Büyükşehir %0,2)\n'
+            '• Ödeme: Yılda 2 taksit (Mart-Mayıs / Kasım)\n'
+            '• Muafiyet: Emekli, engelli, 200m² altı tek konut\n\n'
+            '_1319 sayılı Emlak Vergisi Kanunu_'
+        ),
+    },
     'vergi_muafiyeti': {
         'anahtar': ['vergi muafiyet', 'kira vergi istisna', 'vergi istisnası'],
         'cevap': (

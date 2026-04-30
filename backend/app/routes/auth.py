@@ -59,6 +59,24 @@ def profil_guncelle():
     return jsonify({'user': _user(e)})
 
 
+@bp.route('/sifre-degistir', methods=['PUT'])
+@jwt_required()
+def sifre_degistir():
+    e = Emlakci.query.get(int(get_jwt_identity()))
+    d = request.get_json() or {}
+    eski = d.get('eski_sifre', '')
+    yeni = d.get('yeni_sifre', '')
+    if not eski or not yeni:
+        return jsonify({'message': 'Eski ve yeni şifre gerekli'}), 400
+    if e.sifre_hash != _hash(eski):
+        return jsonify({'message': 'Eski şifre hatalı'}), 401
+    if len(yeni) < 4:
+        return jsonify({'message': 'Yeni şifre en az 4 karakter olmalı'}), 400
+    e.sifre_hash = _hash(yeni)
+    db.session.commit()
+    return jsonify({'message': 'Şifre değiştirildi'})
+
+
 def _user(e):
     return {
         'id': e.id, 'ad_soyad': e.ad_soyad, 'email': e.email,

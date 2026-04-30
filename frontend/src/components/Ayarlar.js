@@ -8,6 +8,7 @@ export default function Ayarlar() {
     ad_soyad: user?.ad_soyad || '', telefon: user?.telefon || '',
     acente_adi: user?.acente_adi || '', yetki_no: user?.yetki_no || '',
   });
+  const [sifreForm, setSifreForm] = useState({ eski_sifre: '', yeni_sifre: '', yeni_tekrar: '' });
   const [logo, setLogo] = useState(localStorage.getItem('emlakisim_logo') || '');
   const [tema, setTema] = useState(localStorage.getItem('emlakisim_tema') || 'acik');
   const [mesaj, setMesaj] = useState('');
@@ -65,6 +66,22 @@ export default function Ayarlar() {
           <div><label className="etiket">Yetki Belgesi No</label><input className="input" name="yetki_no" value={profilForm.yetki_no} onChange={dp} /></div>
         </div>
         <button className="btn-yesil" onClick={profilKaydet} disabled={yuk}>{yuk ? '...' : 'Kaydet'}</button>
+      </div>
+
+      {/* Şifre Değiştirme */}
+      <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid var(--border)' }}>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: 'var(--text-primary)' }}>🔒 Şifre Değiştir</div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Eski Şifre</label><input className="input" type="password" value={sifreForm.eski_sifre} onChange={e => setSifreForm(p => ({ ...p, eski_sifre: e.target.value }))} /></div>
+          <div><label className="etiket">Yeni Şifre</label><input className="input" type="password" value={sifreForm.yeni_sifre} onChange={e => setSifreForm(p => ({ ...p, yeni_sifre: e.target.value }))} /></div>
+        </div>
+        <button className="btn-yesil" onClick={async () => {
+          if (sifreForm.yeni_sifre.length < 4) { setMesaj('Şifre en az 4 karakter'); return; }
+          try {
+            await api.put('/api/auth/sifre-degistir', sifreForm);
+            setMesaj('Şifre değiştirildi'); setSifreForm({ eski_sifre: '', yeni_sifre: '', yeni_tekrar: '' });
+          } catch (e) { setMesaj(e.response?.data?.message || 'Hata'); }
+        }} style={{ fontSize: 13 }}>Şifre Değiştir</button>
       </div>
 
       {/* Logo Ayarı */}
