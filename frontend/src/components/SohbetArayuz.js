@@ -36,6 +36,7 @@ import AdminPanel from './AdminPanel';
 import KrediPanel from './KrediPanel';
 import AdminDashboard from './AdminDashboard';
 import IlanOCR from './IlanOCR';
+import ResimIsaretleme from './ResimIsaretleme';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -144,6 +145,7 @@ export default function SohbetArayuz() {
       case 'admin':        return <div className="sayfa-icerik"><AdminPanel /></div>;
       case 'admin_dash':   return <div className="sayfa-icerik"><AdminDashboard /></div>;
       case 'ilan_ocr':     return <div className="sayfa-icerik"><IlanOCR /></div>;
+      case 'isaretleme':   return <div className="sayfa-icerik"><ResimIsaretleme /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

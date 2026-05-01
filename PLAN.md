@@ -470,16 +470,14 @@ Kullanıcı mesaj gönderir
 - [x] DASK son kullanma takibi
 - [x] Mülk kartında ⚖️ buton
 
-### Resim İşaretleme
-- [ ] Fotoğraf üzerinde el ile (mouse/touch) işaretleme yapabilme
-- [ ] Daire/oda/alan işaretleme ve kaydetme
+### Resim İşaretleme ✅
+- [x] Canvas: serbest çizim + daire + dikdörtgen (mouse+touch)
+- [x] Renk/kalınlık + temizle + kaydet PNG + paylaş
 
-### Döviz & Altın Kurları
-- [ ] TCMB/API'den günlük döviz kurları (USD, EUR, GBP)
-- [ ] Günlük altın gram fiyatı
-- [ ] Fiyat girişinde otomatik döviz dönüşümü gösterme
-- [ ] "Döviz kuru" / "altın fiyatı" asistan komutu
-- [ ] Admin panelden kur güncelleme
+### Döviz & Altın Kurları ✅
+- [x] TCMB + yedek API + altın gram + cache + zamanlayıcı
+- [x] "döviz" / "altın" / "5M TL dolar" asistan komutları
+- [x] Mülk kartında 💱 buton
 
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
