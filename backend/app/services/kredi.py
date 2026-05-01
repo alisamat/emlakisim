@@ -30,7 +30,15 @@ AI_FIYAT = {
     'claude-haiku-4-5-20251001': {'input': 0.25,  'output': 1.25},
 }
 
-KAR_MARJI = 3.0  # AI maliyeti × 3 = kredi
+def _kar_marji():
+    try:
+        from app.routes.ayarlar import parametre_al
+        val = parametre_al('kredi_kar_marji', '3.0')
+        return float(val)
+    except Exception:
+        return 3.0
+
+KAR_MARJI = 3.0  # varsayılan, runtime'da _kar_marji() kullanılır
 
 
 def kredi_kontrol(emlakci, tutar=1):
@@ -73,5 +81,5 @@ def ai_maliyet_hesapla(model, token_input, token_output):
     """AI token maliyetini hesapla → (usd, kredi)."""
     fiyat = AI_FIYAT.get(model, {'input': 0.15, 'output': 0.60})
     usd = (token_input * fiyat['input'] / 1_000_000) + (token_output * fiyat['output'] / 1_000_000)
-    kredi = max(0.5, usd * KAR_MARJI * 1000)  # minimum 0.5 kredi, aksi halde çok düşük kalır
+    kredi = max(0.5, usd * _kar_marji() * 1000)  # minimum 0.5 kredi, aksi halde çok düşük kalır
     return round(usd, 6), round(kredi, 2)

@@ -4,14 +4,41 @@ Kira vergisi, değer artış kazancı, kira getirisi (ROI), aidat analizi
 """
 
 
-def kira_vergisi(yillik_kira, istisna_tutari=33000, vergi_dilimleri=None):
+def _admin_param(anahtar, varsayilan):
+    """Admin panelden parametre oku."""
+    try:
+        from app.routes.ayarlar import parametre_al
+        val = parametre_al(anahtar)
+        if val:
+            return float(val) if '.' in str(val) else val
+    except Exception:
+        pass
+    return varsayilan
+
+
+def kira_vergisi(yillik_kira, istisna_tutari=None, vergi_dilimleri=None):
     """
-    Kira geliri vergisi hesaplama (2026 tahmini).
-    yillik_kira: Yıllık toplam kira geliri (TL)
-    istisna_tutari: Yıllık istisna (2026: ~33.000 TL tahmini)
+    Kira geliri vergisi hesaplama.
+    Admin panelden güncellenebilir parametreler kullanır.
     """
+    if istisna_tutari is None:
+        istisna_tutari = _admin_param('vergi_istisna_2026', 33000)
+        if isinstance(istisna_tutari, str):
+            istisna_tutari = float(istisna_tutari)
+
     if vergi_dilimleri is None:
-        # 2026 tahmini gelir vergisi dilimleri
+        # Admin'den dilim oku
+        dilimleri_oku = []
+        for i in range(1, 6):
+            dilim = _admin_param(f'vergi_dilim_{i}', None)
+            if dilim and ':' in str(dilim):
+                sinir, oran = str(dilim).split(':')
+                dilimleri_oku.append((float(sinir), float(oran)))
+        if dilimleri_oku:
+            vergi_dilimleri = dilimleri_oku
+            vergi_dilimleri.append((float('inf'), 0.40))
+
+    if vergi_dilimleri is None:
         vergi_dilimleri = [
             (110000, 0.15),
             (230000, 0.20),
@@ -70,6 +97,10 @@ def deger_artis_kazanci(alis_fiyati, satis_fiyati, alis_yili, satis_yili, yenide
     """
     elde_tutma = satis_yili - alis_yili
 
+    # İstisna admin'den
+    if yeniden_degerleme is None:
+        yeniden_degerleme = 1.30 ** elde_tutma
+
     if elde_tutma >= 5:
         return {
             'alis_fiyati': alis_fiyati,
@@ -81,15 +112,13 @@ def deger_artis_kazanci(alis_fiyati, satis_fiyati, alis_yili, satis_yili, yenide
             'vergi': 0,
         }
 
-    # Yeniden değerleme oranı tahmini (yıllık %30 ortalama)
-    if yeniden_degerleme is None:
-        yeniden_degerleme = 1.30 ** elde_tutma
-
     degerlendirilmis_maliyet = alis_fiyati * yeniden_degerleme
     kazanc = max(0, satis_fiyati - degerlendirilmis_maliyet)
 
-    # İstisna (2026 tahmini ~87.000 TL)
-    istisna = 87000
+    # İstisna admin'den
+    istisna = _admin_param('deger_artis_istisna', 87000)
+    if isinstance(istisna, str):
+        istisna = float(istisna)
     matrah = max(0, kazanc - istisna)
 
     # Gelir vergisi dilimleri ile hesapla
@@ -143,8 +172,11 @@ def _getiri_degerlendirme(oran):
 
 
 def tapu_masrafi(satis_bedeli, dask_bedeli=1500, doner_sermaye=1000):
-    """Tapu devir masrafı hesaplama."""
-    tapu_harci = satis_bedeli * 0.04  # %4 (alıcı+satıcı)
+    """Tapu devir masrafı hesaplama. Oranlar admin'den okunur."""
+    oran = _admin_param('tapu_harci_oran', 0.04)
+    if isinstance(oran, str):
+        oran = float(oran)
+    tapu_harci = satis_bedeli * oran
     alici_harci = satis_bedeli * 0.02
     satici_harci = satis_bedeli * 0.02
     toplam = tapu_harci + dask_bedeli + doner_sermaye
