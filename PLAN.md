@@ -479,6 +479,59 @@ Kullanıcı mesaj gönderir
 - [x] "döviz" / "altın" / "5M TL dolar" asistan komutları
 - [x] Mülk kartında 💱 buton
 
+### Emlakçılar Modülü (YENİ)
+Emlakçılar dizini — dış emlakçıları kaydet ve yönet:
+- [ ] Emlakçı CRUD (ad soyad, telefon, adres, bölge, uzmanlık, notlar)
+- [ ] Emlakçı listesi, arama, filtreleme
+- [ ] İşlem menüsünde "Emlakçılar" bölümü
+- [ ] Sohbetten "emlakçı ekle", "emlakçı listele" komutları
+
+### Grup Modülü (YENİ — Detaylı)
+Emlakçılar arası işbirliği grubu:
+
+**Grup Yönetimi:**
+- [ ] Grup CRUD (ad, slogan, açıklama)
+- [ ] Grup kurucusu = otomatik yönetici + üye
+- [ ] Gruba üye ekleme (sadece uygulamayı kullanan emlakçılar)
+- [ ] Üyelik teklifi → emlakçının bildirimine düşer → kabul/red
+- [ ] Kabul etmezse gruba hiçbir bilgi gitmez
+- [ ] Gruptan üye çıkarma (yönetici yetkisi)
+- [ ] Yönetici atama (yönetici silemez, sadece yeni yönetici atayabilir)
+- [ ] Grup silme: kimse kalmadığında sistem otomatik siler
+- [ ] Yönetici çıkış: başka yönetici varsa veya grupta kimse yoksa çıkabilir
+
+**Üyelik Kuralları:**
+- [ ] Bir emlakçı en fazla 2 gruba üye olabilir (kurduğu dahil)
+- [ ] 2 gruba üyeyse yeni teklif bildirimi gitmez
+- [ ] "Grup tekliflerini kapat" ayar butonu (Ayarlar sayfasında)
+- [ ] Grup girişlerinde ve çıkışlarında otomatik bildirim
+
+**Portföy & Talep Paylaşımı:**
+- [ ] Gruba portföy aç/kapat özelliği (varsayılan: kapalı)
+- [ ] Gruba talep aç/kapat özelliği (varsayılan: kapalı)
+- [ ] Her ilan/talep için tek tek gruba aç/kapat
+- [ ] Toplu seçim ile gruba aç/kapat
+- [ ] Ayarlarda genel "gruba aç" toggle → yeni ilanlar otomatik açık/kapalı
+- [ ] Gruba üye olunca uyarı: "İlanlarınızı gruba açmak ister misiniz?"
+- [ ] Grup üyeliği aktif olsa bile varsayılan kapalı (bilinçli açma)
+
+**Eşleştirme Sayfası (Grup içi):**
+- [ ] Grup üyelerinin açık portföyleri ve talepleri eşleştirme
+- [ ] Sadece izin verilenler arasında eşleştirme
+- [ ] Alıcı/satıcı adı ve kişisel bilgileri GÖSTERİLMEZ (veri güvenliği)
+- [ ] Resimler gösterilmez, sadece yazı bilgisi
+- [ ] "Yenile" butonuyla veri çekilir (otomatik değil, manual)
+
+**Grup Alt Sayfaları:**
+- [ ] Üyeler sayfası (liste + yönetici badge'ı)
+- [ ] Ayarlar sayfası (portföy/talep paylaşım toggle)
+- [ ] Eşleştirmeler sayfası (grup içi portföy-talep eşleşme)
+- [ ] Bildirimler/aktivite sayfası (giriş/çıkış logları)
+
+**Sohbet Komutları:**
+- [ ] "grup kur", "grup listele", "gruba üye ekle" sohbetten yapılabilmeli
+- [ ] "emlakçı ekle", "emlakçıları göster" sohbetten yapılabilmeli
+
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
 
