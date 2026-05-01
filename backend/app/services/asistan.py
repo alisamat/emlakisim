@@ -42,7 +42,8 @@ _PATTERNS = [
     (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam|neyi\s*hatirl)', 'hatirlatma_liste'),
     (r'(?:bunu\s*hatirla|bunu\s*unutma)',                     'unutma'),
     # ── Rapor & Özet ──
-    (r'(?:rapor|özet|istatistik|durum|nasil\s*gidiyor|ne\s*durumda)', 'rapor'),
+    (r'(?:rapor|özet|durum|nasil\s*gidiyor|ne\s*durumda)',            'rapor'),
+    (r'(?:istatistik|dagilim|dağılım|segment)',                      'istatistik'),
     (r'(?:genel\s*durum|genel\s*ozet|genel\s*bakis)',         'rapor'),
     # ── Muhasebe (15+ varyasyon) ──
     (r'(?:kar\s*zarar|kâr\s*zarar|kar.zarar|gelir\s*gider)',  'muhasebe_rapor'),
@@ -224,6 +225,9 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'istatistik':
+        return _istatistik_detay(emlakci)
 
     if komut == 'strateji':
         from app.services.akilli_oneri import stratejik_oneriler
@@ -505,6 +509,28 @@ def _cari_rapor(emlakci):
             f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
             f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
             + '\n'.join(satirlar))
+
+
+def _istatistik_detay(emlakci):
+    """Detaylı istatistik — müşteri + portföy dağılım."""
+    from collections import Counter
+    musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).all()
+    mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
+
+    m_sic = Counter(m.sicaklik or 'orta' for m in musteriler)
+    m_isl = Counter(m.islem_turu or '?' for m in musteriler)
+    p_tip = Counter(m.tip or '?' for m in mulkler)
+    p_isl = Counter(m.islem_turu or '?' for m in mulkler)
+
+    f = lambda d: ', '.join([f'{k}: {v}' for k, v in d.most_common(5)])
+
+    return (f'📊 *Detaylı İstatistik*\n\n'
+            f'👥 *Müşteriler ({len(musteriler)}):*\n'
+            f'  Sıcaklık: {f(m_sic)}\n'
+            f'  İşlem: {f(m_isl)}\n\n'
+            f'🏢 *Portföy ({len(mulkler)}):*\n'
+            f'  Tip: {f(p_tip)}\n'
+            f'  İşlem: {f(p_isl)}')
 
 
 def _genel_ara(emlakci, metin):

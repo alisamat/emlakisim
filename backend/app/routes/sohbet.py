@@ -199,6 +199,23 @@ def sohbet_detay(sid):
     })
 
 
+@bp.route('/sohbetler/export', methods=['GET'])
+@jwt_required()
+def sohbet_export():
+    """Tüm sohbet geçmişini JSON olarak export et."""
+    emlakci_id = get_jwt_identity()
+    sohbetler = PanelSohbet.query.filter_by(emlakci_id=emlakci_id).order_by(PanelSohbet.olusturma).all()
+    data = []
+    for s in sohbetler:
+        mesajlar = PanelMesaj.query.filter_by(sohbet_id=s.id).order_by(PanelMesaj.olusturma).all()
+        data.append({
+            'baslik': s.baslik,
+            'tarih': s.olusturma.isoformat() if s.olusturma else None,
+            'mesajlar': [{'rol': m.rol, 'icerik': m.icerik, 'tarih': m.olusturma.isoformat() if m.olusturma else None} for m in mesajlar],
+        })
+    return jsonify({'sohbetler': data, 'toplam': len(data)})
+
+
 @bp.route('/sohbetler/<int:sid>', methods=['DELETE'])
 @jwt_required()
 def sohbet_sil(sid):

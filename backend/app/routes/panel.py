@@ -16,6 +16,47 @@ def _eid():
     return int(get_jwt_identity())
 
 
+# ── İstatistikler ─────────────────────────────────────────────────────────────
+@bp.route('/istatistik', methods=['GET'])
+@jwt_required()
+def istatistik():
+    """Genel istatistik — müşteri + portföy + muhasebe dağılımları."""
+    eid = _eid()
+    musteriler = Musteri.query.filter_by(emlakci_id=eid).all()
+    mulkler = Mulk.query.filter_by(emlakci_id=eid, aktif=True).all()
+
+    from collections import Counter
+    m_sicaklik = Counter(m.sicaklik or 'orta' for m in musteriler)
+    m_islem = Counter(m.islem_turu or 'kira' for m in musteriler)
+    m_grup = Counter(m.grup for m in musteriler if m.grup)
+
+    p_tip = Counter(m.tip or 'daire' for m in mulkler)
+    p_islem = Counter(m.islem_turu or 'kira' for m in mulkler)
+    p_ilce = Counter(m.ilce for m in mulkler if m.ilce)
+    p_grup = Counter(m.grup for m in mulkler if m.grup)
+
+    fiyatlar = [m.fiyat for m in mulkler if m.fiyat]
+
+    return jsonify({
+        'musteri': {
+            'toplam': len(musteriler),
+            'sicaklik': dict(m_sicaklik),
+            'islem': dict(m_islem),
+            'gruplar': dict(m_grup),
+        },
+        'portfoy': {
+            'toplam': len(mulkler),
+            'tip': dict(p_tip),
+            'islem': dict(p_islem),
+            'ilce': dict(p_ilce.most_common(10)),
+            'gruplar': dict(p_grup),
+            'fiyat_ort': round(sum(fiyatlar) / len(fiyatlar)) if fiyatlar else 0,
+            'fiyat_min': min(fiyatlar) if fiyatlar else 0,
+            'fiyat_max': max(fiyatlar) if fiyatlar else 0,
+        },
+    })
+
+
 # ── Müşteriler ─────────────────────────────────────────────────────────────────
 @bp.route('/musteriler', methods=['GET'])
 @jwt_required()
@@ -252,6 +293,40 @@ def email_gonder_endpoint():
     if basarili:
         return jsonify({'ok': True, 'mesaj': 'Email gönderildi'})
     return jsonify({'message': f'Email gönderilemedi: {sonuc}'}), 500
+
+
+@bp.route('/email/toplu', methods=['POST'])
+@jwt_required()
+def email_toplu():
+    """Birden fazla müşteriye aynı anda email gönder."""
+    d = request.get_json() or {}
+    emlakci = Emlakci.query.get(_eid())
+    musteri_idler = d.get('musteri_idler', [])
+    mesaj = d.get('mesaj', '').strip()
+    konu = d.get('konu', 'Emlakisim').strip()
+
+    if not musteri_idler:
+        return jsonify({'message': 'Müşteri listesi gerekli'}), 400
+
+    gonderilen = 0
+    hatali = 0
+    for mid in musteri_idler:
+        m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first()
+        if not m:
+            continue
+        det = m.detaylar or {}
+        alici = det.get('email', '')
+        if not alici:
+            hatali += 1
+            continue
+        html = musteri_email_sablonu(emlakci, m, None, mesaj)
+        ok, _ = email_gonder(alici, konu, html, gonderen_ad=emlakci.ad_soyad)
+        if ok:
+            gonderilen += 1
+        else:
+            hatali += 1
+
+    return jsonify({'gonderilen': gonderilen, 'hatali': hatali, 'toplam': len(musteri_idler)})
 
 
 @bp.route('/email/portfoy', methods=['POST'])
