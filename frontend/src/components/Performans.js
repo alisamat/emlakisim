@@ -4,6 +4,7 @@ import api from '../api';
 export default function Performans() {
   const [veri, setVeri] = useState({});
   const [sektor, setSektor] = useState('');
+  const [stratejik, setStratejik] = useState([]);
   const [piyasa, setPiyasa] = useState('');
   const [yuk, setYuk] = useState({});
 
@@ -29,6 +30,7 @@ export default function Performans() {
         toplam_diyalog: eg.data.toplam_diyalog || 0,
       });
     }).catch(() => {});
+    api.get('/api/panel/gelismis/zeka/stratejik').then(r => setStratejik(r.data.oneriler || [])).catch(() => {});
   }, []);
 
   const sektorGetir = async () => {
@@ -89,6 +91,19 @@ export default function Performans() {
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{veri.toplam_diyalog || 0} toplam diyalog</span>
         </div>
       </div>
+
+      {/* Stratejik Öneriler */}
+      {stratejik.length > 0 && (
+        <div style={{ background: '#fffbeb', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #fde68a' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#92400e', marginBottom: 8 }}>🎯 Stratejik Öneriler</div>
+          {stratejik.map((o, i) => (
+            <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid #fef3c7', fontSize: 13 }}>
+              <div style={{ fontWeight: 600, color: '#78350f' }}>{o.baslik}</div>
+              <div style={{ color: '#92400e', fontSize: 12, marginTop: 2 }}>{o.mesaj}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Sektörel Bilgi */}
       <div className="grid-2" style={{ gap: 12, marginBottom: 16 }}>

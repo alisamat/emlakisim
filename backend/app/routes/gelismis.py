@@ -13,6 +13,7 @@ from app.services.ilan_ocr import ilan_fotograf_oku, ilanlari_karsilastir
 from app.services.zeka import proaktif_oneriler, musteri_analiz, gunluk_zeka_raporu
 from app.services.kisisellesme import profil_cikart, hizli_erisim_onerileri
 from app.services.akilli_arama import genel_arama
+from app.services.akilli_oneri import stratejik_oneriler
 import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
@@ -176,6 +177,13 @@ def zeka_rapor():
     from app.models import Emlakci
     emlakci = Emlakci.query.get(int(get_jwt_identity()))
     return jsonify(gunluk_zeka_raporu(emlakci))
+
+
+@bp.route('/zeka/stratejik', methods=['GET'])
+@jwt_required()
+def zeka_stratejik():
+    """Stratejik iş önerileri — portföy dengesi, fiyat, bölge, gelir trendi."""
+    return jsonify({'oneriler': stratejik_oneriler(int(get_jwt_identity()))})
 
 
 @bp.route('/zeka/profil', methods=['GET'])

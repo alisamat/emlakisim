@@ -83,6 +83,7 @@ _PATTERNS = [
     (r'(?:fiyat|m2|metrekare)\s*(?:ne\s*kadar|ortalama)',     'sektor_bilgi'),
     # ── Performans ──
     (r'(?:performans|kpi|verimlilik|ozet\s*rapor|nasil\s*gidiyorum)', 'performans'),
+    (r'(?:strateji|oneri|öner|ne\s*yapmaliyim|tavsiye|yol\s*harita)', 'strateji'),
     # ── Yardım ──
     # ── Müşteri detay ──
     (r'(?:musteri|müşteri).*(?:bilgi|detay|profil)',          'musteri_liste'),
@@ -223,6 +224,14 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'strateji':
+        from app.services.akilli_oneri import stratejik_oneriler
+        oneriler = stratejik_oneriler(emlakci.id)
+        if not oneriler:
+            return '✅ *Harika gidiyorsun!* Şu an stratejik bir sorun görünmüyor.'
+        satirlar = [f'• *{o["baslik"]}*\n  {o["mesaj"]}' for o in oneriler[:5]]
+        return f'🎯 *Stratejik Öneriler:*\n\n' + '\n\n'.join(satirlar)
 
     if komut == 'genel_ara':
         return _genel_ara(emlakci, metin)
