@@ -476,24 +476,14 @@ Kullanıcı mesaj gönderir
 - [ ] Kuveyttürk ödeme entegrasyonu (dış servis)
 - [x] Son kullanma tarihi sistemi (model + kredi yükleme uzatma)
 
-### Yedekleme Format Seçimi
-- [ ] Yedek indirirken JSON veya Excel seçebilme (kullanıcıya sor)
+### Yedekleme Format Seçimi ✅
+- [x] JSON veya Excel (?format=json/excel)
 
-### AI Davranış Ayarları
-- [ ] İşlem onay modu (her DB işleminde onay kutusu: Evet/Hayır)
-- [ ] AI dil tonu (resmi / samimi / kısa)
-- [ ] Otomatik eşleştirme açık/kapalı
-- [ ] Proaktif öneriler açık/kapalı
-- [ ] Bildirim tercihleri (hangi tip bildirimler gelsin)
-- [ ] Varsayılan işlem türü (kiralık/satılık)
-- [ ] Varsayılan şehir/ilçe
-- [ ] WhatsApp mesai dışı mesaj özelleştirme
+### AI Davranış Ayarları ✅
+- [x] İşlem onay, AI ton, eşleştirme, öneriler, bildirim — 12 ayar toggle
 
-### Admin Parametre Yönetimi
-- [ ] Vergi oranları (gelir vergisi dilimleri, KDV, tapu harcı, istisna tutarları)
-- [ ] Hesaplama parametreleri (kira artış oranı, yeniden değerleme, istisna tutarı)
-- [ ] Belge şablon parametreleri (yasal metinler, uyarı cümleleri)
-- [ ] Sistem sabitleri admin panelden değiştirilebilir (restart gerekmez)
+### Admin Parametre Yönetimi ✅
+- [x] 12 sistem parametresi inline düzenleme
 
 ### Tamamlanan
 - [x] Reklam metni + sunum PDF + ilan metni

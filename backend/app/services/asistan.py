@@ -837,6 +837,22 @@ def _sistem_prompt(emlakci, metin=''):
     except:
         pass
 
+    # Kullanıcı ayarlarını oku
+    ton_talimat = ''
+    try:
+        from app.models.ayarlar import KullaniciAyar
+        kayit = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+        if kayit and kayit.ayarlar:
+            ton = kayit.ayarlar.get('ai_tonu', 'samimi')
+            if ton == 'resmi':
+                ton_talimat = '\n- Resmi ve profesyonel bir dil kullan, "siz" hitabı kullan'
+            elif ton == 'kisa':
+                ton_talimat = '\n- Çok kısa ve öz cevap ver, gereksiz detay verme'
+            else:
+                ton_talimat = '\n- Samimi ve yardımsever ol, "sen" hitabı kullan'
+    except:
+        pass
+
     return f"""Sen Emlakisim'in yapay zeka destekli emlak asistanısın. Gerçek bir emlak ofisi asistanı gibi davran.
 
 {baglam}
@@ -856,7 +872,7 @@ Görevlerin:
 - Sektörel bilgi ver (mevzuat, vergi, piyasa)
 
 Kurallar:
-- Türkçe konuş, kısa ve net ol
+- Türkçe konuş, kısa ve net ol{ton_talimat}
 - Bilgi eksikse sor, tahmin etme
 - İşlem yaptıktan sonra onay mesajı ver
 - Proaktif ol: yapılabilecekleri öner, hatırlat, uyar

@@ -104,10 +104,24 @@ export default function Yedekleme() {
       {/* İşlemler */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <button onClick={indir} disabled={yukleniyor} style={{
-          flex: '1 1 200px', padding: '16px 20px', borderRadius: 12, border: '2px solid #16a34a',
+          flex: '1 1 140px', padding: '16px 20px', borderRadius: 12, border: '2px solid #16a34a',
           background: '#f0fdf4', color: '#16a34a', fontWeight: 700, fontSize: 14, cursor: 'pointer',
         }}>
-          📥 Excel İndir
+          📥 Excel
+        </button>
+        <button onClick={async () => {
+          setYuk(true); setMesaj('');
+          try {
+            const r = await api.get('/api/panel/yedek/indir?format=json', { responseType: 'blob' });
+            const url = URL.createObjectURL(new Blob([r.data]));
+            const a = document.createElement('a'); a.href = url; a.download = `emlakisim_yedek_${Date.now()}.json`; a.click();
+            setMesaj('JSON yedek indirildi!');
+          } catch { setMesaj('Hata'); } finally { setYuk(false); }
+        }} disabled={yukleniyor} style={{
+          flex: '1 1 140px', padding: '16px 20px', borderRadius: 12, border: '2px solid #f59e0b',
+          background: '#fffbeb', color: '#92400e', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+        }}>
+          📥 JSON
         </button>
         <button onClick={emailGonder} disabled={yukleniyor} style={{
           flex: '1 1 200px', padding: '16px 20px', borderRadius: 12, border: '2px solid #3b82f6',
