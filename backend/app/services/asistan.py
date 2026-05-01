@@ -34,8 +34,8 @@ _PATTERNS = [
     (r'(?:portfoy|portföy|mulk|mülk|emlak)\s*(?:listele|göster|listesi|kac)',    'mulk_liste'),
     (r'(?:yeni\s*(?:mulk|mülk|ilan|emlak|daire))',            'mulk_ekle'),
     (r'(?:kac|kaç)\s*(?:mulk|mülk|ilan|emlak)',               'mulk_liste'),
-    (r'(?:kiralik|kiralık)\s*(?:listele|göster|var\s*mi)',     'mulk_liste'),
-    (r'(?:satilik|satılık)\s*(?:listele|göster|var\s*mi)',     'mulk_liste'),
+    (r'(?:kiralik|kiralık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
+    (r'(?:satilik|satılık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
     # ── Not & Hatırlatma ──
     (r'(?:not)\s*(?:ekle|al|kaydet|yaz)',                     'not_ekle'),
     (r'(?:unutma|hatirla|hatırla|aklinda\s*tut|aklında\s*tut|sakla|kaydet\s*bunu)', 'unutma'),
@@ -135,6 +135,14 @@ _PATTERNS = [
     (r'(?:karanlik|karanlık|gece)\s*(?:mod|tema)',            'rapor'),
     # ── Genel arama ──
     (r'(?:ara|bul)\s+(.+)',                                   'genel_ara'),
+    (r'(.+)\s+(?:ara|bul)$',                                  'genel_ara'),
+    (r'(?:onu|ona)\s*(?:ara|ula)',                             'genel_ara'),
+    # ── Tapu & Komisyon hesapla ──
+    (r'(?:tapu)\s*(?:masraf|harç|harc|maliyet|ne\s*kadar)',   'rapor'),
+    (r'(?:komisyon)\s*(?:hesapla|ne\s*kadar)',                 'rapor'),
+    # ── Ayar/şifre ──
+    (r'(?:sifre|şifre|sifremi|şifremi)',                       'rapor'),
+    (r'(?:ayar|tema|logo)\s*(?:degistir|değiştir|ac|aç)',     'rapor'),
     # ── Yardım & Yetenek ──
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
     (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
