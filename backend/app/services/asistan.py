@@ -145,6 +145,10 @@ _PATTERNS = [
     # ── Ayar/şifre ──
     (r'(?:sifre|şifre|sifremi|şifremi)',                       'rapor'),
     (r'(?:ayar|tema|logo)\s*(?:degistir|değiştir|ac|aç)',     'rapor'),
+    # ── Yasal & Piyasa & Süreç ──
+    (r'(?:yasal|hukuki|ipotek|haciz|iskan)\s*(?:durum|kontrol|risk)', 'yasal_bilgi'),
+    (r'(?:piyasa|deger|değer)\s*(?:analiz|rapor|karsilastir)',        'piyasa_bilgi'),
+    (r'(?:surec|süreç)\s*(?:durum|ozet|ne\s*durumda)',               'surec_ozet_cmd'),
     # ── Yardım & Yetenek ──
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
     (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
@@ -225,6 +229,26 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'yasal_bilgi':
+        return ('⚖️ *Yasal durum kontrolü için:*\n\n'
+                'Portföy sayfasında mülkün ⋮ menüsünden *"Yasal Durum"* butonuna tıklayın.\n'
+                '10 kontrol noktası: iskan, ipotek, haciz, DASK, imar, deprem, aidat, kira, vekaletname\n\n'
+                '_Veya doğrudan hangi mülk için kontrol istediğinizi yazın._')
+
+    if komut == 'piyasa_bilgi':
+        return ('📊 *Piyasa değeri analizi için:*\n\n'
+                'Portföy sayfasında mülkün ⋮ menüsünden *"Piyasa Değeri"* butonuna tıklayın.\n'
+                'Portföy ortalaması, ilçe karşılaştırması, m² fiyat ve değerlendirme göreceksiniz.\n'
+                'PDF rapor da indirebilirsiniz.')
+
+    if komut == 'surec_ozet_cmd':
+        from app.services.surec_bildirim import surec_ozet_rapor
+        rapor = surec_ozet_rapor(emlakci.id)
+        if not rapor:
+            return '📋 Aktif süreç yok.'
+        satirlar = [f'• *{s["baslik"]}* — {s["ilerleme"]} (%{s["yuzde"]})' + (f' ⚠️ {s["gun_gecti"]} gün' if s["uyari"] else '') for s in rapor]
+        return f'📋 *Aktif Süreçler:*\n\n' + '\n'.join(satirlar)
 
     if komut == 'istatistik':
         return _istatistik_detay(emlakci)

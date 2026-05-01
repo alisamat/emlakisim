@@ -453,24 +453,22 @@ Kullanıcı mesaj gönderir
 
 ### Profesyonel Emlakçı Yetkinlikleri
 
-#### A. Süreç Bilgilendirme Sistemi
-- [ ] Süreç adımı tamamlandığında müşteriye otomatik bildirim (email/WhatsApp)
-- [ ] Haftalık süreç özet emaili
-- [ ] Emlakçıya: "X müşterinin süreci Y gündür ilerlemedi" uyarısı
-- [ ] Müşteri portalından süreç takibi (alıcı/satıcı kendi durumunu görsün)
+#### A. Süreç Bilgilendirme ✅
+- [x] Adım tamamlandığında müşteriye otomatik email (progress bar)
+- [x] Emlakçıya bildirim + 5+ gün durağan süreç uyarısı (zamanlayıcı)
+- [x] Süreç özet raporu API
+- [ ] Müşteri portalından süreç takibi (alıcı kendi görsün — ileri seviye)
 
-#### B. Piyasa Değeri Analiz Raporu
-- [ ] Mülkün m² fiyatını bölge ortalamasıyla karşılaştırma
-- [ ] Portföydeki benzer mülklerle fiyat karşılaştırması
-- [ ] "Bölge ortalamasının %X üstünde/altında" değerlendirmesi
-- [ ] Piyasa değeri analiz raporu PDF
+#### B. Piyasa Değeri ✅
+- [x] m² fiyat + portföy + ilçe karşılaştırması
+- [x] "%X üstünde/altında" değerlendirmesi (5 seviye)
+- [x] Piyasa analiz raporu PDF
 
-#### C. Yasal Durum Yönetimi
-- [ ] Mülk yasal durum checklist'i (iskan, ipotek, haciz, DASK, imar)
-- [ ] Eksik belge uyarısı
-- [ ] DASK poliçe son kullanma tarihi takibi
-- [ ] Tapu devir öncesi otomatik kontrol listesi
-- [ ] Yasal risk skoru (her mülk için)
+#### C. Yasal Durum ✅
+- [x] 10 kontrol noktası checklist (iskan, ipotek, haciz, DASK, imar, vb.)
+- [x] Risk skoru (düşük/orta/yüksek)
+- [x] DASK son kullanma takibi
+- [x] Mülk kartında ⚖️ buton
 
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
