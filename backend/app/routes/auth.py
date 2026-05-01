@@ -18,9 +18,17 @@ def _hash(s):
 def kayit():
     d = request.get_json() or {}
     if not all([d.get('ad_soyad'), d.get('email'), d.get('telefon'), d.get('sifre')]):
-        return jsonify({'message': 'Eksik alan'}), 400
+        return jsonify({'message': 'Eksik alan: ad soyad, email, telefon ve şifre gerekli'}), 400
+    if len(d['sifre']) < 4:
+        return jsonify({'message': 'Şifre en az 4 karakter olmalı'}), 400
+    if len(d['ad_soyad']) < 2:
+        return jsonify({'message': 'Ad soyad en az 2 karakter olmalı'}), 400
+    if '@' not in d['email']:
+        return jsonify({'message': 'Geçerli bir email adresi girin'}), 400
     if Emlakci.query.filter_by(email=d['email']).first():
-        return jsonify({'message': 'E-posta zaten kayıtlı'}), 409
+        return jsonify({'message': 'Bu e-posta zaten kayıtlı'}), 409
+    if Emlakci.query.filter_by(telefon=d['telefon']).first():
+        return jsonify({'message': 'Bu telefon numarası zaten kayıtlı'}), 409
     e = Emlakci(
         ad_soyad=d['ad_soyad'], email=d['email'],
         telefon=d['telefon'], sifre_hash=_hash(d['sifre']),

@@ -148,7 +148,9 @@ _PATTERNS = [
     (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
     (r'(?:ne\s*yapabilirsin|yeteneklerin|ozelliklerin|özellikler)', 'yardim'),
     (r'(?:nasil\s*kullan|nasıl\s*kullan|nasil\s*yap|nasıl\s*yap)', 'yardim'),
-    (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'yardim'),
+    (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
+    (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
+    (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
@@ -165,6 +167,15 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'yardim':
         return _yardim_mesaji(emlakci)
+
+    if komut == 'tesekkur':
+        return f'😊 Rica ederim {emlakci.ad_soyad.split(" ")[0]}! Başka bir konuda yardımcı olabilir miyim?'
+
+    if komut == 'gunaydin':
+        return _yardim_mesaji(emlakci)  # Günaydın = hoşgeldin + özet
+
+    if komut == 'iyi_aksam':
+        return f'🌙 İyi akşamlar {emlakci.ad_soyad.split(" ")[0]}! Yarın için bir şey planlamak ister misiniz?'
 
     if komut == 'musteri_liste':
         return _musteri_listele(emlakci)
@@ -302,7 +313,7 @@ def _yardim_mesaji(emlakci):
         yeni_lead = Lead.query.filter_by(emlakci_id=emlakci.id, durum='yeni').count()
         if gorev_sayi or yeni_lead:
             ozet_ek = f'\n📅 Bugün *{gorev_sayi}* görev · 🎯 *{yeni_lead}* yeni lead\n'
-    except:
+    except Exception:
         pass
 
     # Proaktif uyarılar
@@ -318,7 +329,7 @@ def _yardim_mesaji(emlakci):
             uyarilar += f'\n💾 {yd["mesaj"]}'
         if emlakci.kredi and emlakci.kredi < 5:
             uyarilar += f'\n💎 Krediniz düşük: *{emlakci.kredi}*'
-    except:
+    except Exception:
         pass
 
     return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n{ozet_ek}{uyarilar}\n'
@@ -348,7 +359,7 @@ def _hizli_erisim_mesaji(emlakci):
         if oneriler:
             komutlar = ', '.join([f'"{o["komut"]}"' for o in oneriler[:4]])
             return f'⚡ *Sık kullandıkların:* {komutlar}\n\n'
-    except:
+    except Exception:
         pass
     return ''
 
@@ -409,7 +420,7 @@ def _musteri_kaydet(emlakci, metin):
     try:
         zincir = musteri_eklendi_sonrasi(emlakci, musteri)
         zincir_mesaj = '\n'.join(zincir) if zincir else ''
-    except:
+    except Exception:
         zincir_mesaj = ''
 
     return f'✅ *Müşteri eklendi!*\n\n👤 {ad}\n📞 {telefon or "—"}\n🏷 {islem.capitalize()}' + eslesme_mesaj + (f'\n\n{zincir_mesaj}' if zincir_mesaj else '')
@@ -441,7 +452,7 @@ def _mulk_kaydet(emlakci, metin):
     try:
         zincir = mulk_eklendi_sonrasi(emlakci, mulk)
         zincir_mesaj = '\n'.join(zincir) if zincir else ''
-    except:
+    except Exception:
         zincir_mesaj = ''
 
     fiyat_str = f'{int(fiyat):,}'.replace(',', '.') + ' TL' if fiyat else '—'
@@ -965,11 +976,11 @@ def _sistem_prompt(emlakci, metin=''):
     from app.services.kisisellesme import kisisellesmis_prompt_eki
     try:
         baglam = baglam_olustur(emlakci, metin)
-    except:
+    except Exception:
         baglam = ''
     try:
         baglam += kisisellesmis_prompt_eki(emlakci.id)
-    except:
+    except Exception:
         pass
 
     # Kullanıcı ayarlarını oku
@@ -985,7 +996,7 @@ def _sistem_prompt(emlakci, metin=''):
                 ton_talimat = '\n- Çok kısa ve öz cevap ver, gereksiz detay verme'
             else:
                 ton_talimat = '\n- Samimi ve yardımsever ol, "sen" hitabı kullan'
-    except:
+    except Exception:
         pass
 
     return f"""Sen Emlakisim AI — emlak profesyonelleri için geliştirilmiş üst segment yapay zeka asistanısın.
