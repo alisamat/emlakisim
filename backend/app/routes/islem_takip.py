@@ -63,10 +63,29 @@ def surec_guncelle(sid):
     s = SurecTakip.query.filter_by(id=sid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
     if 'durum' in d: s.durum = d['durum']
-    if 'adimlar' in d: s.adimlar = d['adimlar']
+    if 'adimlar' in d:
+        # Yeni tamamlanan adımları tespit et
+        eski = s.adimlar or []
+        yeni = d['adimlar']
+        for i, (e, y) in enumerate(zip(eski, yeni)):
+            if e.get('durum') != 'tamamlandi' and y.get('durum') == 'tamamlandi':
+                try:
+                    from app.services.surec_bildirim import adim_tamamlandi_bildir
+                    adim_tamamlandi_bildir(sid, i, _eid())
+                except Exception:
+                    pass
+        s.adimlar = yeni
     if 'baslik' in d: s.baslik = d['baslik']
     db.session.commit()
     return jsonify({'surec': _s(s)})
+
+
+@bp.route('/surec/ozet', methods=['GET'])
+@jwt_required()
+def surec_ozet():
+    """Aktif süreçlerin özet raporu."""
+    from app.services.surec_bildirim import surec_ozet_rapor
+    return jsonify({'surecler': surec_ozet_rapor(_eid())})
 
 
 # ── Evrak Arşivi ─────────────────────────────────────────

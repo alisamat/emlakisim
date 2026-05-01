@@ -34,8 +34,11 @@ def zamanlayici_baslat(app):
         # Her gün 03:00 — otomatik pattern öğrenme
         _scheduler.add_job(lambda: _with_app(app, _otomatik_ogren), 'cron', hour=3, id='ogren')
 
+        # Her gün 10:00 — durağan süreç uyarısı
+        _scheduler.add_job(lambda: _with_app(app, _surec_uyari), 'cron', hour=10, id='surec_uyari')
+
         _scheduler.start()
-        logger.info('[Zamanlayıcı] Başlatıldı — 6 görev aktif')
+        logger.info('[Zamanlayıcı] Başlatıldı — 7 görev aktif')
     except ImportError:
         logger.warning('[Zamanlayıcı] apscheduler yüklü değil, atlanıyor')
     except Exception as e:
@@ -152,6 +155,24 @@ def _kredi_kontrol():
             'AI asistan kullanmaya devam etmek için kredi ekleyin.')
 
     logger.info('[Zamanlayıcı] Kredi kontrolleri yapıldı')
+
+
+def _surec_uyari():
+    """5+ gündür ilerlememiş süreçler için uyarı."""
+    from app.services.surec_bildirim import surec_ozet_rapor
+    from app.models import Emlakci
+    from app.routes.bildirim import bildirim_olustur
+
+    for e in Emlakci.query.filter_by(aktif=True).all():
+        rapor = surec_ozet_rapor(e.id)
+        duragen = [s for s in rapor if s['uyari']]
+        if duragen:
+            for s in duragen:
+                bildirim_olustur(e.id, 'surec',
+                    f'⚠️ {s["baslik"]} — {s["gun_gecti"]} gündür ilerleme yok ({s["ilerleme"]})',
+                    link='surec')
+
+    logger.info('[Zamanlayıcı] Süreç uyarıları kontrol edildi')
 
 
 def _otomatik_ogren():
