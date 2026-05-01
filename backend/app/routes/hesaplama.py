@@ -3,7 +3,7 @@ HESAPLAMA — Emlak hesaplama API'leri
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
-from app.services.hesaplama import kira_vergisi, deger_artis_kazanci, kira_getirisi, aidat_analizi
+from app.services.hesaplama import kira_vergisi, deger_artis_kazanci, kira_getirisi, aidat_analizi, tapu_masrafi, komisyon_hesapla
 
 bp = Blueprint('hesaplama', __name__, url_prefix='/api/panel/hesaplama')
 
@@ -53,4 +53,20 @@ def aidat_analizi_endpoint():
         kira=float(d.get('kira', 0)),
         mulk_fiyati=float(d.get('mulk_fiyati', 0)),
     )
+    return jsonify(sonuc)
+
+
+@bp.route('/tapu-masrafi', methods=['POST'])
+@jwt_required()
+def tapu_masrafi_endpoint():
+    d = request.get_json() or {}
+    sonuc = tapu_masrafi(float(d.get('satis_bedeli', 0)))
+    return jsonify(sonuc)
+
+
+@bp.route('/komisyon', methods=['POST'])
+@jwt_required()
+def komisyon_endpoint():
+    d = request.get_json() or {}
+    sonuc = komisyon_hesapla(d.get('islem_turu', 'satis'), float(d.get('bedel', 0)))
     return jsonify(sonuc)

@@ -666,6 +666,77 @@ _FUNCTIONS = [
             'required': ['icerik'],
         },
     },
+    {
+        'name': 'gorev_ekle',
+        'description': 'Görev veya hatırlatma oluşturur',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'baslik': {'type': 'string', 'description': 'Görev başlığı'},
+                'aciklama': {'type': 'string'},
+                'tip': {'type': 'string', 'enum': ['gorev', 'hatirlatma', 'yer_gosterme', 'toplanti']},
+            },
+            'required': ['baslik'],
+        },
+    },
+    {
+        'name': 'fatura_olustur',
+        'description': 'Fatura oluşturur',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'alici_ad': {'type': 'string'},
+                'tutar': {'type': 'number'},
+                'tip': {'type': 'string', 'enum': ['hizmet', 'komisyon', 'satis', 'kiralama']},
+            },
+            'required': ['alici_ad', 'tutar'],
+        },
+    },
+    {
+        'name': 'eslestir',
+        'description': 'Müşteriye uygun mülkleri bulur',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_id': {'type': 'integer', 'description': 'Müşteri ID'},
+            },
+            'required': ['musteri_id'],
+        },
+    },
+    {
+        'name': 'kira_vergisi_hesapla',
+        'description': 'Kira vergisi hesaplar',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'yillik_kira': {'type': 'number', 'description': 'Yıllık kira geliri TL'},
+            },
+            'required': ['yillik_kira'],
+        },
+    },
+    {
+        'name': 'kira_getirisi_hesapla',
+        'description': 'Kira getirisi ROI hesaplar',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_fiyati': {'type': 'number'},
+                'aylik_kira': {'type': 'number'},
+            },
+            'required': ['mulk_fiyati', 'aylik_kira'],
+        },
+    },
+    {
+        'name': 'genel_arama',
+        'description': 'Müşteri, mülk, görev, lead, fatura arar',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sorgu': {'type': 'string', 'description': 'Arama kelimesi'},
+            },
+            'required': ['sorgu'],
+        },
+    },
 ]
 
 def _ai_function_call(fonksiyon_adi, args, emlakci):
@@ -696,6 +767,48 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         db.session.add(n)
         db.session.commit()
         return '✅ Not kaydedildi.'
+
+    if fonksiyon_adi == 'gorev_ekle':
+        from app.models.planlama import Gorev
+        g = Gorev(emlakci_id=emlakci.id, baslik=args.get('baslik', ''), aciklama=args.get('aciklama'), tip=args.get('tip', 'gorev'))
+        db.session.add(g); db.session.commit()
+        return f'✅ Görev eklendi: {args.get("baslik")}'
+
+    if fonksiyon_adi == 'fatura_olustur':
+        from app.models.fatura import Fatura
+        tutar = float(args.get('tutar', 0))
+        f = Fatura(emlakci_id=emlakci.id, alici_ad=args.get('alici_ad', ''), tutar=tutar,
+                   tip=args.get('tip', 'hizmet'), kdv_oran=20, kdv_tutar=round(tutar*0.2, 2),
+                   toplam=round(tutar*1.2, 2), fatura_no=f'F-{datetime.now().strftime("%Y%m%d%H%M")}')
+        db.session.add(f); db.session.commit()
+        return f'✅ Fatura oluşturuldu: {f.fatura_no} — {int(f.toplam):,} TL'.replace(',', '.')
+
+    if fonksiyon_adi == 'eslestir':
+        from app.services.eslestirme import eslesdir
+        sonuclar = eslesdir(emlakci.id, musteri_id=args.get('musteri_id'), limit=5)
+        if not sonuclar:
+            return '📭 Uygun mülk bulunamadı.'
+        satirlar = [f'• {s["baslik"]} — {s["fiyat_str"]} (%{s["puan"]})' for s in sonuclar]
+        return f'🔗 *{len(sonuclar)} uygun mülk:*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'kira_vergisi_hesapla':
+        from app.services.hesaplama import kira_vergisi
+        s = kira_vergisi(float(args.get('yillik_kira', 0)))
+        f = lambda v: f'{int(v):,}'.replace(',', '.')
+        return f'🧾 *Kira Vergisi*\nGelir: {f(s["yillik_kira"])} TL\nVergi: {f(s["vergi"])} TL\nNet: {f(s["net_gelir"])} TL\nOran: %{s["efektif_oran"]}'
+
+    if fonksiyon_adi == 'kira_getirisi_hesapla':
+        from app.services.hesaplama import kira_getirisi
+        s = kira_getirisi(float(args.get('mulk_fiyati', 0)), float(args.get('aylik_kira', 0)))
+        return f'💰 *Kira Getirisi*\nBrüt: %{s["brut_getiri"]}\nNet: %{s["net_getiri"]}\nGeri dönüş: {s["geri_donus_yil"]} yıl\n{s["degerlendirme"]}'
+
+    if fonksiyon_adi == 'genel_arama':
+        from app.services.akilli_arama import genel_arama
+        sonuc = genel_arama(emlakci.id, args.get('sorgu', ''))
+        if not sonuc['sonuclar']:
+            return f'🔍 Sonuç bulunamadı.'
+        satirlar = [f'{s["ikon"]} *{s["baslik"]}* — {s["detay"]}' for s in sonuc['sonuclar'][:8]]
+        return f'🔍 *Arama sonuçları:*\n\n' + '\n'.join(satirlar)
 
     return None
 

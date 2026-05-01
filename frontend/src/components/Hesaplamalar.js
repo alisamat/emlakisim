@@ -6,6 +6,8 @@ const HESAP_TIPLERI = [
   { key: 'deger-artis', label: 'Değer Artış Kazancı', ikon: '📈', renk: '#f59e0b' },
   { key: 'kira-getirisi', label: 'Kira Getirisi (ROI)', ikon: '💰', renk: '#16a34a' },
   { key: 'aidat-analizi', label: 'Aidat Analizi', ikon: '🏢', renk: '#3b82f6' },
+  { key: 'tapu-masrafi', label: 'Tapu Masrafı', ikon: '📋', renk: '#8b5cf6' },
+  { key: 'komisyon', label: 'Komisyon Hesapla', ikon: '💼', renk: '#06b6d4' },
 ];
 
 function HesapFormu({ tip, onSonuc }) {
@@ -45,6 +47,26 @@ function HesapFormu({ tip, onSonuc }) {
       <div><label className="etiket">Aylık Kira (TL)</label><input className="input" type="number" value={form.aylik_kira || ''} onChange={e => d('aylik_kira', e.target.value)} /></div>
       <div><label className="etiket">Yıllık Gider (TL)</label><input className="input" type="number" value={form.yillik_gider || '0'} onChange={e => d('yillik_gider', e.target.value)} /></div>
       <div><button className="btn-yesil" onClick={hesapla} disabled={yukleniyor} style={{ marginTop: 20 }}>{yukleniyor ? '...' : '🧮 Hesapla'}</button></div>
+    </div>
+  );
+
+  if (tip === 'tapu-masrafi') return (
+    <div className="grid-2" style={{ marginBottom: 12, gap: 12 }}>
+      <div><label className="etiket">Satış Bedeli (TL)</label><input className="input" type="number" value={form.satis_bedeli || ''} onChange={e => d('satis_bedeli', e.target.value)} /></div>
+      <div><button className="btn-yesil" onClick={hesapla} disabled={yukleniyor} style={{ marginTop: 20 }}>{yukleniyor ? '...' : '🧮 Hesapla'}</button></div>
+    </div>
+  );
+
+  if (tip === 'komisyon') return (
+    <div className="grid-2" style={{ marginBottom: 12, gap: 12 }}>
+      <div>
+        <label className="etiket">İşlem Türü</label>
+        <select className="input" value={form.islem_turu || 'satis'} onChange={e => d('islem_turu', e.target.value)}>
+          <option value="satis">Satış</option><option value="kira">Kiralama</option>
+        </select>
+      </div>
+      <div><label className="etiket">{(form.islem_turu || 'satis') === 'satis' ? 'Satış Bedeli (TL)' : 'Aylık Kira (TL)'}</label><input className="input" type="number" value={form.bedel || ''} onChange={e => d('bedel', e.target.value)} /></div>
+      <div style={{ gridColumn: 'span 2' }}><button className="btn-yesil" onClick={hesapla} disabled={yukleniyor}>{yukleniyor ? '...' : '🧮 Hesapla'}</button></div>
     </div>
   );
 
@@ -107,6 +129,26 @@ function SonucGoster({ tip, sonuc }) {
         <Satir label="Net Getiri" deger={`%${sonuc.net_getiri}`} renk={sonuc.net_getiri >= 5 ? '#16a34a' : '#f59e0b'} />
         <Satir label="Geri Dönüş" deger={`${sonuc.geri_donus_yil} yıl`} />
         <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600, color: '#475569' }}>{sonuc.degerlendirme}</div>
+      </>}
+
+      {tip === 'tapu-masrafi' && <>
+        <Satir label="Satış Bedeli" deger={f(sonuc.satis_bedeli) + ' TL'} />
+        <Satir label="Tapu Harcı (%4)" deger={f(sonuc.tapu_harci) + ' TL'} renk="#dc2626" />
+        <Satir label="  Alıcı payı (%2)" deger={f(sonuc.alici_harci) + ' TL'} />
+        <Satir label="  Satıcı payı (%2)" deger={f(sonuc.satici_harci) + ' TL'} />
+        <Satir label="DASK" deger={f(sonuc.dask) + ' TL'} />
+        <Satir label="Döner Sermaye" deger={f(sonuc.doner_sermaye) + ' TL'} />
+        <Satir label="Toplam Masraf" deger={f(sonuc.toplam_masraf) + ' TL'} renk="#dc2626" />
+      </>}
+
+      {tip === 'komisyon' && <>
+        <Satir label="İşlem" deger={sonuc.islem} />
+        <Satir label="Bedel" deger={f(sonuc.bedel) + ' TL'} />
+        <Satir label="Komisyon Oranı" deger={sonuc.oran} />
+        <Satir label="Komisyon" deger={f(sonuc.komisyon) + ' TL'} renk="#16a34a" />
+        <Satir label="KDV (%20)" deger={f(sonuc.kdv) + ' TL'} />
+        <Satir label="Toplam" deger={f(sonuc.toplam) + ' TL'} renk="#16a34a" />
+        {sonuc.aciklama && <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>{sonuc.aciklama}</div>}
       </>}
 
       {tip === 'aidat-analizi' && <>

@@ -142,6 +142,46 @@ def _getiri_degerlendirme(oran):
     return '🔴 Yatırıma uygun değil'
 
 
+def tapu_masrafi(satis_bedeli, dask_bedeli=1500, doner_sermaye=1000):
+    """Tapu devir masrafı hesaplama."""
+    tapu_harci = satis_bedeli * 0.04  # %4 (alıcı+satıcı)
+    alici_harci = satis_bedeli * 0.02
+    satici_harci = satis_bedeli * 0.02
+    toplam = tapu_harci + dask_bedeli + doner_sermaye
+
+    return {
+        'satis_bedeli': satis_bedeli,
+        'tapu_harci': round(tapu_harci, 2),
+        'alici_harci': round(alici_harci, 2),
+        'satici_harci': round(satici_harci, 2),
+        'dask': dask_bedeli,
+        'doner_sermaye': doner_sermaye,
+        'toplam_masraf': round(toplam, 2),
+    }
+
+
+def komisyon_hesapla(islem_turu, bedel, oran=None):
+    """Emlakçı komisyon hesaplama."""
+    if islem_turu == 'satis':
+        oran = oran or 0.02  # %2
+        komisyon = bedel * oran
+        kdv = komisyon * 0.20
+        return {
+            'islem': 'Satış', 'bedel': bedel, 'oran': f'%{oran*100:.0f}',
+            'komisyon': round(komisyon, 2), 'kdv': round(kdv, 2),
+            'toplam': round(komisyon + kdv, 2),
+            'aciklama': f'Alıcıdan %{oran*100:.0f} + satıcıdan %{oran*100:.0f} (ayrı ayrı)',
+        }
+    else:
+        komisyon = bedel  # 1 aylık kira
+        kdv = komisyon * 0.20
+        return {
+            'islem': 'Kiralama', 'bedel': bedel, 'oran': '1 aylık kira',
+            'komisyon': round(komisyon, 2), 'kdv': round(kdv, 2),
+            'toplam': round(komisyon + kdv, 2),
+        }
+
+
 def aidat_analizi(aidat, kira, mulk_fiyati):
     """Aidat/kira ve aidat/fiyat oranı analizi."""
     kira_orani = (aidat / kira * 100) if kira else 0
