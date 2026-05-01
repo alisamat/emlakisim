@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
 import UstBaslik from './UstBaslik';
@@ -41,6 +41,27 @@ import '../sohbet.css';
 export default function SohbetArayuz() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('chat');
+
+  // Klavye kısayolları
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '1') { e.preventDefault(); setActiveTab('chat'); }
+        if (e.key === '2') { e.preventDefault(); setActiveTab('musteriler'); }
+        if (e.key === '3') { e.preventDefault(); setActiveTab('mulkler'); }
+        if (e.key === 'k') { e.preventDefault(); document.querySelector('.sag-panel-ara')?.focus(); }
+      }
+      if (e.key === 'Escape') { setSolAcik(false); setSagAcik(false); setKrediPanelAcik(false); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []); // eslint-disable-line
+
+  // Sayfa title güncelleme
+  useEffect(() => {
+    const titles = { chat: 'Sohbet', musteriler: 'Müşteriler', mulkler: 'Portföy', muhasebe: 'Muhasebe', planlama: 'Planlama' };
+    document.title = `${titles[activeTab] || activeTab} — Emlakisim AI`;
+  }, [activeTab]);
   const [sohbetId, setSohbetId] = useState(null);
   const [mesajlar, setMesajlar] = useState([]);
   const [kredi, setKredi] = useState(user?.kredi ?? 10);
