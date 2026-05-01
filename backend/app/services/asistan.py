@@ -1044,46 +1044,76 @@ def isle(emlakci, mesaj: dict, session: dict, pid: str, tok: str) -> bool:
             kullanilan_islem = 'bekleyen'
             kullanilan_model = 'pattern'
         else:
-            # 2. Öğrenilen pattern'lar (DB'den)
-            ogrenilen = ogrenilen_pattern_esle(metin_norm)
-            if ogrenilen:
-                cevap = _komut_calistir(ogrenilen, emlakci, metin, session)
-                kullanilan_islem = ogrenilen
-                kullanilan_model = 'ogrenilen'
-            else:
-                # 3. Danışmanlık bilgi bankası (sıfır maliyet)
-                from app.services.danismanlik import danismanlik_cevapla
-                danismanlik = danismanlik_cevapla(metin_norm)
-                if danismanlik:
-                    cevap = danismanlik
-                    kullanilan_islem = 'danismanlik'
-                    kullanilan_model = 'pattern'
+            # 2. BAĞLAMSAL KARAR MOTORU (pattern'dan önce)
+            from app.services.karar import baglam_karar
+            try:
+                karar = baglam_karar(emlakci.id, metin, metin_norm)
+            except Exception:
+                karar = None
+
+            if karar:
+                komut_adi, args = karar
+                if komut_adi == 'telefon_ara':
+                    cevap = args['mesaj']
+                elif komut_adi == 'musteri_bilgi':
+                    cevap = args['mesaj']
+                elif komut_adi == 'musteri_iletisim':
+                    cevap = args['mesaj']
+                elif komut_adi == 'eslestirme_musteri':
+                    from app.services.eslestirme import eslesdir
+                    sonuclar = eslesdir(emlakci.id, musteri_id=args['musteri_id'], limit=5)
+                    if sonuclar:
+                        satirlar = [f'• {s["baslik"]} — {s["fiyat_str"]} (%{s["puan"]})' for s in sonuclar]
+                        cevap = f'🔗 *Uygun mülkler:*\n\n' + '\n'.join(satirlar)
+                    else:
+                        cevap = '📭 Şu an uygun mülk bulunamadı.'
+                elif komut_adi in ('fiyat_filtre', 'boyut_filtre', 'alternatif'):
+                    cevap = args['mesaj']
                 else:
-                    # 4. Sabit pattern matching (sıfır maliyet)
-                    komut = _pattern_isle(metin_norm, emlakci, metin)
-                    if komut:
-                        cevap = _komut_calistir(komut, emlakci, metin, session)
-                        kullanilan_islem = komut
+                    cevap = args.get('mesaj', 'İşlem tamamlandı.')
+                kullanilan_islem = komut_adi
+                kullanilan_model = 'baglam'
+            else:
+                # 3. Öğrenilen pattern'lar (DB'den)
+                ogrenilen = ogrenilen_pattern_esle(metin_norm)
+                if ogrenilen:
+                    cevap = _komut_calistir(ogrenilen, emlakci, metin, session)
+                    kullanilan_islem = ogrenilen
+                    kullanilan_model = 'ogrenilen'
+                else:
+                    # 3. Danışmanlık bilgi bankası (sıfır maliyet)
+                    from app.services.danismanlik import danismanlik_cevapla
+                    danismanlik = danismanlik_cevapla(metin_norm)
+                    if danismanlik:
+                        cevap = danismanlik
+                        kullanilan_islem = 'danismanlik'
                         kullanilan_model = 'pattern'
                     else:
-                        # 5. AI (function calling — tüm modellerde)
-                        sistem = _sistem_prompt(emlakci, metin)
-                        openai_key = os.environ.get('OPENAI_API_KEY', '')
-                        gemini_key = os.environ.get('GEMINI_API_KEY', '')
-                        if openai_key:
-                            cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
-                            kullanilan_model = 'openai'
-                        elif gemini_key:
-                            try:
-                                cevap = _gemini_with_functions(gemini_key, sistem, gecmis, emlakci)
-                                kullanilan_model = 'gemini'
-                            except Exception:
-                                cevap = _ai_cevap(metin, gecmis, sistem)
-                                kullanilan_model = 'gemini'
+                        # 4. Sabit pattern matching (sıfır maliyet)
+                        komut = _pattern_isle(metin_norm, emlakci, metin)
+                        if komut:
+                            cevap = _komut_calistir(komut, emlakci, metin, session)
+                            kullanilan_islem = komut
+                            kullanilan_model = 'pattern'
                         else:
-                            cevap = _ai_cevap(metin, gecmis, sistem)
-                            kullanilan_model = 'claude'
-                        kullanilan_islem = 'ai_sohbet'
+                            # 5. AI (function calling — tüm modellerde)
+                            sistem = _sistem_prompt(emlakci, metin)
+                            openai_key = os.environ.get('OPENAI_API_KEY', '')
+                            gemini_key = os.environ.get('GEMINI_API_KEY', '')
+                            if openai_key:
+                                cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
+                                kullanilan_model = 'openai'
+                            elif gemini_key:
+                                try:
+                                    cevap = _gemini_with_functions(gemini_key, sistem, gecmis, emlakci)
+                                    kullanilan_model = 'gemini'
+                                except Exception:
+                                    cevap = _ai_cevap(metin, gecmis, sistem)
+                                    kullanilan_model = 'gemini'
+                            else:
+                                cevap = _ai_cevap(metin, gecmis, sistem)
+                                kullanilan_model = 'claude'
+                            kullanilan_islem = 'ai_sohbet'
 
         # Zeka motoru — cevabı zenginleştir
         try:

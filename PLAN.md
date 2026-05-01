@@ -444,6 +444,14 @@ Kullanıcı mesaj gönderir
 #### Kişiselleşme ✅
 - [x] Emlakçı profili + kişiselleşmiş prompt + hızlı erişim
 
+#### 8. Bağlamsal Karar Motoru
+Pattern matching'den önce bağlam ve niyet analizi yapılır:
+- [ ] Mesaj → bağlam analizi → niyet tespiti → doğru işlem yönlendirme
+- [ ] "ara" kelimesi: son müşteri varsa telefon, yoksa DB arama
+- [ ] Zamir + bağlam: "onu ara" → son müşterinin telefonunu ver
+- [ ] Zincirleme anlam: "beğenmiş, ara" → telefon arama
+- [ ] Ambiguity resolution: aynı kelime farklı bağlamda farklı anlam
+
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
 
