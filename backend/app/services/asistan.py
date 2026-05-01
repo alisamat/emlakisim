@@ -145,6 +145,10 @@ _PATTERNS = [
     # ── Ayar/şifre ──
     (r'(?:sifre|şifre|sifremi|şifremi)',                       'rapor'),
     (r'(?:ayar|tema|logo)\s*(?:degistir|değiştir|ac|aç)',     'rapor'),
+    # ── Döviz & Altın ──
+    (r'(?:doviz|döviz|kur|dolar|euro|sterlin)',                  'doviz_kuru'),
+    (r'(?:altin|altın|gram\s*fiyat)',                            'altin_fiyat'),
+    (r'(\d[\d.,]*)\s*(?:tl|lira).*(?:dolar|euro|doviz|döviz)',   'fiyat_cevir'),
     # ── Yasal & Piyasa & Süreç ──
     (r'(?:yasal|hukuki|ipotek|haciz|iskan)\s*(?:durum|kontrol|risk)', 'yasal_bilgi'),
     (r'(?:piyasa|deger|değer)\s*(?:analiz|rapor|karsilastir)',        'piyasa_bilgi'),
@@ -229,6 +233,15 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'fatura_liste':
         return _fatura_listele(emlakci)
+
+    if komut == 'doviz_kuru':
+        return _doviz_goster()
+
+    if komut == 'altin_fiyat':
+        return _doviz_goster()
+
+    if komut == 'fiyat_cevir':
+        return _fiyat_cevir(metin)
 
     if komut == 'yasal_bilgi':
         return ('⚖️ *Yasal durum kontrolü için:*\n\n'
@@ -533,6 +546,47 @@ def _cari_rapor(emlakci):
             f'🟢 Toplam Alacak: *{f(alacak)} TL*\n'
             f'🔴 Toplam Borç: *{f(borc)} TL*\n\n'
             + '\n'.join(satirlar))
+
+
+def _doviz_goster():
+    """Döviz + altın kurları göster."""
+    from app.services.doviz import kurlari_getir
+    k = kurlari_getir()
+    f = lambda v: f'{v:,.2f}'.replace(',', '.') if v else '—'
+    usd = k.get('USD', {})
+    eur = k.get('EUR', {})
+    gbp = k.get('GBP', {})
+    altin = k.get('ALTIN_GRAM')
+    return (f'💱 *Güncel Kurlar* ({k.get("tarih", "?")})\n\n'
+            f'🇺🇸 Dolar: *{f(usd.get("satis"))} TL*\n'
+            f'🇪🇺 Euro: *{f(eur.get("satis"))} TL*\n'
+            f'🇬🇧 Sterlin: *{f(gbp.get("satis"))} TL*\n'
+            f'🥇 Altın (gram): *{f(altin)} TL*\n\n'
+            f'_Kaynak: {k.get("kaynak", "?")}_')
+
+
+def _fiyat_cevir(metin):
+    """Metindeki TL tutarı dövize çevir."""
+    import re as _re
+    m = _re.search(r'([\d.,]+)', metin.replace('.', '').replace(',', '.'))
+    if not m:
+        return 'Tutar bulunamadı. Örnek: "5000000 TL dolar"'
+    try:
+        tutar = float(m.group(1))
+    except ValueError:
+        return 'Geçersiz tutar.'
+
+    from app.services.doviz import fiyat_donustur
+    s = fiyat_donustur(tutar)
+    f_n = lambda v: f'{v:,.2f}'.replace(',', '.')
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.')
+
+    return (f'💱 *{f_tl(tutar)} TL =*\n\n'
+            f'🇺🇸 ${f_n(s.get("USD", 0))}\n'
+            f'🇪🇺 €{f_n(s.get("EUR", 0))}\n'
+            f'🇬🇧 £{f_n(s.get("GBP", 0))}\n'
+            f'🥇 {f_n(s.get("ALTIN_GRAM", 0))} gram altın\n\n'
+            f'_Kur: ${s.get("kurlar", {}).get("USD", "?")} · {s.get("tarih", "")}_')
 
 
 def _istatistik_detay(emlakci):

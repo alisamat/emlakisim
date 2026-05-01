@@ -4,6 +4,7 @@ HESAPLAMA — Emlak hesaplama API'leri
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app.services.hesaplama import kira_vergisi, deger_artis_kazanci, kira_getirisi, aidat_analizi, tapu_masrafi, komisyon_hesapla
+from app.services.doviz import kurlari_getir, fiyat_donustur
 
 bp = Blueprint('hesaplama', __name__, url_prefix='/api/panel/hesaplama')
 
@@ -70,3 +71,19 @@ def komisyon_endpoint():
     d = request.get_json() or {}
     sonuc = komisyon_hesapla(d.get('islem_turu', 'satis'), float(d.get('bedel', 0)))
     return jsonify(sonuc)
+
+
+@bp.route('/doviz', methods=['GET'])
+@jwt_required()
+def doviz_kurlari():
+    """Günlük döviz + altın kurları."""
+    return jsonify(kurlari_getir())
+
+
+@bp.route('/fiyat-donustur', methods=['POST'])
+@jwt_required()
+def fiyat_donustur_endpoint():
+    """TL fiyatı döviz + altına çevir."""
+    d = request.get_json() or {}
+    tutar = float(d.get('tutar', 0))
+    return jsonify(fiyat_donustur(tutar))

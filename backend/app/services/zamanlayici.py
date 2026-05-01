@@ -37,8 +37,11 @@ def zamanlayici_baslat(app):
         # Her gün 10:00 — durağan süreç uyarısı
         _scheduler.add_job(lambda: _with_app(app, _surec_uyari), 'cron', hour=10, id='surec_uyari')
 
+        # Her gün 09:00 — döviz kurları güncelle
+        _scheduler.add_job(lambda: _with_app(app, _doviz_guncelle), 'cron', hour=9, minute=5, id='doviz')
+
         _scheduler.start()
-        logger.info('[Zamanlayıcı] Başlatıldı — 7 görev aktif')
+        logger.info('[Zamanlayıcı] Başlatıldı — 8 görev aktif')
     except ImportError:
         logger.warning('[Zamanlayıcı] apscheduler yüklü değil, atlanıyor')
     except Exception as e:
@@ -155,6 +158,14 @@ def _kredi_kontrol():
             'AI asistan kullanmaya devam etmek için kredi ekleyin.')
 
     logger.info('[Zamanlayıcı] Kredi kontrolleri yapıldı')
+
+
+def _doviz_guncelle():
+    """Günlük döviz kurlarını güncelle."""
+    from app.services.doviz import kurlari_getir
+    kurlar = kurlari_getir(yenile=True)
+    if kurlar:
+        logger.info(f'[Zamanlayıcı] Döviz kurları güncellendi: USD={kurlar.get("USD", {}).get("satis")}')
 
 
 def _surec_uyari():
