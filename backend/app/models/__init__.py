@@ -13,6 +13,7 @@ from app.models.islem_takip import SurecTakip, Evrak
 from app.models.ofis import Envanter, GeriBildirim
 from app.models.ofis_ekip import Danisман, MusteriAtama
 from app.models.iletisim_gecmisi import IletisimKayit
+from app.models.grup import EmlakciDizin, Grup, GrupUyelik, GrupBildirim
 from app.models.hafiza_model import MusteriHafiza, KonusmaState
 from app.models.ayarlar import KullaniciAyar, SistemParametre
 
