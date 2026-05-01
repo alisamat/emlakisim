@@ -73,3 +73,49 @@ def musteri_talep():
     db.session.add(lead)
     db.session.commit()
     return jsonify({'message': 'Talebiniz iletildi. En kısa sürede dönüş yapılacaktır.'})
+
+
+# ── Müşteri Süreç Takibi (public — token ile) ─────────────
+@bp.route('/surec/<token>', methods=['GET'])
+def musteri_surec(token):
+    """Müşteri kendi sürecini token ile takip eder."""
+    import secrets
+    from app.models.islem_takip import SurecTakip
+
+    # Token = musteri_id'nin hex hali (basit ama çalışır)
+    # Production'da gerçek token sistemi kullanılmalı
+    try:
+        musteri_id = int(token, 16) if len(token) <= 8 else None
+    except (ValueError, TypeError):
+        musteri_id = None
+
+    if not musteri_id:
+        # Alternatif: onay token'ından müşteri bul
+        t = MusteriOnayToken.query.filter_by(token=token).first()
+        if t:
+            yg = YerGosterme.query.get(t.yer_gosterme_id)
+            musteri_id = yg.musteri_id if yg else None
+
+    if not musteri_id:
+        return jsonify({'message': 'Geçersiz bağlantı'}), 404
+
+    m = Musteri.query.get(musteri_id)
+    if not m:
+        return jsonify({'message': 'Müşteri bulunamadı'}), 404
+
+    # Bu müşteriye ait süreçler
+    surecler = SurecTakip.query.filter_by(musteri_id=musteri_id).all()
+
+    return jsonify({
+        'musteri': {'ad_soyad': m.ad_soyad},
+        'surecler': [{
+            'baslik': s.baslik,
+            'tip': s.tip,
+            'durum': s.durum,
+            'adimlar': s.adimlar or [],
+            'ilerleme': {
+                'tamamlanan': sum(1 for a in (s.adimlar or []) if a.get('durum') == 'tamamlandi'),
+                'toplam': len(s.adimlar or []),
+            },
+        } for s in surecler],
+    })

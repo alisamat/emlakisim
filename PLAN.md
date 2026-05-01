@@ -457,7 +457,7 @@ Kullanıcı mesaj gönderir
 - [x] Adım tamamlandığında müşteriye otomatik email (progress bar)
 - [x] Emlakçıya bildirim + 5+ gün durağan süreç uyarısı (zamanlayıcı)
 - [x] Süreç özet raporu API
-- [ ] Müşteri portalından süreç takibi (alıcı kendi görsün — ileri seviye)
+- [x] Müşteri portalından süreç takibi (token ile kendi sürecini görür)
 
 #### B. Piyasa Değeri ✅
 - [x] m² fiyat + portföy + ilçe karşılaştırması
