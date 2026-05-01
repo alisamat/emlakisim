@@ -14,6 +14,7 @@ from app.models.ofis import Envanter, GeriBildirim
 from app.models.ofis_ekip import Danisман, MusteriAtama
 from app.models.iletisim_gecmisi import IletisimKayit
 from app.models.hafiza_model import MusteriHafiza, KonusmaState
+from app.models.ayarlar import KullaniciAyar, SistemParametre
 
 
 class Emlakci(db.Model):

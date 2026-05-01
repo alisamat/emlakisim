@@ -285,6 +285,13 @@ def email_portfoy():
 def yedek_indir():
     """Tüm veriyi Excel olarak indir."""
     emlakci = Emlakci.query.get(_eid())
+    fmt = request.args.get('format', 'excel')  # excel veya json
+    if fmt == 'json':
+        from app.services.yedekleme import _json_export
+        data = _json_export(emlakci)
+        yedek_logla(emlakci)
+        dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
+        return send_file(io.BytesIO(data), mimetype='application/json', as_attachment=True, download_name=f'{dosya_adi}.json')
     data = excel_export(emlakci)
     yedek_logla(emlakci)
     dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'

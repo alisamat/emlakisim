@@ -1,6 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
+function SistemParametreleri() {
+  const [params, setParams] = useState([]);
+  useEffect(() => {
+    api.get('/api/panel/admin/parametreler').then(r => setParams(r.data.parametreler || [])).catch(() => {});
+  }, []);
+  const guncelle = async (id, deger) => {
+    try { await api.put(`/api/panel/admin/parametreler/${id}`, { deger }); } catch {}
+  };
+  if (params.length === 0) return null;
+  const kategoriler = [...new Set(params.map(p => p.kategori))];
+  return (
+    <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid var(--border)' }}>
+      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>⚙️ Sistem Parametreleri</div>
+      {kategoriler.map(kat => (
+        <div key={kat}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginTop: 8, marginBottom: 4, textTransform: 'uppercase' }}>{kat}</div>
+          {params.filter(p => p.kategori === kat).map(p => (
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-light, #f1f5f9)', fontSize: 12 }}>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 600 }}>{p.aciklama || p.anahtar}</span>
+              </div>
+              <input style={{ width: 100, padding: '3px 6px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, textAlign: 'right' }}
+                defaultValue={p.deger} onBlur={e => guncelle(p.id, e.target.value)} />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [dash, setDash] = useState(null);
   const [kullanicilar, setKullanicilar] = useState([]);
@@ -81,6 +112,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Sistem Parametreleri */}
+      <SistemParametreleri />
 
       {/* Kullanıcılar */}
       <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
