@@ -117,6 +117,13 @@ def mesaj_gonder():
         islem_adi = 'ogrenilen'
     diyalog_kaydet(emlakci.id, metin, metin_norm, islem_adi, model=kullanilan_model)
 
+    # Konuşma özetini uzun dönem hafızaya kaydet
+    try:
+        from app.services.hafiza import konusma_ozeti_kaydet
+        konusma_ozeti_kaydet(emlakci.id, gecmis)
+    except Exception:
+        pass
+
     # Asistan mesajını kaydet
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
     db.session.commit()

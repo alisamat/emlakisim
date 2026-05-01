@@ -148,9 +148,44 @@ def _musteri_tam_baglam(emlakci_id, musteri):
 
 def musteri_hafiza_ekle(emlakci_id, musteri_id, tip, icerik):
     """Müşteri hakkında kalıcı bilgi kaydet."""
+    # Tekrar kontrolü — aynı bilgiyi tekrar ekleme
+    son = MusteriHafiza.query.filter_by(
+        emlakci_id=emlakci_id, musteri_id=musteri_id
+    ).order_by(MusteriHafiza.olusturma.desc()).first()
+    if son and son.icerik == icerik[:300]:
+        return
     h = MusteriHafiza(emlakci_id=emlakci_id, musteri_id=musteri_id, tip=tip, icerik=icerik[:300])
     db.session.add(h)
     db.session.commit()
+
+
+def konusma_ozeti_kaydet(emlakci_id, gecmis):
+    """Konuşma bittiğinde önemli bilgileri uzun dönem hafızaya kaydet."""
+    if not gecmis or len(gecmis) < 4:
+        return
+
+    son_mesajlar = gecmis[-10:]
+    musteriler = Musteri.query.filter_by(emlakci_id=emlakci_id).all()
+
+    for m in musteriler:
+        if not m.ad_soyad:
+            continue
+        ad_lower = m.ad_soyad.lower()
+        parcalar = ad_lower.split()
+
+        for mesaj in son_mesajlar:
+            content = mesaj.get('content', '').lower()
+            eslesti = ad_lower in content
+            if not eslesti:
+                for parca in parcalar:
+                    if len(parca) > 2 and parca in content:
+                        eslesti = True
+                        break
+
+            if eslesti and mesaj['role'] == 'user':
+                # Kullanıcı bu müşteri hakkında konuştu
+                musteri_hafiza_ekle(emlakci_id, m.id, 'konusma', mesaj['content'][:200])
+                break
 
 
 def _state_getir(emlakci_id):
