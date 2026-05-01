@@ -92,6 +92,13 @@ export default function Kayit() {
             Zaten hesabın var mı? <Link to="/giris" style={{ color: '#16a34a', fontWeight: 600 }}>Giriş Yap</Link>
           </div>
         </div>
+
+        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {[['hakkimizda', 'Hakkımızda'], ['fiyatlar', 'Fiyatlar'], ['iletisim', 'İletişim'], ['kvkk', 'KVKK'], ['gizlilik', 'Gizlilik']].map(([yol, ad]) => (
+            <a key={yol} href={`https://backend-production-9ffc.up.railway.app/${yol}`} target="_blank" rel="noreferrer"
+              style={{ fontSize: 11, color: '#94a3b8', textDecoration: 'none' }}>{ad}</a>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -62,6 +62,22 @@ def create_app(env='production'):
         pass
 
     from flask import render_template_string
+
+    @app.route('/api/health')
+    def health():
+        """Sağlık kontrolü — monitoring için."""
+        from app.services.sms import sms_durum
+        from app.services.dosya import storage_durum
+        return jsonify({
+            'status': 'ok',
+            'version': '1.0.0',
+            'services': {
+                'database': True,
+                'sms': sms_durum(),
+                'storage': storage_durum(),
+            }
+        })
+
     @app.route('/gizlilik')
     def gizlilik():
         return render_template_string("""<!DOCTYPE html>

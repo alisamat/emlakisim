@@ -67,6 +67,14 @@ export default function Giris() {
             Hesabın yok mu? <Link to="/kayit" style={{ color: '#16a34a', fontWeight: 600 }}>Kayıt Ol</Link>
           </div>
         </div>
+
+        {/* Footer linkler */}
+        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {[['hakkimizda', 'Hakkımızda'], ['fiyatlar', 'Fiyatlar'], ['iletisim', 'İletişim'], ['kvkk', 'KVKK'], ['gizlilik', 'Gizlilik']].map(([yol, ad]) => (
+            <a key={yol} href={`https://backend-production-9ffc.up.railway.app/${yol}`} target="_blank" rel="noreferrer"
+              style={{ fontSize: 11, color: '#94a3b8', textDecoration: 'none' }}>{ad}</a>
+          ))}
+        </div>
       </div>
     </div>
   );
