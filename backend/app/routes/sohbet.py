@@ -111,17 +111,29 @@ def mesaj_gonder():
                     sistem = _sistem_prompt(emlakci, metin)
                     try:
                         openai_key = os.environ.get('OPENAI_API_KEY', '')
+                        gemini_key = os.environ.get('GEMINI_API_KEY', '')
                         if openai_key:
-                            cevap = _openai_with_functions(openai_key, sistem, gecmis, emlakci)
+                            from app.services.asistan import _openai_with_functions as owf
+                            cevap = owf(openai_key, sistem, gecmis, emlakci)
+                            kullanilan_model = 'openai'
+                        elif gemini_key:
+                            from app.services.asistan import _gemini_with_functions as gwf
+                            try:
+                                cevap = gwf(gemini_key, sistem, gecmis, emlakci)
+                                kullanilan_model = 'gemini'
+                            except Exception:
+                                cevap = _ai_cevap(metin, gecmis, sistem)
+                                kullanilan_model = 'gemini'
                         else:
                             cevap = _ai_cevap(metin, gecmis, sistem)
+                            kullanilan_model = 'claude'
                     except Exception as e:
                         logger.error(f'[Sohbet] AI hatası: {e}')
                         cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+                        kullanilan_model = 'hata'
 
                     # AI kredi düş
-                    kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model='gpt-4o-mini')
-                    kullanilan_model = 'openai'
+                    kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model=kullanilan_model)
 
     # Zeka motoru — cevabı zenginleştir
     try:

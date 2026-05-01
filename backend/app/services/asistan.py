@@ -336,7 +336,21 @@ def _yardim_mesaji(emlakci):
             '💡 *Hesaplama:* "kira vergisi hesapla"\n\n'
             '💡 *İpucu:* Excel\'den toplu müşteri/portföy ekleyebilirsiniz!\n'
             'Fotoğraf çekerek sahibinden ilanlarını portföye aktarabilirsiniz!\n\n'
+            + _hizli_erisim_mesaji(emlakci) +
             '_Doğal dille yazın, anlayacağım._')
+
+
+def _hizli_erisim_mesaji(emlakci):
+    """Kişiselleşmiş hızlı erişim önerileri."""
+    try:
+        from app.services.kisisellesme import hizli_erisim_onerileri
+        oneriler = hizli_erisim_onerileri(emlakci.id)
+        if oneriler:
+            komutlar = ', '.join([f'"{o["komut"]}"' for o in oneriler[:4]])
+            return f'⚡ *Sık kullandıkların:* {komutlar}\n\n'
+    except:
+        pass
+    return ''
 
 
 # ─── Bekleyen İşlem Yürütme ────────────────────────────────
