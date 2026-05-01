@@ -234,6 +234,14 @@ function MusteriKarti({ m, onDuzenle, onSil }) {
                 display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
                 textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#16a34a',
               }}>💬 WhatsApp Gönder</button>}
+              {m.telefon && <button onClick={() => {
+                setMenuAcik(false);
+                const mesaj = window.prompt('SMS mesajı:', `Merhaba ${m.ad_soyad}, Emlakisim.`);
+                if (mesaj) api.post('/api/panel/sms/gonder', { telefon: m.telefon, mesaj }).catch(() => {});
+              }} style={{
+                display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
+                textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#8b5cf6',
+              }}>📱 SMS Gönder</button>}
               <button onClick={() => { setMenuAcik(false); onSil(m.id); }} style={{
                 display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none',
                 textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626',

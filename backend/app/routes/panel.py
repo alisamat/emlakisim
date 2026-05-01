@@ -357,6 +357,29 @@ def yedek_email():
         return jsonify({'message': f'Gönderim hatası: {e}'}), 500
 
 
+# ── SMS ───────────────────────────────────────────────────────────────────────
+@bp.route('/sms/gonder', methods=['POST'])
+@jwt_required()
+def sms_gonder_endpoint():
+    d = request.get_json() or {}
+    telefon = d.get('telefon', '').strip()
+    mesaj_text = d.get('mesaj', '').strip()
+    if not telefon or not mesaj_text:
+        return jsonify({'message': 'Telefon ve mesaj gerekli'}), 400
+    from app.services.sms import sms_gonder
+    ok, sonuc = sms_gonder(telefon, mesaj_text)
+    if ok:
+        return jsonify({'ok': True, 'mesaj': 'SMS gönderildi'})
+    return jsonify({'message': f'SMS gönderilemedi: {sonuc}'}), 500
+
+
+@bp.route('/sms/durum', methods=['GET'])
+@jwt_required()
+def sms_durum_endpoint():
+    from app.services.sms import sms_durum
+    return jsonify(sms_durum())
+
+
 # ── Notlar ─────────────────────────────────────────────────────────────────────
 @bp.route('/notlar', methods=['GET'])
 @jwt_required()
