@@ -37,6 +37,8 @@ import KrediPanel from './KrediPanel';
 import AdminDashboard from './AdminDashboard';
 import IlanOCR from './IlanOCR';
 import ResimIsaretleme from './ResimIsaretleme';
+import Emlakcilar from './Emlakcilar';
+import Gruplar from './Gruplar';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -108,6 +110,7 @@ export default function SohbetArayuz() {
         setMesajlar(p => [...p, { rol: 'assistant', icerik: r.data.cevap, olusturma: new Date().toISOString() }]);
         if (!sohbetId) setSohbetId(r.data.sohbet_id);
         if (r.data.kredi_kalan !== undefined) setKredi(r.data.kredi_kalan);
+        if (r.data.tab) setTimeout(() => openTab(r.data.tab), 600);
       })
       .catch(() => {
         setMesajlar(p => [...p, { rol: 'assistant', icerik: 'Bir hata oluştu.', olusturma: new Date().toISOString() }]);
@@ -146,6 +149,8 @@ export default function SohbetArayuz() {
       case 'admin_dash':   return <div className="sayfa-icerik"><AdminDashboard /></div>;
       case 'ilan_ocr':     return <div className="sayfa-icerik"><IlanOCR /></div>;
       case 'isaretleme':   return <div className="sayfa-icerik"><ResimIsaretleme /></div>;
+      case 'emlakcilar':   return <div className="sayfa-icerik"><Emlakcilar /></div>;
+      case 'gruplar':      return <div className="sayfa-icerik"><Gruplar /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (
@@ -155,6 +160,7 @@ export default function SohbetArayuz() {
             mesajlar={mesajlar}
             setMesajlar={setMesajlar}
             onKrediGuncelle={setKredi}
+            onTabAc={openTab}
           />
         );
     }

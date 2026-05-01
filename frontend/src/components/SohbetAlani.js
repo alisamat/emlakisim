@@ -53,7 +53,7 @@ function useSesliYazma(onSonuc) {
   return { dinliyor, baslat, destekleniyor: !!recognition.current };
 }
 
-export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle }) {
+export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle, onTabAc }) {
   const { user } = useAuth();
   const [girdi, setGirdi] = useState('');
   const [yukleniyor, setYuk] = useState(false);
@@ -82,6 +82,7 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
       setMesajlar(p => [...p, { rol: 'assistant', icerik: r.data.cevap, olusturma: new Date().toISOString() }]);
       if (!sohbetId) setSohbetId(r.data.sohbet_id);
       if (r.data.kredi_kalan !== undefined) onKrediGuncelle(r.data.kredi_kalan);
+      if (r.data.tab && onTabAc) setTimeout(() => onTabAc(r.data.tab), 600);
     } catch {
       setMesajlar(p => [...p, { rol: 'assistant', icerik: 'Bir hata oluştu, lütfen tekrar deneyin.', olusturma: new Date().toISOString() }]);
     } finally {

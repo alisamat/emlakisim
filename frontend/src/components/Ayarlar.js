@@ -110,6 +110,9 @@ export default function Ayarlar() {
         <Toggle label="Yedek Uyarıları" anahtar="bildirim_yedek" aciklama="Yedek alınmadığında uyar" />
         <Toggle label="Kredi Uyarısı" anahtar="bildirim_kredi" aciklama="Kredi düşük olduğunda uyar" />
 
+        <div style={{ fontWeight: 700, fontSize: 13, marginTop: 16, marginBottom: 8 }}>👥 Grup Ayarları</div>
+        <Toggle label="Grup Davetlerini Kapat" anahtar="grup_teklif_kapali" aciklama="Yeni grup davetlerini otomatik reddet" />
+
         <button className="btn-yesil" onClick={aiKaydet} style={{ marginTop: 12, fontSize: 13 }}>AI Ayarlarını Kaydet</button>
       </div>
 

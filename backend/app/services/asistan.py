@@ -161,6 +161,33 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── Emlakçı Dizini ──
+    (r'(?:emlakci|emlakçı)\s*(?:ekle|kaydet|kayıt)',          'emlakci_ekle'),
+    (r'(?:emlakci|emlakçı)\s*(?:liste|listele|rehber|dizin|göster|goster)', 'emlakci_liste'),
+    (r'(?:emlakci|emlakçı)\s*(?:ara|bul)',                    'emlakci_ara'),
+    (r'(?:emlakci|emlakçı)\s*(?:sil|kaldir|kaldır)',          'emlakci_sil'),
+    (r'kac\s*(?:emlakci|emlakçı)|(?:emlakci|emlakçı)\s*(?:kac|kaç|sayı|sayi)', 'emlakci_sayisi'),
+    (r'(?:emlakci|emlakçı)\s*(?:dizin|rehber)',               'emlakci_liste'),
+    # ── Grup Yönetimi ──
+    (r'grup\s*(?:kur|olustur|oluştur|ac|aç|yeni)',           'grup_kur'),
+    (r'grup(?:lar)?\s*(?:liste|listele|göster|goster|neler)', 'grup_liste'),
+    (r'(?:kac|kaç)\s*grup|grup\s*(?:kac|kaç|sayı|sayi)',    'grup_sayisi'),
+    (r'grup\s*(?:esles|eşleş|eslestir|eşleştir)',            'grup_esles'),
+    (r'grup\s*(?:uye|üye)(?:ler|leri)?',                     'grup_uyeleri'),
+    (r'grup\s*(?:davet|teklif)',                              'grup_davet'),
+    (r'grup.*(?:cik|çık|ayril|ayrıl)',                        'grup_cik'),
+    (r'grup\s*(?:ayar|setting)',                              'grup_ayar'),
+    (r'(?:portfoy|portföy)\s*(?:ac|aç|paylas|paylaş).*grup', 'grup_portfoy_ac'),
+    (r'grup.*(?:portfoy|portföy)\s*(?:ac|aç|paylas|paylaş)', 'grup_portfoy_ac'),
+    (r'(?:portfoy|portföy)\s*(?:kapat|kapa).*grup',          'grup_portfoy_kapat'),
+    (r'grup.*(?:portfoy|portföy)\s*(?:kapat|kapa)',           'grup_portfoy_kapat'),
+    (r'(?:talep)\s*(?:ac|aç|paylas|paylaş).*grup',           'grup_talep_ac'),
+    (r'grup.*(?:talep)\s*(?:ac|aç|paylas|paylaş)',            'grup_talep_ac'),
+    (r'(?:talep)\s*(?:kapat|kapa).*grup',                    'grup_talep_kapat'),
+    (r'grup.*(?:talep)\s*(?:kapat|kapa)',                     'grup_talep_kapat'),
+    (r'grup\s*(?:bildirim|aktivite|hareket)',                 'grup_bildirim'),
+    (r'(?:grub|grup).*(?:davet\s*et|ekle).*(?:uye|üye)',     'grup_uye_davet'),
+    (r'(?:grub|grup).*(?:yonetici|yönetici)\s*(?:ata|yap)',  'grup_yonetici_ata'),
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
@@ -168,6 +195,74 @@ def _pattern_isle(metin_norm, emlakci, metin_raw):
     for pattern, komut in _PATTERNS:
         if re.search(pattern, metin_norm):
             return komut
+    return None
+
+
+# ─── Sayfa Navigasyon Haritası ────────────────────────────
+_NAVIGASYON_PATTERNS = [
+    # (regex, tab_key, cevap_mesaj)
+    (r'(?:müşteri|musteri)\s*(?:sayfa|ekran|git|aç|ac|göster|goster)',   'musteriler',  '👥 Müşteriler sayfası açılıyor...'),
+    (r'(?:mulk|mülk|portfoy|portföy)\s*(?:sayfa|ekran|git|aç|ac|göster|goster)', 'mulkler', '🏢 Portföy sayfası açılıyor...'),
+    (r'(?:yer\s*goster|yer\s*göster)\s*(?:sayfa|git|aç|ac)',            'kayitlar',    '📋 Yer gösterme kayıtları açılıyor...'),
+    (r'(?:belge|dokuman|doküman)\s*(?:sayfa|git|aç|ac|göster|goster)',   'belgeler',    '📄 Belgeler sayfası açılıyor...'),
+    (r'(?:muhasebe)\s*(?:sayfa|git|aç|ac|göster|goster)',               'muhasebe',    '💰 Muhasebe sayfası açılıyor...'),
+    (r'(?:hesaplama|hesap)\s*(?:sayfa|git|aç|ac|göster|goster)',        'hesaplamalar','🧮 Hesaplama araçları açılıyor...'),
+    (r'(?:planlama|gorev|görev)\s*(?:sayfa|git|aç|ac|göster|goster)',   'planlama',    '📅 Planlama sayfası açılıyor...'),
+    (r'(?:yedek|yedekleme|backup)\s*(?:sayfa|git|aç|ac|göster|goster)', 'yedekleme',   '💾 Yedekleme sayfası açılıyor...'),
+    (r'(?:toplu)\s*(?:sayfa|git|aç|ac|göster|goster|islem|işlem)',      'toplu',       '📦 Toplu işlemler açılıyor...'),
+    (r'(?:lead)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'leadler',     '🎯 Lead yönetimi açılıyor...'),
+    (r'(?:esles|eşleş)\s*(?:sayfa|git|aç|ac)',                          'eslestirme',  '🔗 Eşleştirme sayfası açılıyor...'),
+    (r'(?:takvim|kalendar)\s*(?:sayfa|git|aç|ac|göster|goster)',        'takvim',      '📅 Takvim açılıyor...'),
+    (r'(?:tanitim|tanıtım|sosyal)\s*(?:sayfa|git|aç|ac|göster|goster)','tanitim',     '🌐 Tanıtım sayfası açılıyor...'),
+    (r'(?:fatura)\s*(?:sayfa|git|aç|ac|göster|goster)',                 'faturalar',   '🧾 Faturalar açılıyor...'),
+    (r'(?:cagri|çağrı|arama)\s*(?:kayit|kayıt|sayfa|git|aç|ac)',       'cagrilar',    '📞 Çağrı kayıtları açılıyor...'),
+    (r'(?:kar\s*zarar|kâr\s*zarar)\s*(?:sayfa|git|aç|ac|göster)',      'karzarar',    '📈 Kâr/Zarar sayfası açılıyor...'),
+    (r'(?:cari)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'cariler',     '📒 Cari hesaplar açılıyor...'),
+    (r'(?:ayar)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'ayarlar',     '⚙️ Ayarlar sayfası açılıyor...'),
+    (r'(?:muhasebe\s*rapor)\s*(?:sayfa|git|aç|ac)',                     'muhrapor',    '📊 Muhasebe raporu açılıyor...'),
+    (r'(?:butce|bütçe)\s*(?:sayfa|git|aç|ac|göster|goster)',           'butce',       '💼 Bütçe planlama açılıyor...'),
+    (r'(?:surec|süreç)\s*(?:sayfa|git|aç|ac|takip|göster)',            'surec',       '📋 Süreç takip açılıyor...'),
+    (r'(?:talep)\s*(?:sayfa|git|aç|ac|göster|goster)',                  'talepler',    '📝 Talepler sayfası açılıyor...'),
+    (r'(?:ekip|danisman|danışman)\s*(?:sayfa|git|aç|ac|göster)',       'ekip',        '👔 Ekip yönetimi açılıyor...'),
+    (r'(?:performans|kpi)\s*(?:sayfa|git|aç|ac|göster)',               'performans',  '🏆 Performans sayfası açılıyor...'),
+    (r'(?:iletisim|iletişim)\s*(?:gecmis|geçmiş|sayfa|git|aç|ac)',    'iletisim',    '📞 İletişim geçmişi açılıyor...'),
+    (r'(?:envanter|malzeme|stok)\s*(?:sayfa|git|aç|ac|göster)',        'envanter',    '📦 Ofis envanter açılıyor...'),
+    (r'(?:admin|yonetim|yönetim)\s*(?:panel|sayfa|git|aç|ac)',        'admin_dash',  '🛡 Admin paneli açılıyor...'),
+    (r'(?:ilan\s*ocr|ocr)\s*(?:sayfa|git|aç|ac)',                      'ilan_ocr',    '📸 İlan OCR açılıyor...'),
+    (r'(?:isaretleme|işaretleme|resim\s*isaret)\s*(?:sayfa|git|aç|ac)','isaretleme', '🖊 Resim işaretleme açılıyor...'),
+    (r'(?:emlakci|emlakçı)\s*(?:dizin|sayfa|git|aç|ac)\s*(?:sayfa|git|aç|ac)?', 'emlakcilar', '📒 Emlakçı dizini açılıyor...'),
+    (r'(?:grup)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'gruplar',     '👥 Gruplar sayfası açılıyor...'),
+    (r'(?:profil)\s*(?:sayfa|git|aç|ac|göster|goster)',                'profil',      '👤 Profil sayfası açılıyor...'),
+    (r'(?:kredi)\s*(?:sayfa|git|aç|ac|göster|goster|satin|satın)',     'kredi',       '💎 Kredi paneli açılıyor...'),
+    # Kısa navigasyonlar — "X aç" / "X'e git" / "X göster"
+    (r'müsterilere?\s*git',           'musteriler',  '👥 Müşteriler sayfası açılıyor...'),
+    (r'portföye?\s*git',              'mulkler',     '🏢 Portföy sayfası açılıyor...'),
+    (r'muhasebeye?\s*git',            'muhasebe',    '💰 Muhasebe sayfası açılıyor...'),
+    (r'takvi?me?\s*git',              'takvim',      '📅 Takvim açılıyor...'),
+    (r'ayarlara?\s*git',              'ayarlar',     '⚙️ Ayarlar sayfası açılıyor...'),
+    (r'gruplara?\s*git',              'gruplar',     '👥 Gruplar sayfası açılıyor...'),
+    (r'leadlere?\s*git',              'leadler',     '🎯 Lead yönetimi açılıyor...'),
+    (r'faturalara?\s*git',            'faturalar',   '🧾 Faturalar açılıyor...'),
+    (r'carilere?\s*git',              'cariler',     '📒 Cari hesaplar açılıyor...'),
+    (r'ekibe?\s*git',                 'ekip',        '👔 Ekip yönetimi açılıyor...'),
+    (r'profile?\s*git',               'profil',      '👤 Profil sayfası açılıyor...'),
+    # "X'i aç" / "X aç"
+    (r'musterileri?\s*ac',            'musteriler',  '👥 Müşteriler sayfası açılıyor...'),
+    (r'(?:portfoy|portföy)u?\s*ac',   'mulkler',     '🏢 Portföy sayfası açılıyor...'),
+    (r'muhasebeyi?\s*ac',             'muhasebe',    '💰 Muhasebe sayfası açılıyor...'),
+    (r'takvimi?\s*ac',                'takvim',      '📅 Takvim açılıyor...'),
+    (r'ayarlari?\s*ac',               'ayarlar',     '⚙️ Ayarlar sayfası açılıyor...'),
+    (r'gruplari?\s*ac',               'gruplar',     '👥 Gruplar sayfası açılıyor...'),
+    (r'faturalari?\s*ac',             'faturalar',   '🧾 Faturalar açılıyor...'),
+    (r'belgeleri?\s*ac',              'belgeler',    '📄 Belgeler sayfası açılıyor...'),
+]
+
+
+def _navigasyon_kontrol(metin_norm):
+    """Navigasyon komutu mu kontrol et. (tab, mesaj) veya None döndür."""
+    for pattern, tab, mesaj in _NAVIGASYON_PATTERNS:
+        if re.search(pattern, metin_norm):
+            return tab, mesaj
     return None
 
 
@@ -254,6 +349,14 @@ def _komut_calistir(komut, emlakci, metin, session):
                 'Portföy sayfasında mülkün ⋮ menüsünden *"Piyasa Değeri"* butonuna tıklayın.\n'
                 'Portföy ortalaması, ilçe karşılaştırması, m² fiyat ve değerlendirme göreceksiniz.\n'
                 'PDF rapor da indirebilirsiniz.')
+
+    # ── Emlakçı Dizini ──
+    if komut in ('emlakci_ekle', 'emlakci_sil', 'emlakci_liste', 'emlakci_ara', 'emlakci_sayisi'):
+        return _emlakci_komut(komut, emlakci, metin, session)
+
+    # ── Grup Yönetimi ──
+    if komut and komut.startswith('grup_'):
+        return _grup_komut(komut, emlakci, metin, session)
 
     if komut == 'surec_ozet_cmd':
         from app.services.surec_bildirim import surec_ozet_rapor
@@ -394,7 +497,9 @@ def _yardim_mesaji(emlakci):
             '🧾 *Fatura:* "fatura ekle", "fatura listele"\n'
             '💰 *Muhasebe:* "kar zarar", "cari"\n'
             '🧠 *Unutma:* "unutma: Ahmet beye yarın dönüş yap"\n'
-            '💡 *Hesaplama:* "kira vergisi hesapla"\n\n'
+            '💡 *Hesaplama:* "kira vergisi hesapla"\n'
+            '📒 *Emlakçı Dizini:* "emlakçı ekle", "emlakçı listele", "emlakçı ara"\n'
+            '👥 *Gruplar:* "grup kur", "gruplarım", "grup eşleştir", "portföyü gruba aç"\n\n'
             '💡 *İpucu:* Excel\'den toplu müşteri/portföy ekleyebilirsiniz!\n'
             'Fotoğraf çekerek sahibinden ilanlarını portföye aktarabilirsiniz!\n\n'
             + _hizli_erisim_mesaji(emlakci) +
@@ -433,6 +538,12 @@ def _bekleyen_isle(session, emlakci, metin):
         return _gorev_kaydet(emlakci, metin)
     if islem == 'fatura_ekle':
         return _fatura_kaydet(emlakci, metin)
+    if islem == 'emlakci_ekle_bilgi':
+        return _emlakci_kaydet(emlakci, metin)
+    if islem == 'grup_kur_bilgi':
+        return _grup_kaydet(emlakci, metin)
+    if islem == 'grup_uye_davet_bilgi':
+        return _grup_uye_davet_isle(emlakci, metin, session)
     return None
 
 
@@ -747,6 +858,461 @@ def _hatirlatma_listele(emlakci):
         return '📭 Henüz hatırlatma yok.\n\n_"Unutma: ..." yazarak hatırlatma ekleyebilirsiniz._'
     satirlar = [f'*{i+1}.* {n.icerik[:80]}' for i, n in enumerate(notlar)]
     return f'🧠 *Hatırlatmalarınız* ({len(notlar)})\n\n' + '\n'.join(satirlar)
+
+
+# ─── Emlakçı Dizini Komutları ─────────────────────────────
+def _emlakci_komut(komut, emlakci, metin, session):
+    """Emlakçı dizini sohbet komutları."""
+    from app.models.grup import EmlakciDizin
+
+    if komut == 'emlakci_ekle':
+        session['bekleyen_islem'] = 'emlakci_ekle_bilgi'
+        return ('📒 *Yeni emlakçı ekleyelim!*\n\n'
+                'Bilgileri virgülle ayırarak yazın:\n'
+                'Ad Soyad, Telefon, Bölge, Uzmanlık, Acente\n\n'
+                '_Örnek: Mehmet Kaya, 05321234567, Kadıköy, Satılık Daire, ABC Emlak_\n'
+                '_Sadece ad yazmanız da yeterli._')
+
+    if komut == 'emlakci_sayisi':
+        sayi = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).count()
+        return f'📒 Emlakçı dizininizde *{sayi}* kayıt var.'
+
+    if komut == 'emlakci_liste':
+        kayitlar = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).order_by(EmlakciDizin.ad_soyad).limit(15).all()
+        if not kayitlar:
+            return ('📒 Emlakçı dizininiz henüz boş.\n\n'
+                    '_"Emlakçı ekle" yazarak yeni emlakçı kaydedebilirsiniz._')
+        satirlar = []
+        for i, e in enumerate(kayitlar):
+            detay = []
+            if e.telefon:
+                detay.append(f'📞 {e.telefon}')
+            if e.bolge:
+                detay.append(f'📍 {e.bolge}')
+            if e.uzmanlik:
+                detay.append(f'🏷 {e.uzmanlik}')
+            if e.acente:
+                detay.append(f'🏢 {e.acente}')
+            satirlar.append(f'*{i+1}.* {e.ad_soyad}' + (f'\n   {" · ".join(detay)}' if detay else ''))
+        toplam = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).count()
+        return f'📒 *Emlakçı Dizini* ({toplam} kayıt)\n\n' + '\n'.join(satirlar)
+
+    if komut == 'emlakci_ara':
+        sorgu = re.sub(r'(?:emlakci|emlakçı)\s*(?:ara|bul)\s*', '', metin.lower()).strip()
+        if not sorgu:
+            return '🔍 Kimi aramak istiyorsunuz? Örnek: "emlakçı ara Mehmet"'
+        kayitlar = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).filter(
+            db.or_(
+                EmlakciDizin.ad_soyad.ilike(f'%{sorgu}%'),
+                EmlakciDizin.bolge.ilike(f'%{sorgu}%'),
+                EmlakciDizin.acente.ilike(f'%{sorgu}%'),
+                EmlakciDizin.telefon.ilike(f'%{sorgu}%'),
+            )
+        ).limit(10).all()
+        if not kayitlar:
+            return f'🔍 "{sorgu}" ile eşleşen emlakçı bulunamadı.'
+        satirlar = []
+        for i, e in enumerate(kayitlar):
+            detay = []
+            if e.telefon:
+                detay.append(f'📞 {e.telefon}')
+            if e.bolge:
+                detay.append(f'📍 {e.bolge}')
+            satirlar.append(f'*{i+1}.* {e.ad_soyad}' + (f' — {" · ".join(detay)}' if detay else ''))
+        return f'🔍 *"{sorgu}" arama sonuçları:*\n\n' + '\n'.join(satirlar)
+
+    if komut == 'emlakci_sil':
+        return ('📒 Emlakçı silmek için dizin sayfasından ilerleyebilirsiniz.\n\n'
+                '_Silmek istediğiniz emlakçının adını yazın, ben bulayım:_\n'
+                'Örnek: "Mehmet Kaya sil"')
+
+    return None
+
+
+def _emlakci_kaydet(emlakci, metin):
+    """Serbest metinden emlakçı bilgisi çıkar ve kaydet."""
+    from app.models.grup import EmlakciDizin
+    parcalar = [p.strip() for p in metin.replace(';', ',').split(',')]
+    ad = parcalar[0] if parcalar else metin.strip()
+    telefon = parcalar[1] if len(parcalar) > 1 else None
+    bolge = parcalar[2] if len(parcalar) > 2 else None
+    uzmanlik = parcalar[3] if len(parcalar) > 3 else None
+    acente = parcalar[4] if len(parcalar) > 4 else None
+
+    e = EmlakciDizin(
+        ekleyen_id=emlakci.id, ad_soyad=ad,
+        telefon=telefon, bolge=bolge,
+        uzmanlik=uzmanlik, acente=acente,
+    )
+    db.session.add(e)
+    db.session.commit()
+
+    detaylar = []
+    if telefon:
+        detaylar.append(f'📞 {telefon}')
+    if bolge:
+        detaylar.append(f'📍 {bolge}')
+    if uzmanlik:
+        detaylar.append(f'🏷 {uzmanlik}')
+    if acente:
+        detaylar.append(f'🏢 {acente}')
+
+    return (f'✅ *Emlakçı kaydedildi!*\n\n'
+            f'👤 {ad}\n'
+            + '\n'.join(detaylar) +
+            '\n\n_Başka emlakçı eklemek için "emlakçı ekle" yazın._')
+
+
+# ─── Grup Yönetimi Komutları ──────────────────────────────
+def _grup_komut(komut, emlakci, metin, session):
+    """Grup yönetimi sohbet komutları."""
+    from app.models.grup import Grup, GrupUyelik, GrupBildirim, EmlakciDizin
+    from app.models import Emlakci as EmlakciModel, Mulk as MulkModel, Musteri as MusteriModel
+
+    if komut == 'grup_kur':
+        # Max 2 grup kontrolü
+        aktif = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='aktif').count()
+        if aktif >= 2:
+            return '⚠️ En fazla *2 gruba* üye olabilirsiniz. Yeni grup kurmak için mevcut bir gruptan çıkmanız gerekiyor.'
+        session['bekleyen_islem'] = 'grup_kur_bilgi'
+        return ('👥 *Yeni grup kuralım!*\n\n'
+                'Grup adı ve sloganı virgülle ayırarak yazın:\n\n'
+                '_Örnek: Kadıköy Emlakçılar, Kadıköy bölgesinde işbirliği grubu_\n'
+                '_Sadece grup adı yazmanız da yeterli._')
+
+    if komut == 'grup_sayisi':
+        aktif = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='aktif').count()
+        bekleyen = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='bekliyor').count()
+        mesaj = f'👥 *{aktif}* gruba üyesiniz.'
+        if bekleyen:
+            mesaj += f'\n📩 *{bekleyen}* bekleyen davetiniz var.'
+        mesaj += f'\n_(Maksimum 2 grup üyeliği)_'
+        return mesaj
+
+    if komut == 'grup_liste':
+        uyelikler = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+        if not uyelikler:
+            return ('👥 Henüz bir gruba üye değilsiniz.\n\n'
+                    '_"Grup kur" yazarak yeni bir işbirliği grubu oluşturabilirsiniz._')
+        satirlar = []
+        for u in uyelikler:
+            g = Grup.query.get(u.grup_id)
+            if not g or not g.aktif:
+                continue
+            uye_sayisi = GrupUyelik.query.filter_by(grup_id=g.id, durum='aktif').count()
+            rol_ikon = '👑' if u.rol == 'yonetici' else '👤'
+            portfoy_durum = '🏢✅' if u.portfoy_acik else '🏢❌'
+            talep_durum = '👥✅' if u.talep_acik else '👥❌'
+            satirlar.append(
+                f'{rol_ikon} *{g.ad}*\n'
+                f'   {uye_sayisi} üye · {portfoy_durum} Portföy · {talep_durum} Talep'
+                + (f'\n   _{g.slogan}_' if g.slogan else '')
+            )
+        return f'👥 *Gruplarınız:*\n\n' + '\n\n'.join(satirlar)
+
+    if komut == 'grup_uyeleri':
+        # İlk aktif grubu bul (veya metinden grup adı çıkar)
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.\n\n_"Grup kur" yazarak yeni grup oluşturabilirsiniz._'
+        uyeler = GrupUyelik.query.filter_by(grup_id=grup.id, durum='aktif').all()
+        satirlar = []
+        for u in uyeler:
+            e = EmlakciModel.query.get(u.emlakci_id)
+            if not e:
+                continue
+            rol_ikon = '👑' if u.rol == 'yonetici' else '👤'
+            durum_detay = []
+            if u.portfoy_acik:
+                durum_detay.append('🏢 Portföy açık')
+            if u.talep_acik:
+                durum_detay.append('👥 Talep açık')
+            satirlar.append(f'{rol_ikon} *{e.ad_soyad}*' + (f' — {", ".join(durum_detay)}' if durum_detay else ''))
+        return f'👥 *{grup.ad} — Üyeler ({len(uyeler)}):*\n\n' + '\n'.join(satirlar)
+
+    if komut == 'grup_davet':
+        bekleyenler = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='bekliyor').all()
+        if not bekleyenler:
+            return '📩 Bekleyen grup davetiniz yok.'
+        satirlar = []
+        for u in bekleyenler:
+            g = Grup.query.get(u.grup_id)
+            if g:
+                satirlar.append(f'• *{g.ad}*' + (f' — _{g.slogan}_' if g.slogan else ''))
+        return (f'📩 *Bekleyen Davetler ({len(bekleyenler)}):*\n\n'
+                + '\n'.join(satirlar) +
+                '\n\n_Kabul etmek için "daveti kabul et" yazın.\nReddetmek için "daveti reddet" yazın._')
+
+    if komut == 'grup_cik':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        if uyelik.rol == 'yonetici':
+            baska_yonetici = GrupUyelik.query.filter(
+                GrupUyelik.grup_id == grup.id, GrupUyelik.emlakci_id != emlakci.id,
+                GrupUyelik.rol == 'yonetici', GrupUyelik.durum == 'aktif'
+            ).first()
+            aktif_uye = GrupUyelik.query.filter(
+                GrupUyelik.grup_id == grup.id, GrupUyelik.emlakci_id != emlakci.id,
+                GrupUyelik.durum == 'aktif'
+            ).count()
+            if aktif_uye > 0 and not baska_yonetici:
+                return (f'⚠️ *{grup.ad}* grubunun tek yöneticisisiniz.\n'
+                        'Çıkmak için önce başka birine yöneticilik verin:\n'
+                        '_"grup yönetici ata [isim]" yazın._')
+        uyelik.durum = 'cikti'
+        GrupBildirim(grup_id=grup.id, emlakci_id=emlakci.id, tip='uye_cikti',
+                     mesaj=f'{emlakci.ad_soyad} gruptan ayrıldı')
+        kalan = GrupUyelik.query.filter_by(grup_id=grup.id, durum='aktif').count()
+        if kalan <= 1:  # kendisi hala sayılıyor olabilir, commit sonrası 0 olur
+            grup.aktif = False
+        db.session.commit()
+        return f'✅ *{grup.ad}* grubundan ayrıldınız.'
+
+    if komut == 'grup_ayar':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        portfoy_durum = '✅ Açık' if uyelik.portfoy_acik else '❌ Kapalı'
+        talep_durum = '✅ Açık' if uyelik.talep_acik else '❌ Kapalı'
+        return (f'⚙️ *{grup.ad} — Paylaşım Ayarlarınız:*\n\n'
+                f'🏢 Portföy paylaşımı: *{portfoy_durum}*\n'
+                f'👥 Talep paylaşımı: *{talep_durum}*\n\n'
+                '_Değiştirmek için:_\n'
+                '• "portföyümü gruba aç"\n'
+                '• "portföyümü gruba kapat"\n'
+                '• "taleplerimizi gruba aç"\n'
+                '• "taleplerimizi gruba kapat"')
+
+    if komut == 'grup_portfoy_ac':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        uyelik.portfoy_acik = True
+        db.session.commit()
+        mulk_sayi = MulkModel.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+        return (f'✅ Portföyünüz *{grup.ad}* grubuna açıldı!\n\n'
+                f'🏢 {mulk_sayi} mülk grup üyeleriyle paylaşılıyor.\n'
+                '_Kişisel bilgiler (adres, müşteri adı) gizli kalır._')
+
+    if komut == 'grup_portfoy_kapat':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        uyelik.portfoy_acik = False
+        db.session.commit()
+        return f'✅ Portföyünüz *{grup.ad}* grubunda artık gizli.'
+
+    if komut == 'grup_talep_ac':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        uyelik.talep_acik = True
+        db.session.commit()
+        musteri_sayi = MusteriModel.query.filter_by(emlakci_id=emlakci.id).count()
+        return (f'✅ Talepleriniz *{grup.ad}* grubuna açıldı!\n\n'
+                f'👥 {musteri_sayi} müşteri talebi grup üyeleriyle paylaşılıyor.\n'
+                '_Müşteri isimleri ve iletişim bilgileri gizli kalır._')
+
+    if komut == 'grup_talep_kapat':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        uyelik.talep_acik = False
+        db.session.commit()
+        return f'✅ Talepleriniz *{grup.ad}* grubunda artık gizli.'
+
+    if komut == 'grup_esles':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        # Eşleştirme yap
+        acik_portfoy = GrupUyelik.query.filter_by(grup_id=grup.id, durum='aktif', portfoy_acik=True).all()
+        acik_talep = GrupUyelik.query.filter_by(grup_id=grup.id, durum='aktif', talep_acik=True).all()
+        portfoyler = []
+        for u in acik_portfoy:
+            mulkler = MulkModel.query.filter_by(emlakci_id=u.emlakci_id, aktif=True).all()
+            for m in mulkler:
+                portfoyler.append({
+                    'tip': m.tip, 'islem': m.islem_turu, 'fiyat': m.fiyat,
+                    'ilce': m.ilce, 'oda': m.oda_sayisi, 'uye': u.emlakci_id,
+                })
+        talepler = []
+        for u in acik_talep:
+            musteriler = MusteriModel.query.filter_by(emlakci_id=u.emlakci_id).all()
+            for m in musteriler:
+                talepler.append({
+                    'islem': m.islem_turu, 'butce': m.butce_max,
+                    'uye': u.emlakci_id,
+                })
+        eslesimler = []
+        for t in talepler:
+            for p in portfoyler:
+                if t['islem'] == p['islem'] and t['uye'] != p['uye']:
+                    if t['butce'] and p['fiyat'] and p['fiyat'] <= t['butce']:
+                        eslesimler.append(p)
+        if not eslesimler:
+            return (f'🔗 *{grup.ad} — Eşleştirme Sonucu:*\n\n'
+                    f'🏢 {len(portfoyler)} açık portföy · 👥 {len(talepler)} açık talep\n'
+                    '❌ Henüz eşleşme bulunamadı.\n\n'
+                    '_Daha fazla üyenin portföy/taleplerini açması gerekebilir._')
+        satirlar = []
+        for e in eslesimler[:10]:
+            fiyat_str = f'{int(e["fiyat"]):,}'.replace(',', '.') + ' TL' if e['fiyat'] else '?'
+            satirlar.append(f'• {e["tip"] or "?"} · {e["ilce"] or "?"} · {e["oda"] or "?"} · {fiyat_str}')
+        return (f'🔗 *{grup.ad} — Eşleştirme Sonucu:*\n\n'
+                f'🏢 {len(portfoyler)} portföy · 👥 {len(talepler)} talep · ✅ *{len(eslesimler)} eşleşme*\n\n'
+                + '\n'.join(satirlar) +
+                (f'\n\n_...ve {len(eslesimler) - 10} eşleşme daha_' if len(eslesimler) > 10 else ''))
+
+    if komut == 'grup_bildirim':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        bildirimler = GrupBildirim.query.filter_by(grup_id=grup.id)\
+            .order_by(GrupBildirim.olusturma.desc()).limit(10).all()
+        if not bildirimler:
+            return f'📢 *{grup.ad}* grubunda henüz aktivite yok.'
+        satirlar = []
+        for b in bildirimler:
+            tarih = b.olusturma.strftime('%d.%m %H:%M') if b.olusturma else ''
+            satirlar.append(f'• {b.mesaj} _{tarih}_')
+        return f'📢 *{grup.ad} — Son Aktiviteler:*\n\n' + '\n'.join(satirlar)
+
+    if komut == 'grup_uye_davet':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        if uyelik.rol != 'yonetici':
+            return '⚠️ Üye davet etmek için *yönetici* yetkisi gerekli.'
+        session['bekleyen_islem'] = 'grup_uye_davet_bilgi'
+        session['davet_grup_id'] = grup.id
+        return (f'👥 *{grup.ad}* grubuna üye davet edin.\n\n'
+                'Davet etmek istediğiniz emlakçının adını veya ID\'sini yazın.\n'
+                '_(Sadece uygulamayı kullanan emlakçılar davet edilebilir)_')
+
+    if komut == 'grup_yonetici_ata':
+        grup, uyelik = _grup_bul(emlakci, metin)
+        if not grup:
+            return '👥 Üye olduğunuz bir grup bulunamadı.'
+        if uyelik.rol != 'yonetici':
+            return '⚠️ Yönetici atamak için *yönetici* yetkisi gerekli.'
+        return (f'👥 *{grup.ad}* grubuna yönetici atamak için üye listesini kontrol edin.\n\n'
+                '_Grup üyelerini görmek için "grup üyeleri" yazın._')
+
+    return None
+
+
+def _grup_bul(emlakci, metin):
+    """Metinden grup adı çıkarmaya çalış, bulamazsa ilk aktif grubu döndür."""
+    from app.models.grup import Grup, GrupUyelik
+    uyelikler = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+    if not uyelikler:
+        return None, None
+
+    # Metinde grup adı geçiyor mu?
+    metin_lower = metin.lower()
+    for u in uyelikler:
+        g = Grup.query.get(u.grup_id)
+        if g and g.aktif and g.ad.lower() in metin_lower:
+            return g, u
+
+    # Bulamadıysa ilk grubu döndür
+    for u in uyelikler:
+        g = Grup.query.get(u.grup_id)
+        if g and g.aktif:
+            return g, u
+
+    return None, None
+
+
+def _grup_kaydet(emlakci, metin):
+    """Serbest metinden grup bilgisi çıkar ve kur."""
+    from app.models.grup import Grup, GrupUyelik, GrupBildirim
+    parcalar = [p.strip() for p in metin.replace(';', ',').split(',')]
+    ad = parcalar[0] if parcalar else metin.strip()
+    slogan = parcalar[1] if len(parcalar) > 1 else None
+
+    g = Grup(ad=ad, slogan=slogan, kurucu_id=emlakci.id)
+    db.session.add(g)
+    db.session.flush()
+
+    u = GrupUyelik(grup_id=g.id, emlakci_id=emlakci.id, rol='yonetici', durum='aktif')
+    db.session.add(u)
+    db.session.add(GrupBildirim(grup_id=g.id, emlakci_id=emlakci.id, tip='grup_kuruldu', mesaj=f'Grup "{g.ad}" kuruldu'))
+    db.session.commit()
+
+    return (f'✅ *Grup kuruldu!*\n\n'
+            f'👥 *{g.ad}*\n'
+            + (f'📝 {slogan}\n' if slogan else '') +
+            f'👑 Yönetici: {emlakci.ad_soyad}\n\n'
+            '_Üye davet etmek için "gruba üye ekle" yazın.\n'
+            'Portföyünüzü açmak için "portföyümü gruba aç" yazın._')
+
+
+def _grup_uye_davet_isle(emlakci, metin, session):
+    """Gruba üye davet et."""
+    from app.models.grup import Grup, GrupUyelik
+    from app.models import Emlakci as EmlakciModel
+    from app.routes.bildirim import bildirim_olustur
+
+    grup_id = session.pop('davet_grup_id', None)
+    if not grup_id:
+        return '⚠️ Davet işlemi iptal edildi. Tekrar "gruba üye ekle" yazın.'
+
+    grup = Grup.query.get(grup_id)
+    if not grup:
+        return '⚠️ Grup bulunamadı.'
+
+    # İsimle emlakçı ara
+    sorgu = metin.strip()
+    hedef = EmlakciModel.query.filter(
+        EmlakciModel.aktif == True,
+        EmlakciModel.ad_soyad.ilike(f'%{sorgu}%')
+    ).first()
+
+    if not hedef:
+        # ID ile dene
+        try:
+            hedef = EmlakciModel.query.filter_by(id=int(sorgu), aktif=True).first()
+        except (ValueError, TypeError):
+            pass
+
+    if not hedef:
+        return f'⚠️ "{sorgu}" adında aktif bir emlakçı bulunamadı.\n\n_Uygulamayı kullanan biri olmalı._'
+
+    if hedef.id == emlakci.id:
+        return '⚠️ Kendinizi davet edemezsiniz.'
+
+    # Max 2 kontrol
+    aktif = GrupUyelik.query.filter_by(emlakci_id=hedef.id, durum='aktif').count()
+    if aktif >= 2:
+        return f'⚠️ *{hedef.ad_soyad}* zaten 2 gruba üye, yeni davet gönderilemez.'
+
+    # Teklif kapalı mı
+    from app.models.ayarlar import KullaniciAyar
+    ayar = KullaniciAyar.query.filter_by(emlakci_id=hedef.id).first()
+    if ayar and ayar.ayarlar and ayar.ayarlar.get('grup_teklif_kapali'):
+        return f'⚠️ *{hedef.ad_soyad}* grup tekliflerini kapatmış.'
+
+    # Zaten üye/bekliyor mu
+    mevcut = GrupUyelik.query.filter_by(grup_id=grup_id, emlakci_id=hedef.id).first()
+    if mevcut and mevcut.durum in ('aktif', 'bekliyor'):
+        return f'⚠️ *{hedef.ad_soyad}* zaten üye veya davet bekliyor.'
+
+    # Davet oluştur
+    if mevcut:
+        mevcut.durum = 'bekliyor'
+    else:
+        u = GrupUyelik(grup_id=grup_id, emlakci_id=hedef.id, rol='uye', durum='bekliyor')
+        db.session.add(u)
+
+    bildirim_olustur(hedef.id, 'grup',
+        f'📩 "{grup.ad}" grubuna üyelik davetiniz var',
+        f'{emlakci.ad_soyad} sizi davet etti.', link='gruplar')
+
+    db.session.commit()
+    return f'✅ *{hedef.ad_soyad}* adlı emlakçıya *{grup.ad}* grubu için davet gönderildi!'
 
 
 # ─── AI Fonksiyonları (function calling) ───────────────────

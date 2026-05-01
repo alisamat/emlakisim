@@ -82,6 +82,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '📒 Emlakçılar & Gruplar',
+    items: [
+      { ikon: '📒', ad: 'Emlakçı Dizini', tab: 'emlakcilar', aciklama: 'Dış emlakçı rehberi, iletişim bilgileri' },
+      { ikon: '👥', ad: 'Gruplar', tab: 'gruplar', aciklama: 'İşbirliği grupları, portföy/talep paylaşımı, eşleştirme' },
+    ],
+  },
+  {
     baslik: '🏢 Ofis & Ekip',
     items: [
       { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip', aciklama: 'Ofis danışmanları ve müşteri ataması' },

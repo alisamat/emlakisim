@@ -6,7 +6,7 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Emlakci, PanelSohbet, PanelMesaj
-from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle
+from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle, _navigasyon_kontrol
 from app.services.kredi import kredi_kontrol, kredi_dus, KREDI_TABLOSU
 from app.services.egitim import diyalog_kaydet, ogrenilen_pattern_esle
 
@@ -52,11 +52,30 @@ def mesaj_gonder():
 
     metin_norm = _normalize(metin)
     kullanilan_model = None
+    nav_tab = None  # Sayfa navigasyonu
+
+    # 0. Navigasyon kontrolü — "ayarlara git", "müşterileri aç" vb.
+    nav = _navigasyon_kontrol(metin_norm)
+    if nav:
+        nav_tab, cevap = nav
+        kullanilan_model = 'navigasyon'
+        # Mesajı kaydet ve direkt dön
+        db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+        db.session.commit()
+        return jsonify({
+            'cevap': cevap,
+            'kredi_kalan': emlakci.kredi,
+            'sohbet_id': sohbet.id,
+            'tab': nav_tab,
+        })
 
     # 1. Bekleyen adımlı işlem
     bekleyen = _bekleyen_isle(session, emlakci, metin)
     if bekleyen:
-        cevap = bekleyen
+        if isinstance(bekleyen, tuple):
+            cevap, nav_tab = bekleyen
+        else:
+            cevap = bekleyen
         islem = session.get('_son_islem', 'pattern')
         kredi_dus(emlakci, islem, aciklama=metin[:100])
         kullanilan_model = 'pattern'
@@ -92,7 +111,11 @@ def mesaj_gonder():
                 # 4. Sabit pattern matching
                 komut = _pattern_isle(metin_norm, emlakci, metin)
                 if komut:
-                    cevap = _komut_calistir(komut, emlakci, metin, session)
+                    sonuc = _komut_calistir(komut, emlakci, metin, session)
+                    if isinstance(sonuc, tuple):
+                        cevap, nav_tab = sonuc
+                    else:
+                        cevap = sonuc
                     kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
                     kullanilan_model = 'pattern'
                 else:
@@ -161,11 +184,14 @@ def mesaj_gonder():
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
     db.session.commit()
 
-    return jsonify({
+    resp = {
         'cevap': cevap,
         'kredi_kalan': emlakci.kredi,
         'sohbet_id': sohbet.id,
-    })
+    }
+    if nav_tab:
+        resp['tab'] = nav_tab
+    return jsonify(resp)
 
 
 @bp.route('/sohbetler', methods=['GET'])
