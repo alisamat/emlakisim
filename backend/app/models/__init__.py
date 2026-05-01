@@ -81,6 +81,7 @@ class Mulk(db.Model):
     notlar        = db.Column(db.Text)
     detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
     grup          = db.Column(db.String(50))              # kullanıcı tanımlı grup
+    yasal_durum   = db.Column(db.JSON, default=dict)     # iskan, ipotek, haciz, dask, imar
     aktif         = db.Column(db.Boolean, default=True)
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 

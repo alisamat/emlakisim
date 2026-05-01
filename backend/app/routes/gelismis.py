@@ -14,6 +14,7 @@ from app.services.zeka import proaktif_oneriler, musteri_analiz, gunluk_zeka_rap
 from app.services.kisisellesme import profil_cikart, hizli_erisim_onerileri
 from app.services.akilli_arama import genel_arama
 from app.services.akilli_oneri import stratejik_oneriler
+from app.services.yasal import yasal_durum_getir, yasal_durum_guncelle, piyasa_degeri_analiz, piyasa_rapor_pdf
 import base64
 from app.models import Mulk
 from app.models.iletisim_gecmisi import IletisimKayit
@@ -198,6 +199,52 @@ def zeka_profil():
 def zeka_hizli():
     """En çok kullanılan komutlar — hızlı erişim."""
     return jsonify({'oneriler': hizli_erisim_onerileri(int(get_jwt_identity()))})
+
+
+# ── Yasal Durum & Piyasa Değeri ────────────────────────────
+@bp.route('/yasal/<int:mulk_id>', methods=['GET'])
+@jwt_required()
+def yasal_getir(mulk_id):
+    sonuc = yasal_durum_getir(mulk_id, int(get_jwt_identity()))
+    if not sonuc:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    return jsonify(sonuc)
+
+
+@bp.route('/yasal/<int:mulk_id>', methods=['PUT'])
+@jwt_required()
+def yasal_guncelle(mulk_id):
+    d = request.get_json() or {}
+    ok = yasal_durum_guncelle(mulk_id, int(get_jwt_identity()), d)
+    if not ok:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    return jsonify({'ok': True})
+
+
+@bp.route('/piyasa-degeri/<int:mulk_id>', methods=['GET'])
+@jwt_required()
+def piyasa_degeri(mulk_id):
+    mulk = Mulk.query.filter_by(id=mulk_id, emlakci_id=int(get_jwt_identity())).first()
+    if not mulk:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    analiz = piyasa_degeri_analiz(mulk, int(get_jwt_identity()))
+    return jsonify(analiz)
+
+
+@bp.route('/piyasa-degeri/<int:mulk_id>/pdf', methods=['GET'])
+@jwt_required()
+def piyasa_degeri_pdf(mulk_id):
+    mulk = Mulk.query.filter_by(id=mulk_id, emlakci_id=int(get_jwt_identity())).first()
+    if not mulk:
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
+    from app.models import Emlakci
+    emlakci = Emlakci.query.get(int(get_jwt_identity()))
+    analiz = piyasa_degeri_analiz(mulk, int(get_jwt_identity()))
+    import io
+    from flask import send_file
+    pdf_bytes = piyasa_rapor_pdf(emlakci, mulk, analiz)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf', as_attachment=True,
+                     download_name=f'piyasa_analiz_{mulk_id}.pdf')
 
 
 # ── Akıllı Arama ─────────────────────────────────────────

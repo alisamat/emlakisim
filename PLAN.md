@@ -451,6 +451,27 @@ Kullanıcı mesaj gönderir
 - [x] "daha ucuz/büyük/başka" → son arama bağlamında filtre
 - [x] WhatsApp + Panel aynı akış
 
+### Profesyonel Emlakçı Yetkinlikleri
+
+#### A. Süreç Bilgilendirme Sistemi
+- [ ] Süreç adımı tamamlandığında müşteriye otomatik bildirim (email/WhatsApp)
+- [ ] Haftalık süreç özet emaili
+- [ ] Emlakçıya: "X müşterinin süreci Y gündür ilerlemedi" uyarısı
+- [ ] Müşteri portalından süreç takibi (alıcı/satıcı kendi durumunu görsün)
+
+#### B. Piyasa Değeri Analiz Raporu
+- [ ] Mülkün m² fiyatını bölge ortalamasıyla karşılaştırma
+- [ ] Portföydeki benzer mülklerle fiyat karşılaştırması
+- [ ] "Bölge ortalamasının %X üstünde/altında" değerlendirmesi
+- [ ] Piyasa değeri analiz raporu PDF
+
+#### C. Yasal Durum Yönetimi
+- [ ] Mülk yasal durum checklist'i (iskan, ipotek, haciz, DASK, imar)
+- [ ] Eksik belge uyarısı
+- [ ] DASK poliçe son kullanma tarihi takibi
+- [ ] Tapu devir öncesi otomatik kontrol listesi
+- [ ] Yasal risk skoru (her mülk için)
+
 ### İlan OCR & Karşılaştırma ✅
 - [x] OCR (Gemini Vision) + portföye ekle + 20 ilan hafıza + karşılaştırma + telefon arama
 
