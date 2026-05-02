@@ -388,9 +388,12 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'tum_excel':
         return ('📥 *Tüm veriniz Excel olarak hazır!*\n\n'
-                'Müşteriler, portföy, gelir/gider, görevler, notlar — tek dosyada.\n\n'
+                '10 sheet, tek dosya:\n'
+                '👥 Müşteriler · 🏢 Portföy · 💰 Gelir/Gider\n'
+                '📅 Görevler · 📝 Notlar · 📋 Yer Göstermeler\n'
+                '🧾 Faturalar · 📒 Cariler · 🎯 Leadler · 📞 İletişim Geçmişi\n\n'
                 '[📥 Tümünü İndir](/api/panel/yedek/indir)\n\n'
-                '_Dosya otomatik indirilecek._')
+                '_Tüm sütunlar dahil — yedek veya taşıma için tam veri._')
 
     # ── Tahmin & Analiz ──
     if komut == 'satici_tahmin':

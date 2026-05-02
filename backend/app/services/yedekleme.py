@@ -20,6 +20,9 @@ def excel_export(emlakci):
     from app.models import Musteri, Mulk, YerGosterme, Not
     from app.models.muhasebe import GelirGider, Cari
     from app.models.planlama import Gorev
+    from app.models.fatura import Fatura
+    from app.models.lead import Lead
+    from app.models.iletisim_gecmisi import IletisimKayit
 
     wb = openpyxl.Workbook()
 
@@ -63,6 +66,39 @@ def excel_export(emlakci):
     ws5.append(['ID', 'Icerik', 'Etiket', 'Tarih'])
     for n in Not.query.filter_by(emlakci_id=emlakci.id).all():
         ws5.append([n.id, n.icerik, n.etiket, str(n.olusturma or '')])
+
+    # Yer Göstermeler
+    ws6 = wb.create_sheet('YerGostermeler')
+    ws6.append(['ID', 'Musteri', 'Mulk', 'Tarih', 'Notlar', 'Durum'])
+    for y in YerGosterme.query.filter_by(emlakci_id=emlakci.id).all():
+        musteri_ad = Musteri.query.get(y.musteri_id).ad_soyad if y.musteri_id and Musteri.query.get(y.musteri_id) else ''
+        mulk_ad = Mulk.query.get(y.mulk_id).baslik if y.mulk_id and Mulk.query.get(y.mulk_id) else ''
+        ws6.append([y.id, musteri_ad, mulk_ad, str(y.tarih or y.olusturma or ''), y.notlar, y.durum])
+
+    # Faturalar
+    ws7 = wb.create_sheet('Faturalar')
+    ws7.append(['ID', 'Fatura No', 'Tip', 'Alici', 'Tutar', 'KDV', 'Toplam', 'Durum', 'Tarih'])
+    for f in Fatura.query.filter_by(emlakci_id=emlakci.id).all():
+        ws7.append([f.id, f.fatura_no, f.tip, f.alici_ad, f.tutar, f.kdv_tutar, f.toplam, f.durum, str(f.olusturma or '')])
+
+    # Cari Hesaplar
+    ws8 = wb.create_sheet('Cariler')
+    ws8.append(['ID', 'Ad', 'Tip', 'Bakiye', 'Tarih'])
+    for c in Cari.query.filter_by(emlakci_id=emlakci.id).all():
+        ws8.append([c.id, c.ad, c.tip, c.bakiye, str(c.olusturma or '')])
+
+    # Leadler
+    ws9 = wb.create_sheet('Leadler')
+    ws9.append(['ID', 'Ad Soyad', 'Telefon', 'Kaynak', 'Durum', 'Puan', 'Notlar', 'Tarih'])
+    for l in Lead.query.filter_by(emlakci_id=emlakci.id).all():
+        ws9.append([l.id, l.ad_soyad, l.telefon, l.kaynak, l.durum, l.puan, l.notlar, str(l.olusturma or '')])
+
+    # İletişim Geçmişi
+    ws10 = wb.create_sheet('IletisimGecmisi')
+    ws10.append(['ID', 'Musteri', 'Tip', 'Yon', 'Ozet', 'Tarih'])
+    for k in IletisimKayit.query.filter_by(emlakci_id=emlakci.id).order_by(IletisimKayit.olusturma.desc()).limit(500).all():
+        musteri_ad = Musteri.query.get(k.musteri_id).ad_soyad if k.musteri_id and Musteri.query.get(k.musteri_id) else ''
+        ws10.append([k.id, musteri_ad, k.tip, k.yon, k.ozet, str(k.olusturma or '')])
 
     buf = io.BytesIO()
     wb.save(buf)
