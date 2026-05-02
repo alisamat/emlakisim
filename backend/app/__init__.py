@@ -20,7 +20,7 @@ def create_app(env='production'):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
+    CORS(app, origins=app.config.get('CORS_ORIGINS', '*'), expose_headers=['Content-Disposition'])
 
     # Rate limiting
     try:

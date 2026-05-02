@@ -110,16 +110,15 @@ function mesajRender(text) {
       const indir = async (e) => {
         e.preventDefault();
         try {
-          const token = localStorage.getItem('emlakisim_token');
-          const r = await fetch(`${api.defaults.baseURL || ''}${url}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
-          const blob = await r.blob();
+          const r = await api.get(url, { responseType: 'blob' });
+          const blob = new Blob([r.data]);
           const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          const cd = r.headers.get('content-disposition');
-          a.download = cd ? cd.split('filename=')[1]?.replace(/"/g, '') : 'dosya.xlsx';
+          const cd = r.headers['content-disposition'];
+          a.download = cd ? cd.split('filename=')[1]?.replace(/"/g, '') : url.includes('zip') ? 'emlakisim.zip' : 'emlakisim.xlsx';
+          document.body.appendChild(a);
           a.click();
+          document.body.removeChild(a);
           URL.revokeObjectURL(a.href);
         } catch { alert('İndirme hatası'); }
       };
