@@ -356,6 +356,34 @@ def _baglam_filtre(metin_norm, emlakci, session):
                             f'🛏 {mulk.oda_sayisi or "?"} · {mulk.metrekare or "?"}m²'
                             + (f'\n🏗 Bina yaşı: {det.get("bina_yasi")}' if det.get("bina_yasi") else '')
                             + (f'\n🔥 Isıtma: {det.get("isinma")}' if det.get("isinma") else ''))
+            elif son_komut == 'gorev':
+                from app.models.planlama import Gorev
+                g = Gorev.query.get(secilen['id'])
+                if g:
+                    return (f'📌 *{g.baslik}*\n\n'
+                            f'🏷 Tip: {g.tip or "görev"}\n'
+                            f'📊 Durum: {g.durum or "bekliyor"}\n'
+                            f'⭐ Öncelik: {g.oncelik or "normal"}'
+                            + (f'\n📅 Başlangıç: {g.baslangic.strftime("%d.%m.%Y %H:%M") if g.baslangic else "—"}')
+                            + (f'\n📝 {g.aciklama[:100]}' if g.aciklama else ''))
+            elif son_komut == 'fatura':
+                from app.models.fatura import Fatura
+                f = Fatura.query.get(secilen['id'])
+                if f:
+                    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+                    return (f'🧾 *Fatura: {f.fatura_no}*\n\n'
+                            f'👤 Alıcı: {f.alici_ad or "—"}\n'
+                            f'💰 Tutar: {f_tl(f.tutar)} TL\n'
+                            f'📊 KDV: {f_tl(f.kdv_tutar)} TL (%{f.kdv_oran or 20})\n'
+                            f'💵 Toplam: {f_tl(f.toplam)} TL\n'
+                            f'📋 Durum: {f.durum or "taslak"}\n'
+                            f'🏷 Tip: {f.tip or "—"}')
+            elif son_komut == 'hatirlatma':
+                n = Not.query.get(secilen['id'])
+                if n:
+                    return (f'🧠 *Hatırlatma*\n\n'
+                            f'📝 {n.icerik}\n'
+                            f'📅 {n.olusturma.strftime("%d.%m.%Y %H:%M") if n.olusturma else "—"}')
 
         if filtre.startswith('sicaklik_') and son_komut == 'musteri':
             hedef = filtre.split('_')[1]
@@ -404,6 +432,24 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 session['son_liste'] = [{'id': m.id} for m in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'🏢 *Portföy (devam):*\n\n' + '\n'.join(satirlar)
+            elif son_komut == 'gorev':
+                from app.models.planlama import Gorev
+                sonuclar = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').offset(offset).limit(10).all()
+                if not sonuclar:
+                    return '📭 Daha fazla görev yok.'
+                satirlar = [f'*{offset+i+1}.* {"📌"} {g.baslik}' for i, g in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': g.id, 'tip': 'gorev'} for g in sonuclar]
+                session['son_offset'] = offset + 10
+                return f'📅 *Görevler (devam):*\n\n' + '\n'.join(satirlar)
+            elif son_komut == 'fatura':
+                from app.models.fatura import Fatura
+                sonuclar = Fatura.query.filter_by(emlakci_id=emlakci.id).order_by(Fatura.olusturma.desc()).offset(offset).limit(10).all()
+                if not sonuclar:
+                    return '📭 Daha fazla fatura yok.'
+                satirlar = [f'*{offset+i+1}.* {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL'.replace(',', '.') for i, f in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': f.id, 'tip': 'fatura'} for f in sonuclar]
+                session['son_offset'] = offset + 10
+                return f'🧾 *Faturalar (devam):*\n\n' + '\n'.join(satirlar)
 
     return None
 
@@ -448,6 +494,7 @@ def _komut_calistir(komut, emlakci, metin, session):
         return sonuc
 
     if komut == 'rapor':
+        session['son_komut'] = 'rapor'
         return _rapor(emlakci)
 
     if komut == 'musteri_ekle':
@@ -473,12 +520,14 @@ def _komut_calistir(komut, emlakci, metin, session):
         return '*Görev başlığını yazın:*\n\n_Örnek: "Ahmet beye yarın saat 3te dönüş yap"_'
 
     if komut == 'gorev_liste':
-        return _gorev_listele(emlakci)
+        session['son_komut'] = 'gorev'
+        return _gorev_listele(emlakci, session)
 
     if komut == 'bugun_ozet':
         return _bugun_ozet(emlakci)
 
     if komut == 'eslestirme':
+        session['son_komut'] = 'eslestirme'
         return _eslestirme_ozet(emlakci)
 
     if komut == 'fatura_ekle':
@@ -486,7 +535,8 @@ def _komut_calistir(komut, emlakci, metin, session):
         return '*Fatura bilgileri:*\n\nAlıcı adı, tutar (TL), açıklama\n_Örnek: "Ali Yılmaz, 15000, komisyon"_'
 
     if komut == 'fatura_liste':
-        return _fatura_listele(emlakci)
+        session['son_komut'] = 'fatura'
+        return _fatura_listele(emlakci, session)
 
     if komut == 'doviz_kuru':
         return _doviz_goster()
@@ -638,7 +688,8 @@ def _komut_calistir(komut, emlakci, metin, session):
         return '*Neyi hatırlamamı istiyorsunuz?*\n\n_Örnek: "Ahmet beye yarın dönüş yap" veya "Kadıköy dairesi 25.000 TL ye düştü"_'
 
     if komut == 'hatirlatma_liste':
-        return _hatirlatma_listele(emlakci)
+        session['son_komut'] = 'hatirlatma'
+        return _hatirlatma_listele(emlakci, session)
 
     return None
 
@@ -1084,11 +1135,13 @@ def _performans_ozet(emlakci):
             f'💎 Kredi: *{emlakci.kredi}*')
 
 
-def _gorev_listele(emlakci):
+def _gorev_listele(emlakci, session=None):
     from app.models.planlama import Gorev
     gorevler = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').order_by(Gorev.olusturma.desc()).limit(10).all()
     if not gorevler:
         return '📅 Aktif görev yok.\n\n_"Görev ekle" yazarak yeni görev ekleyebilirsiniz._'
+    if session is not None:
+        session['son_liste'] = [{'id': g.id, 'tip': 'gorev'} for g in gorevler]
     satirlar = [f'*{i+1}.* {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik}' for i, g in enumerate(gorevler)]
     return f'📅 *Görevleriniz* ({len(gorevler)})\n\n' + '\n'.join(satirlar)
 
@@ -1158,13 +1211,15 @@ def _fatura_kaydet(emlakci, metin):
     return f'✅ *Fatura oluşturuldu!*\n\n🧾 {f.fatura_no}\n👤 {alici}\n💰 {int(f.toplam):,} TL (KDV dahil)'.replace(',', '.')
 
 
-def _fatura_listele(emlakci):
+def _fatura_listele(emlakci, session=None):
     from app.models.fatura import Fatura
     faturalar = Fatura.query.filter_by(emlakci_id=emlakci.id).order_by(Fatura.olusturma.desc()).limit(10).all()
     if not faturalar:
         return '🧾 Henüz fatura yok.'
-    satirlar = [f'*{f.fatura_no}* — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for f in faturalar]
-    return f'🧾 *Son Faturalar*\n\n' + '\n'.join(satirlar)
+    if session is not None:
+        session['son_liste'] = [{'id': f.id, 'tip': 'fatura'} for f in faturalar]
+    satirlar = [f'*{i+1}.* {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for i, f in enumerate(faturalar)]
+    return f'🧾 *Son Faturalar ({len(faturalar)})*\n\n' + '\n'.join(satirlar)
 
 
 def _unutma_kaydet(emlakci, metin):
@@ -1175,12 +1230,14 @@ def _unutma_kaydet(emlakci, metin):
     return f'🧠 *Hatırladım!*\n\n📌 {metin[:150]}\n\n_"Hatırlatmalar" yazarak tüm kayıtları görebilirsiniz._'
 
 
-def _hatirlatma_listele(emlakci):
+def _hatirlatma_listele(emlakci, session=None):
     """Kaydedilmiş hatırlatmaları listele."""
     notlar = Not.query.filter_by(emlakci_id=emlakci.id, etiket='hatirlatici', tamamlandi=False)\
         .order_by(Not.olusturma.desc()).limit(10).all()
     if not notlar:
         return '📭 Henüz hatırlatma yok.\n\n_"Unutma: ..." yazarak hatırlatma ekleyebilirsiniz._'
+    if session is not None:
+        session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar]
     satirlar = [f'*{i+1}.* {n.icerik[:80]}' for i, n in enumerate(notlar)]
     return f'🧠 *Hatırlatmalarınız* ({len(notlar)})\n\n' + '\n'.join(satirlar)
 
