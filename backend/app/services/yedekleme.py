@@ -32,9 +32,19 @@ def excel_export(emlakci):
 
     # Portföy
     ws2 = wb.create_sheet('Portfoy')
-    ws2.append(['ID', 'Baslik', 'Adres', 'Sehir', 'Ilce', 'Tip', 'Islem', 'Fiyat', 'Oda', 'Detaylar', 'Tarih'])
+    ws2.append(['ID', 'Baslik', 'Adres', 'Sehir', 'Ilce', 'Tip', 'Islem', 'Fiyat', 'Metrekare', 'Oda', 'Kat', 'Bina Yasi', 'Isitma', 'Esyali', 'Krediye Uygun', 'Sahibi', 'Sahip Tel', 'Detaylar', 'Tarih'])
     for m in Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all():
-        ws2.append([m.id, m.baslik, m.adres, m.sehir, m.ilce, m.tip, m.islem_turu, m.fiyat, m.oda_sayisi, json.dumps(m.detaylar or {}, ensure_ascii=False), str(m.olusturma or '')])
+        d = m.detaylar or {}
+        # Mülk sahibi bilgisi (müşteriden)
+        sahip_ad, sahip_tel = '', ''
+        if m.musteri_id:
+            sahip = Musteri.query.get(m.musteri_id)
+            if sahip:
+                sahip_ad = sahip.ad_soyad or ''
+                sahip_tel = sahip.telefon or ''
+        ws2.append([m.id, m.baslik, m.adres, m.sehir, m.ilce, m.tip, m.islem_turu, m.fiyat, m.metrekare, m.oda_sayisi,
+                    d.get('kat'), d.get('bina_yasi'), d.get('isitma'), d.get('esyali'), d.get('krediye_uygun'),
+                    sahip_ad, sahip_tel, json.dumps(d, ensure_ascii=False), str(m.olusturma or '')])
 
     # Gelir/Gider
     ws3 = wb.create_sheet('GelirGider')
@@ -58,6 +68,75 @@ def excel_export(emlakci):
     wb.save(buf)
     buf.seek(0)
     return buf.getvalue()
+
+
+def portfoy_excel_export(emlakci):
+    """Sadece portföy verisini Excel olarak export et."""
+    try:
+        import openpyxl
+    except ImportError:
+        return json.dumps(_portfoy_json(emlakci), ensure_ascii=False).encode()
+
+    from app.models import Musteri, Mulk
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Portfoy'
+    ws.append(['ID', 'Baslik', 'Adres', 'Sehir', 'Ilce', 'Tip', 'Islem', 'Fiyat', 'Metrekare', 'Oda', 'Kat', 'Bina Yasi', 'Isitma', 'Esyali', 'Krediye Uygun', 'Sahibi', 'Sahip Tel', 'Tarih'])
+    for m in Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all():
+        d = m.detaylar or {}
+        sahip_ad, sahip_tel = '', ''
+        if m.musteri_id:
+            sahip = Musteri.query.get(m.musteri_id)
+            if sahip:
+                sahip_ad, sahip_tel = sahip.ad_soyad or '', sahip.telefon or ''
+        ws.append([m.id, m.baslik, m.adres, m.sehir, m.ilce, m.tip, m.islem_turu, m.fiyat, m.metrekare, m.oda_sayisi,
+                   d.get('kat'), d.get('bina_yasi'), d.get('isitma'), d.get('esyali'), d.get('krediye_uygun'),
+                   sahip_ad, sahip_tel, str(m.olusturma or '')])
+    # Sütun genişlikleri
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 30)
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def musteri_excel_export(emlakci):
+    """Sadece müşteri verisini Excel olarak export et."""
+    try:
+        import openpyxl
+    except ImportError:
+        return json.dumps(_musteri_json(emlakci), ensure_ascii=False).encode()
+
+    from app.models import Musteri
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Musteriler'
+    ws.append(['ID', 'Ad Soyad', 'Telefon', 'Email', 'TC', 'Islem Turu', 'Butce Min', 'Butce Max', 'Sicaklik', 'Tercihler', 'Tarih'])
+    for m in Musteri.query.filter_by(emlakci_id=emlakci.id).all():
+        ws.append([m.id, m.ad_soyad, m.telefon, m.email, m.tc_kimlik, m.islem_turu, m.butce_min, m.butce_max, m.sicaklik, m.tercih_notlar, str(m.olusturma or '')])
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 30)
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _portfoy_json(emlakci):
+    from app.models import Mulk
+    return [{'id': m.id, 'baslik': m.baslik, 'adres': m.adres, 'sehir': m.sehir, 'ilce': m.ilce,
+             'tip': m.tip, 'islem': m.islem_turu, 'fiyat': m.fiyat, 'metrekare': m.metrekare,
+             'oda': m.oda_sayisi} for m in Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()]
+
+
+def _musteri_json(emlakci):
+    from app.models import Musteri
+    return [{'id': m.id, 'ad_soyad': m.ad_soyad, 'telefon': m.telefon, 'islem': m.islem_turu,
+             'butce_min': m.butce_min, 'butce_max': m.butce_max, 'sicaklik': m.sicaklik}
+            for m in Musteri.query.filter_by(emlakci_id=emlakci.id).all()]
 
 
 def _json_export(emlakci):

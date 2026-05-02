@@ -98,6 +98,45 @@ function sesliOku(metin) {
   window.speechSynthesis.speak(utterance);
 }
 
+// Mesaj içindeki markdown linkleri tıklanabilir yap + bold
+function mesajRender(text) {
+  if (!text) return text;
+  // [label](url) → tıklanabilir indirme butonu
+  const parts = text.split(/(\[.*?\]\(.*?\))/g);
+  return parts.map((part, i) => {
+    const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+    if (linkMatch) {
+      const [, label, url] = linkMatch;
+      const indir = async (e) => {
+        e.preventDefault();
+        try {
+          const token = localStorage.getItem('emlakisim_token');
+          const r = await fetch(`${api.defaults.baseURL || ''}${url}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          const blob = await r.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          const cd = r.headers.get('content-disposition');
+          a.download = cd ? cd.split('filename=')[1]?.replace(/"/g, '') : 'dosya.xlsx';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        } catch { alert('İndirme hatası'); }
+      };
+      return (
+        <button key={i} onClick={indir}
+          style={{ display: 'inline-block', margin: '6px 0', padding: '8px 16px', background: '#16a34a', color: '#fff', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+        >{label}</button>
+      );
+    }
+    // *bold* → <strong>
+    return <span key={i}>{part.split(/(\*[^*]+\*)/).map((p, j) => {
+      if (p.startsWith('*') && p.endsWith('*')) return <strong key={j}>{p.slice(1, -1)}</strong>;
+      return p;
+    })}</span>;
+  });
+}
+
 export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle, onTabAc }) {
   const { user } = useAuth();
   const [girdi, setGirdi] = useState('');
@@ -195,7 +234,7 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
         ) : (
           mesajlar.map((m, i) => (
             <div key={i} className={`sohbet-mesaj ${m.rol}`}>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{m.icerik}</div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{mesajRender(m.icerik)}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                 <span className="sohbet-mesaj-zaman">
                   {new Date(m.olusturma).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}

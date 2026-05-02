@@ -161,6 +161,12 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── Excel Export ──
+    (r'(?:portfoy|portföy|mulk|mülk)\s*(?:.*excel|.*indir|.*liste.*ver)', 'portfoy_excel'),
+    (r'(?:excel)\s*(?:.*portfoy|.*portföy|.*mulk|.*mülk)',               'portfoy_excel'),
+    (r'(?:musteri|müşteri)\s*(?:.*excel|.*indir|.*liste.*ver)',           'musteri_excel'),
+    (r'(?:excel)\s*(?:.*musteri|.*müşteri)',                              'musteri_excel'),
+    (r'(?:tum|tüm|hep).*(?:excel|indir|export)',                         'tum_excel'),
     # ── Tahmin & Analiz ──
     (r'(?:satici|satıcı)\s*(?:tahmin|olasil|olasıl|ihtimal)', 'satici_tahmin'),
     (r'(?:kim)\s*(?:sat|alacak|ilgili)',                     'satici_tahmin'),
@@ -360,6 +366,31 @@ def _komut_calistir(komut, emlakci, metin, session):
                 'Portföy sayfasında mülkün ⋮ menüsünden *"Piyasa Değeri"* butonuna tıklayın.\n'
                 'Portföy ortalaması, ilçe karşılaştırması, m² fiyat ve değerlendirme göreceksiniz.\n'
                 'PDF rapor da indirebilirsiniz.')
+
+    # ── Excel Export ──
+    if komut == 'portfoy_excel':
+        sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+        if sayi == 0:
+            return '📭 Portföyünüzde henüz mülk yok.'
+        return ('📥 *Portföy Excel dosyanız hazır!*\n\n'
+                f'🏢 {sayi} mülk · Başlık, adres, şehir, ilçe, tip, fiyat, m², oda, kat, ısıtma, eşyalı, sahibi...\n\n'
+                '[📥 Excel İndir](/api/panel/yedek/portfoy-excel)\n\n'
+                '_Dosya otomatik indirilecek._')
+
+    if komut == 'musteri_excel':
+        sayi = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
+        if sayi == 0:
+            return '📭 Henüz müşteriniz yok.'
+        return ('📥 *Müşteri Excel dosyanız hazır!*\n\n'
+                f'👥 {sayi} müşteri · Ad soyad, telefon, email, TC, işlem türü, bütçe, sıcaklık, tercihler...\n\n'
+                '[📥 Excel İndir](/api/panel/yedek/musteri-excel)\n\n'
+                '_Dosya otomatik indirilecek._')
+
+    if komut == 'tum_excel':
+        return ('📥 *Tüm veriniz Excel olarak hazır!*\n\n'
+                'Müşteriler, portföy, gelir/gider, görevler, notlar — tek dosyada.\n\n'
+                '[📥 Tümünü İndir](/api/panel/yedek/indir)\n\n'
+                '_Dosya otomatik indirilecek._')
 
     # ── Tahmin & Analiz ──
     if komut == 'satici_tahmin':

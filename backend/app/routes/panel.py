@@ -377,6 +377,36 @@ def yedek_indir():
                      as_attachment=True, download_name=f'{dosya_adi}.json')
 
 
+@bp.route('/yedek/portfoy-excel', methods=['GET'])
+@jwt_required()
+def portfoy_excel():
+    """Sadece portföy verisini Excel olarak indir."""
+    emlakci = Emlakci.query.get(_eid())
+    from app.services.yedekleme import portfoy_excel_export
+    data = portfoy_excel_export(emlakci)
+    dosya_adi = f'portfoy_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
+    if isinstance(data, bytes) and data[:2] == b'PK':
+        return send_file(io.BytesIO(data), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True, download_name=f'{dosya_adi}.xlsx')
+    return send_file(io.BytesIO(data if isinstance(data, bytes) else data.encode()), mimetype='application/json',
+                     as_attachment=True, download_name=f'{dosya_adi}.json')
+
+
+@bp.route('/yedek/musteri-excel', methods=['GET'])
+@jwt_required()
+def musteri_excel():
+    """Sadece müşteri verisini Excel olarak indir."""
+    emlakci = Emlakci.query.get(_eid())
+    from app.services.yedekleme import musteri_excel_export
+    data = musteri_excel_export(emlakci)
+    dosya_adi = f'musteriler_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
+    if isinstance(data, bytes) and data[:2] == b'PK':
+        return send_file(io.BytesIO(data), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True, download_name=f'{dosya_adi}.xlsx')
+    return send_file(io.BytesIO(data if isinstance(data, bytes) else data.encode()), mimetype='application/json',
+                     as_attachment=True, download_name=f'{dosya_adi}.json')
+
+
 @bp.route('/yedek/ozet', methods=['GET'])
 @jwt_required()
 def yedek_ozet_endpoint():
