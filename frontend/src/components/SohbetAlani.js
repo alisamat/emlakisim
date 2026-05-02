@@ -101,7 +101,74 @@ function sesliOku(metin) {
 // Mesaj içindeki markdown linkleri tıklanabilir yap + bold
 function mesajRender(text) {
   if (!text) return text;
-  // [label](url) → tıklanabilir indirme butonu
+
+  // Satır satır işle
+  const satirlar = text.split('\n');
+  const sonuc = [];
+  let listeAcik = false;
+  let listeItems = [];
+
+  const listeKapat = () => {
+    if (listeItems.length > 0) {
+      sonuc.push(<ul key={`ul-${sonuc.length}`} style={{ margin: '4px 0', paddingLeft: 20 }}>{listeItems}</ul>);
+      listeItems = [];
+      listeAcik = false;
+    }
+  };
+
+  satirlar.forEach((satir, si) => {
+    // Numaralı liste: "1. ", "2. " vb.
+    const numaraMatch = satir.match(/^(\d+)\.\s+(.+)/);
+    // Madde işareti: "• ", "- ", "  • " vb.
+    const maddeMatch = satir.match(/^\s*[•\u002D]\s+(.+)/);
+
+    if (numaraMatch) {
+      if (!listeAcik) listeAcik = true;
+      listeItems.push(<li key={`li-${si}`} style={{ fontSize: 13, padding: '1px 0' }}>{satirIciBicimle(numaraMatch[2])}</li>);
+      return;
+    }
+    if (maddeMatch) {
+      if (!listeAcik) listeAcik = true;
+      listeItems.push(<li key={`li-${si}`} style={{ listStyleType: 'disc', fontSize: 13, padding: '1px 0' }}>{satirIciBicimle(maddeMatch[1])}</li>);
+      return;
+    }
+
+    listeKapat();
+
+    // Başlık: "### ", "## "
+    if (satir.startsWith('### ')) {
+      sonuc.push(<div key={si} style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', margin: '8px 0 4px' }}>{satirIciBicimle(satir.slice(4))}</div>);
+      return;
+    }
+    if (satir.startsWith('## ')) {
+      sonuc.push(<div key={si} style={{ fontWeight: 800, fontSize: 15, color: '#0f172a', margin: '10px 0 4px' }}>{satirIciBicimle(satir.slice(3))}</div>);
+      return;
+    }
+
+    // Ayırıcı çizgi
+    if (satir.match(/^[═─\u002D]{3,}$/)) {
+      sonuc.push(<hr key={si} style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />);
+      return;
+    }
+
+    // Boş satır
+    if (!satir.trim()) {
+      sonuc.push(<div key={si} style={{ height: 6 }} />);
+      return;
+    }
+
+    // Normal satır
+    sonuc.push(<div key={si} style={{ lineHeight: 1.5 }}>{satirIciBicimle(satir)}</div>);
+  });
+
+  listeKapat();
+  return sonuc;
+}
+
+// Satır içi biçimlendirme: *bold*, _italic_, `code`, [link](url)
+function satirIciBicimle(text) {
+  if (!text) return text;
+  // Önce [link](url) → buton
   const parts = text.split(/(\[.*?\]\(.*?\))/g);
   return parts.map((part, i) => {
     const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
@@ -124,13 +191,15 @@ function mesajRender(text) {
       };
       return (
         <button key={i} onClick={indir}
-          style={{ display: 'inline-block', margin: '6px 0', padding: '8px 16px', background: '#16a34a', color: '#fff', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          style={{ display: 'inline-block', margin: '4px 0', padding: '8px 16px', background: '#16a34a', color: '#fff', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
         >{label}</button>
       );
     }
-    // *bold* → <strong>
-    return <span key={i}>{part.split(/(\*[^*]+\*)/).map((p, j) => {
-      if (p.startsWith('*') && p.endsWith('*')) return <strong key={j}>{p.slice(1, -1)}</strong>;
+    // *bold* + _italic_ + `code`
+    return <span key={i}>{part.split(/(\*[^*]+\*|_[^_]+_|`[^`]+`)/).map((p, j) => {
+      if (p.startsWith('*') && p.endsWith('*')) return <strong key={j} style={{ color: '#0f172a' }}>{p.slice(1, -1)}</strong>;
+      if (p.startsWith('_') && p.endsWith('_')) return <em key={j} style={{ color: '#64748b' }}>{p.slice(1, -1)}</em>;
+      if (p.startsWith('`') && p.endsWith('`')) return <code key={j} style={{ background: '#f1f5f9', padding: '1px 4px', borderRadius: 4, fontSize: 12, color: '#dc2626' }}>{p.slice(1, -1)}</code>;
       return p;
     })}</span>;
   });
