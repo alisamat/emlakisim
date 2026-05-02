@@ -1996,6 +1996,18 @@ _FUNCTIONS = [
             'required': ['islem_turu', 'bedel'],
         },
     },
+    # ── Kişiselleştirme ──
+    {
+        'name': 'asistan_ismi_degistir',
+        'description': 'Asistanın ismini değiştirir. Kullanıcı "sana Asis diyelim", "ismini X koy", "sana X diye sesleneyim" gibi söylediğinde çağrılır.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'isim': {'type': 'string', 'description': 'Yeni asistan ismi'},
+            },
+            'required': ['isim'],
+        },
+    },
     # ── Sayfa Navigasyonu ──
     {
         'name': 'sayfa_ac',
@@ -2209,6 +2221,22 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
                 f'Komisyon: {f_tl(s["komisyon"])} TL\n'
                 f'KDV: {f_tl(s["kdv"])} TL\n'
                 f'*Toplam: {f_tl(s["toplam"])} TL*')
+
+    if fonksiyon_adi == 'asistan_ismi_degistir':
+        yeni_isim = args.get('isim', '').strip()
+        if not yeni_isim or len(yeni_isim) > 30:
+            return '⚠️ Geçersiz isim. 1-30 karakter olmalı.'
+        from app.models.ayarlar import KullaniciAyar
+        kayit = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+        if kayit:
+            ayarlar = kayit.ayarlar or {}
+            ayarlar['asistan_ismi'] = yeni_isim
+            kayit.ayarlar = ayarlar
+        else:
+            kayit = KullaniciAyar(emlakci_id=emlakci.id, ayarlar={'asistan_ismi': yeni_isim})
+            db.session.add(kayit)
+        db.session.commit()
+        return f'✅ Artık bana *{yeni_isim}* diye seslenebilirsin! 😊'
 
     if fonksiyon_adi == 'sayfa_ac':
         sayfa = args.get('sayfa', 'musteriler')
@@ -2620,7 +2648,18 @@ def _sistem_prompt(emlakci, metin=''):
     except Exception:
         pass
 
-    return f"""Sen Emlakisim AI — emlak profesyonelleri için geliştirilmiş üst segment yapay zeka asistanısın.
+    # Asistan ismi
+    asistan_ismi = 'Emlakisim AI'
+    try:
+        from app.models.ayarlar import KullaniciAyar
+        k = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+        if k and k.ayarlar and k.ayarlar.get('asistan_ismi'):
+            asistan_ismi = k.ayarlar['asistan_ismi']
+    except Exception:
+        pass
+
+    return f"""Sen {asistan_ismi} — emlak profesyonelleri için geliştirilmiş üst segment yapay zeka asistanısın.
+{f'Kullanıcı sana "{asistan_ismi}" diye hitap ediyor. Bu ismi kullan.' if asistan_ismi != 'Emlakisim AI' else ''}
 Sen basit bir chatbot DEĞİLSİN. Sen gerçek bir emlak ofisi asistanı gibi düşünen, planlayan, hatırlayan, öneren, analiz eden akıllı bir sistemsin.
 
 ══════════════════════════════════════

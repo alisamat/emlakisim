@@ -84,6 +84,10 @@ export default function Ayarlar() {
         <Toggle label="Otomatik Eşleştirme" anahtar="otomatik_eslestirme" aciklama="Müşteri/mülk ekleyince uygun eşleşmeleri göster" />
         <Toggle label="Proaktif Öneriler" anahtar="proaktif_oneriler" aciklama="Sorulmadan akıllı öneriler sun" />
         <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-light, #f1f5f9)' }}>
+          <label className="etiket">Asistan İsmi</label>
+          <input className="input" value={aiAyar.asistan_ismi || ''} onChange={e => setAiAyar(p => ({ ...p, asistan_ismi: e.target.value }))} placeholder="Emlakisim AI (varsayılan)" />
+        </div>
+        <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-light, #f1f5f9)' }}>
           <label className="etiket">AI Dil Tonu</label>
           <select className="input" value={aiAyar.ai_tonu || 'samimi'} onChange={e => setAiAyar(p => ({ ...p, ai_tonu: e.target.value }))}>
             <option value="resmi">Resmi</option><option value="samimi">Samimi</option><option value="kisa">Kısa & Öz</option>
