@@ -8,10 +8,18 @@ from app.models import Emlakci, Mulk
 bp = Blueprint('public', __name__, url_prefix='/api/public')
 
 
-@bp.route('/emlakci/<int:eid>', methods=['GET'])
+def _emlakci_bul(eid):
+    """ID veya slug ile emlakçı bul."""
+    try:
+        return Emlakci.query.filter_by(id=int(eid), aktif=True).first()
+    except (ValueError, TypeError):
+        return Emlakci.query.filter_by(slug=eid, aktif=True).first()
+
+
+@bp.route('/emlakci/<eid>', methods=['GET'])
 def emlakci_profil(eid):
     """Emlakçının herkese açık profil bilgileri."""
-    e = Emlakci.query.filter_by(id=eid, aktif=True).first()
+    e = _emlakci_bul(eid)
     if not e:
         return jsonify({'message': 'Emlakçı bulunamadı'}), 404
 
@@ -27,10 +35,10 @@ def emlakci_profil(eid):
     })
 
 
-@bp.route('/emlakci/<int:eid>/portfoy', methods=['GET'])
+@bp.route('/emlakci/<eid>/portfoy', methods=['GET'])
 def emlakci_portfoy(eid):
     """Emlakçının herkese açık portföyü — sadece aktif mülkler."""
-    e = Emlakci.query.filter_by(id=eid, aktif=True).first()
+    e = _emlakci_bul(eid)
     if not e:
         return jsonify({'message': 'Emlakçı bulunamadı'}), 404
 

@@ -507,7 +507,7 @@ def _komut_calistir(komut, emlakci, metin, session):
     if komut == 'web_sayfa_link':
         import os
         frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.vercel.app')
-        link = f'{frontend}/e/{emlakci.id}'
+        link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
         mulk_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
         return (f'🌐 *Web Sayfanız Hazır!*\n\n'
                 f'🔗 {link}\n\n'
@@ -2905,7 +2905,7 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
     if fonksiyon_adi == 'web_sayfa_bilgi':
         import os
         frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.vercel.app')
-        link = f'{frontend}/e/{emlakci.id}'
+        link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
         mulk_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
         return (f'🌐 *Web Sayfanız:*\n\n🔗 {link}\n\n🏠 {mulk_sayi} aktif ilan gösteriliyor.\n'
                 '_Linki müşterilerinize paylaşabilirsiniz._')

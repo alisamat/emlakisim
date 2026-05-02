@@ -29,10 +29,23 @@ def kayit():
         return jsonify({'message': 'Bu e-posta zaten kayıtlı'}), 409
     if Emlakci.query.filter_by(telefon=d['telefon']).first():
         return jsonify({'message': 'Bu telefon numarası zaten kayıtlı'}), 409
+    # Slug oluştur (Ali Şamat → ali-samat)
+    import re as _re
+    slug_base = d['ad_soyad'].lower().strip()
+    for tr, en in {'ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u'}.items():
+        slug_base = slug_base.replace(tr, en)
+    slug_base = _re.sub(r'[^a-z0-9]+', '-', slug_base).strip('-')
+    slug = slug_base
+    sayac = 1
+    while Emlakci.query.filter_by(slug=slug).first():
+        slug = f'{slug_base}-{sayac}'
+        sayac += 1
+
     e = Emlakci(
         ad_soyad=d['ad_soyad'], email=d['email'],
         telefon=d['telefon'], sifre_hash=_hash(d['sifre']),
-        acente_adi=d.get('acente_adi', ''), yetki_no=d.get('yetki_no', '')
+        acente_adi=d.get('acente_adi', ''), yetki_no=d.get('yetki_no', ''),
+        slug=slug,
     )
     db.session.add(e); db.session.commit()
     token = create_access_token(identity=str(e.id))

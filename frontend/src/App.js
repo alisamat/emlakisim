@@ -80,7 +80,7 @@ export default function App() {
         <Routes>
           <Route path="/giris" element={<Giris />} />
           <Route path="/kayit" element={<Kayit />} />
-          <Route path="/e/:emlakciId" element={<PublicPortfoy />} />
+          <Route path="/sayfa/:emlakciId" element={<PublicPortfoy />} />
           <Route path="/"      element={<Koruma><SohbetArayuz /></Koruma>} />
           <Route path="*"      element={<Navigate to="/" replace />} />
         </Routes>

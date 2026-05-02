@@ -29,6 +29,7 @@ class Emlakci(db.Model):
     sifre_hash    = db.Column(db.String(256), nullable=False)
     yetki_no      = db.Column(db.String(50))           # Taşınmaz Ticareti yetki belgesi
     acente_adi    = db.Column(db.String(120))
+    slug          = db.Column(db.String(100), unique=True)  # web sayfası: emlakisim.com/sayfa/arif-kaya
     aktif         = db.Column(db.Boolean, default=True)
     kredi         = db.Column(db.Float, default=10.0)
     kredi_son_kullanma = db.Column(db.DateTime)    # kredi son kullanma tarihi
