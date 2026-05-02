@@ -22,6 +22,12 @@ def _normalize(metin):
 
 # ─── Pattern Matching (sıfır maliyet) ──────────────────────
 _PATTERNS = [
+    # ── Hava Durumu (rapor'dan ÖNCE olmalı — "durum" kelimesi çakışır) ──
+    (r'hava\s*durumu',                                                'hava_durumu_cmd'),
+    (r'(?:hava)\s*(?:nasil|nasıl|ne|soyle|söyle|goster|göster)',     'hava_durumu_cmd'),
+    (r'(?:yarin|yarın|bugun|bugün).*(?:hava|yagmur|yağmur)',         'hava_durumu_cmd'),
+    (r'(?:gosterim|gösterim).*(?:hava|uygun)',                        'hava_durumu_cmd'),
+    (r'(?:yagmur|yağmur)\s*(?:yagacak|yağacak|var\s*mi|var\s*mı)',  'hava_durumu_cmd'),
     # ── Müşteri (10+ varyasyon) ──
     (r'(?:musteri|müşteri|müsteri)\s*(?:ekle|kayit|kaydet|olustur|gir|yaz)', 'musteri_ekle'),
     (r'(?:musteri|müşteri|müsteri)\s*(?:listele|göster|listesi|kimler|kac)', 'musteri_liste'),
@@ -42,7 +48,7 @@ _PATTERNS = [
     (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam|neyi\s*hatirl)', 'hatirlatma_liste'),
     (r'(?:bunu\s*hatirla|bunu\s*unutma)',                     'unutma'),
     # ── Rapor & Özet ──
-    (r'(?:rapor|özet|durum|nasil\s*gidiyor|ne\s*durumda)',            'rapor'),
+    (r'(?:rapor|özet|genel\s*durum|nasil\s*gidiyor|ne\s*durumda)',    'rapor'),
     (r'(?:istatistik|dagilim|dağılım|segment)',                      'istatistik'),
     (r'(?:genel\s*durum|genel\s*ozet|genel\s*bakis)',         'rapor'),
     # ── Muhasebe (15+ varyasyon) ──
@@ -173,10 +179,6 @@ _PATTERNS = [
     # ── QR Kod ──
     (r'(?:qr|kare\s*kod)\s*(?:olustur|oluştur|ver|yap)',             'qr_cmd'),
     (r'(?:kartvizit)\s*(?:qr|kare\s*kod)',                           'qr_kartvizit_cmd'),
-    # ── Hava Durumu ──
-    (r'(?:hava|hava\s*durumu)\s*(?:nasil|nasıl|ne)',                  'hava_durumu_cmd'),
-    (r'(?:yarin|yarın|bugun|bugün).*(?:hava|yagmur|yağmur)',         'hava_durumu_cmd'),
-    (r'(?:gosterim|gösterim).*(?:hava|uygun)',                        'hava_durumu_cmd'),
     # ── Haberler ──
     (r'(?:emlak|sektor|sektör)\s*(?:haber|gelisme|gelişme)',          'haber_cmd'),
     (r'(?:piyasa|market)\s*(?:haber|durum|ne\s*oldu)',               'haber_cmd'),
