@@ -292,6 +292,122 @@ def _navigasyon_kontrol(metin_norm):
     return None
 
 
+# ─── Bağlam Takip Filtreleri ─────────────────────────────
+_BAGLAM_PATTERNS = [
+    # (regex, filtre_tipi)
+    (r'(?:bunlardan|onlardan|icinden|içinden|listeden)\s*(?:sicak|sıcak)',  'sicaklik_sicak'),
+    (r'(?:bunlardan|onlardan|icinden|içinden|listeden)\s*(?:soguk|soğuk)',  'sicaklik_soguk'),
+    (r'(?:bunlardan|onlardan|icinden|içinden|listeden)\s*(?:ilgili)',       'sicaklik_ilgili'),
+    (r'(?:sicak|sıcak)\s*(?:olan|musteri|müşteri)',                        'sicaklik_sicak'),
+    (r'(?:soguk|soğuk)\s*(?:olan|musteri|müşteri)',                        'sicaklik_soguk'),
+    (r'(?:kiralik|kiralık)\s*(?:olan|arayan)',                             'islem_kira'),
+    (r'(?:satilik|satılık)\s*(?:olan|arayan)',                             'islem_satis'),
+    (r'(?:bunlardan|onlardan)?\s*(?:kiralik|kiralık)',                     'islem_kira'),
+    (r'(?:bunlardan|onlardan)?\s*(?:satilik|satılık)',                     'islem_satis'),
+    (r'(\d+)\.\s*(?:numaray[ıi]|siray[ıi]|kisiyi|kişiyi|mulku|mülkü)?\s*(?:goster|göster|sec|seç|detay|ac|aç)', 'numara_sec'),
+    (r'(\d+)\.\s*(?:si|sı|ci|cı|nu|nolu)',                                'numara_sec'),
+    (r'(?:ilk|son|en\s*son)\s*(\d+)',                                      'limit_sec'),
+    (r'(?:daha\s*fazla|devam|geri\s*kalan)',                               'devam'),
+]
+
+
+def _baglam_filtre(metin_norm, emlakci, session):
+    """Bağlamsal takip filtresi — önceki listeyi filtrele."""
+    son_liste = session.get('son_liste')  # [{id, tip, ...}]
+    son_komut = session.get('son_komut')  # 'musteri' veya 'mulk'
+    if not son_liste:
+        return None
+
+    for pattern, filtre in _BAGLAM_PATTERNS:
+        m = re.search(pattern, metin_norm)
+        if not m:
+            continue
+
+        ids = [s['id'] for s in son_liste]
+
+        if filtre == 'numara_sec':
+            idx = int(m.group(1)) - 1
+            if idx < 0 or idx >= len(son_liste):
+                return f'⚠️ {idx+1}. sırada kayıt yok. Listede {len(son_liste)} kayıt var.'
+            secilen = son_liste[idx]
+            if son_komut == 'musteri':
+                mus = Musteri.query.get(secilen['id'])
+                if mus:
+                    session['son_musteri_id'] = mus.id
+                    butce = ''
+                    if mus.butce_min or mus.butce_max:
+                        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+                        butce = f'\n💰 Bütçe: {f_tl(mus.butce_min)} - {f_tl(mus.butce_max)} TL'
+                    return (f'👤 *{mus.ad_soyad}*\n\n'
+                            f'📞 {mus.telefon or "—"}\n'
+                            f'📧 {mus.email or "—"}\n'
+                            f'🏷 {mus.islem_turu or "?"} · {"🔥" if mus.sicaklik == "sicak" else "🟡" if mus.sicaklik == "ilgili" else "❄️"} {mus.sicaklik or "?"}'
+                            f'{butce}'
+                            + (f'\n📝 {mus.tercih_notlar[:100]}' if mus.tercih_notlar else ''))
+            elif son_komut == 'mulk':
+                mulk = Mulk.query.get(secilen['id'])
+                if mulk:
+                    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+                    det = mulk.detaylar or {}
+                    return (f'🏢 *{mulk.baslik or mulk.adres or "—"}*\n\n'
+                            f'📍 {mulk.ilce or "?"}, {mulk.sehir or "?"}\n'
+                            f'💰 {f_tl(mulk.fiyat)}\n'
+                            f'🏷 {mulk.islem_turu or "?"} · {mulk.tip or "?"}\n'
+                            f'🛏 {mulk.oda_sayisi or "?"} · {mulk.metrekare or "?"}m²'
+                            + (f'\n🏗 Bina yaşı: {det.get("bina_yasi")}' if det.get("bina_yasi") else '')
+                            + (f'\n🔥 Isıtma: {det.get("isinma")}' if det.get("isinma") else ''))
+
+        if filtre.startswith('sicaklik_') and son_komut == 'musteri':
+            hedef = filtre.split('_')[1]
+            sonuclar = Musteri.query.filter(Musteri.id.in_(ids), Musteri.sicaklik == hedef).all()
+            if not sonuclar:
+                return f'📭 Listede {hedef} müşteri yok.'
+            satirlar = [f'*{i+1}.* {"🔥" if hedef == "sicak" else "🟡" if hedef == "ilgili" else "❄️"} {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+            session['son_liste'] = [{'id': m.id} for m in sonuclar]
+            return f'👥 *{hedef.capitalize()} müşteriler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
+
+        if filtre.startswith('islem_'):
+            hedef_islem = 'kira' if 'kira' in filtre else 'satis'
+            hedef_label = 'Kiralık' if hedef_islem == 'kira' else 'Satılık'
+            if son_komut == 'musteri':
+                sonuclar = Musteri.query.filter(Musteri.id.in_(ids), Musteri.islem_turu == hedef_islem).all()
+                if not sonuclar:
+                    return f'📭 Listede {hedef_label.lower()} arayan müşteri yok.'
+                satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "—"}' for i, m in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': m.id} for m in sonuclar]
+                return f'👥 *{hedef_label} arayan müşteriler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
+            elif son_komut == 'mulk':
+                sonuclar = Mulk.query.filter(Mulk.id.in_(ids), Mulk.islem_turu == hedef_islem).all()
+                if not sonuclar:
+                    return f'📭 Listede {hedef_label.lower()} mülk yok.'
+                f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+                satirlar = [f'*{i+1}.* {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': m.id} for m in sonuclar]
+                return f'🏢 *{hedef_label} mülkler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
+
+        if filtre == 'devam':
+            offset = session.get('son_offset', 10)
+            if son_komut == 'musteri':
+                sonuclar = Musteri.query.filter_by(emlakci_id=emlakci.id).order_by(Musteri.olusturma.desc()).offset(offset).limit(10).all()
+                if not sonuclar:
+                    return '📭 Daha fazla müşteri yok.'
+                satirlar = [f'*{offset+i+1}.* {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': m.id} for m in sonuclar]
+                session['son_offset'] = offset + 10
+                return f'👥 *Müşteriler (devam):*\n\n' + '\n'.join(satirlar)
+            elif son_komut == 'mulk':
+                sonuclar = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).order_by(Mulk.olusturma.desc()).offset(offset).limit(10).all()
+                if not sonuclar:
+                    return '📭 Daha fazla mülk yok.'
+                f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+                satirlar = [f'*{offset+i+1}.* {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
+                session['son_liste'] = [{'id': m.id} for m in sonuclar]
+                session['son_offset'] = offset + 10
+                return f'🏢 *Portföy (devam):*\n\n' + '\n'.join(satirlar)
+
+    return None
+
+
 # ─── Direkt DB İşlemleri (sıfır AI maliyeti) ──────────────
 def _komut_calistir(komut, emlakci, metin, session):
     """Pattern ile eşleşen komutu çalıştır."""
@@ -321,11 +437,15 @@ def _komut_calistir(komut, emlakci, metin, session):
 
     if komut == 'musteri_liste':
         session['son_komut'] = 'musteri'
-        return _musteri_listele(emlakci)
+        session['son_offset'] = 10
+        sonuc, liste = _musteri_listele(emlakci, session)
+        return sonuc
 
     if komut == 'mulk_liste':
         session['son_komut'] = 'mulk'
-        return _mulk_listele(emlakci)
+        session['son_offset'] = 10
+        sonuc, liste = _mulk_listele(emlakci, session)
+        return sonuc
 
     if komut == 'rapor':
         return _rapor(emlakci)
@@ -523,12 +643,16 @@ def _komut_calistir(komut, emlakci, metin, session):
     return None
 
 
-def _musteri_listele(emlakci):
+def _musteri_listele(emlakci, session=None):
     musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).order_by(Musteri.olusturma.desc()).limit(10).all()
     if not musteriler:
-        return '📭 Henüz müşteriniz yok.\n\n_"Müşteri ekle" yazarak yeni müşteri ekleyebilirsiniz._'
+        return '📭 Henüz müşteriniz yok.\n\n_"Müşteri ekle" yazarak yeni müşteri ekleyebilirsiniz._', []
+    if session is not None:
+        session['son_liste'] = [{'id': m.id} for m in musteriler]
     satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(musteriler)]
-    return f'👥 *Müşterileriniz* ({len(musteriler)})\n\n' + '\n'.join(satirlar)
+    toplam = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
+    ek = f'\n\n_Toplam {toplam} müşteri. "devam" yazarak daha fazla görebilirsiniz._' if toplam > 10 else ''
+    return f'👥 *Müşterileriniz* ({toplam})\n\n' + '\n'.join(satirlar) + ek, musteriler
 
 
 def _harf_filtre(emlakci, metin, session):
@@ -628,15 +752,19 @@ def _mulk_ara(emlakci, metin):
     return f'🔍 *"{sorgu}" arama sonuçları:* ({len(sonuclar)})\n\n' + '\n'.join(satirlar)
 
 
-def _mulk_listele(emlakci):
+def _mulk_listele(emlakci, session=None):
     mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).order_by(Mulk.olusturma.desc()).limit(10).all()
     if not mulkler:
-        return '📭 Henüz portföyünüzde mülk yok.\n\n_"Mülk ekle" yazarak yeni mülk ekleyebilirsiniz._'
+        return '📭 Henüz portföyünüzde mülk yok.\n\n_"Mülk ekle" yazarak yeni mülk ekleyebilirsiniz._', []
+    if session is not None:
+        session['son_liste'] = [{'id': m.id} for m in mulkler]
     satirlar = []
     for i, m in enumerate(mulkler):
         fiyat = f'{int(m.fiyat):,}'.replace(',', '.') + ' TL' if m.fiyat else '?'
         satirlar.append(f'*{i+1}.* {m.baslik or m.adres or "—"} — {fiyat} ({m.islem_turu or "?"})')
-    return f'🏢 *Portföyünüz* ({len(mulkler)})\n\n' + '\n'.join(satirlar)
+    toplam = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+    ek = f'\n\n_Toplam {toplam} mülk. "devam" yazarak daha fazla görebilirsiniz._' if toplam > 10 else ''
+    return f'🏢 *Portföyünüz* ({toplam})\n\n' + '\n'.join(satirlar) + ek, mulkler
 
 
 def _rapor(emlakci):
@@ -1702,7 +1830,8 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         return f'✅ Müşteri eklendi: {args.get("ad_soyad")}'
 
     if fonksiyon_adi == 'musteri_listele':
-        return _musteri_listele(emlakci)
+        sonuc, _ = _musteri_listele(emlakci)
+        return sonuc
 
     if fonksiyon_adi == 'mulk_ekle':
         m = Mulk(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi')})
@@ -1711,7 +1840,8 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         return f'✅ Mülk eklendi: {args.get("baslik")}'
 
     if fonksiyon_adi == 'mulk_listele':
-        return _mulk_listele(emlakci)
+        sonuc, _ = _mulk_listele(emlakci)
+        return sonuc
 
     if fonksiyon_adi == 'rapor':
         return _rapor(emlakci)

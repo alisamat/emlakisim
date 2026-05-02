@@ -6,7 +6,7 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Emlakci, PanelSohbet, PanelMesaj
-from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle, _navigasyon_kontrol
+from app.services.asistan import _ai_cevap, _sistem_prompt, _normalize, _pattern_isle, _komut_calistir, _openai_with_functions, _bekleyen_isle, _navigasyon_kontrol, _baglam_filtre
 from app.services.kredi import kredi_kontrol, kredi_dus, KREDI_TABLOSU
 from app.services.egitim import diyalog_kaydet, ogrenilen_pattern_esle
 
@@ -68,6 +68,15 @@ def mesaj_gonder():
             'sohbet_id': sohbet.id,
             'tab': nav_tab,
         })
+
+    # 0.5. Bağlam filtresi — "bunlardan sıcak olanları", "1. numarayı göster"
+    baglam = _baglam_filtre(metin_norm, emlakci, session)
+    if baglam:
+        cevap = baglam
+        kullanilan_model = 'baglam_filtre'
+        db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+        db.session.commit()
+        return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id})
 
     # 1. Bekleyen adımlı işlem
     bekleyen = _bekleyen_isle(session, emlakci, metin)
