@@ -639,9 +639,13 @@ def mulk_resim_ekle(mid):
     """Mülke fotoğraf ekle (multipart veya base64)."""
     mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
 
+    import os
+    storage = os.environ.get('STORAGE_TYPE', 'local')
+    max_resim = 5 if storage == 'local' else 20  # Local=DB'de, sınırlı tut
+
     resimler = mulk.resimler or []
-    if len(resimler) >= 20:
-        return jsonify({'message': 'En fazla 20 fotoğraf eklenebilir'}), 400
+    if len(resimler) >= max_resim:
+        return jsonify({'message': f'En fazla {max_resim} fotoğraf eklenebilir' + (' (dış depolama aktif değil)' if storage == 'local' else '')}), 400
 
     # Multipart file upload
     if request.files.get('image'):
@@ -713,18 +717,40 @@ def mulk_kapak_yap(mid, idx):
     return jsonify({'resimler': resimler})
 
 
-def _resim_kucult(dosya_bytes, max_boyut=1200):
-    """Resmi max 1200px genişliğe küçült (kalite koruyarak)."""
+def _resim_kucult(dosya_bytes, max_boyut=None):
+    """
+    Resmi küçült — storage tipine göre strateji:
+    - Local (DB): max 400px, JPEG %50 → ~20-40KB (thumbnail)
+    - Supabase/S3: max 1200px, JPEG %80 → ~100-200KB (tam kalite)
+    """
+    import os
+    storage = os.environ.get('STORAGE_TYPE', 'local')
+    if storage == 'local':
+        hedef_boyut = max_boyut or 400
+        kalite = 50
+    else:
+        hedef_boyut = max_boyut or 1200
+        kalite = 80
+
     try:
         from PIL import Image
         img = Image.open(io.BytesIO(dosya_bytes))
-        if img.width > max_boyut:
-            oran = max_boyut / img.width
+        # EXIF rotasyon düzelt
+        try:
+            from PIL import ImageOps
+            img = ImageOps.exif_transpose(img)
+        except Exception:
+            pass
+        # RGB'ye çevir (RGBA/P modunda JPEG kaydedemez)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        if img.width > hedef_boyut:
+            oran = hedef_boyut / img.width
             yeni_boy = int(img.height * oran)
-            img = img.resize((max_boyut, yeni_boy), Image.LANCZOS)
+            img = img.resize((hedef_boyut, yeni_boy), Image.LANCZOS)
         buf = io.BytesIO()
-        img.save(buf, format='JPEG', quality=80, optimize=True)
+        img.save(buf, format='JPEG', quality=kalite, optimize=True)
         buf.seek(0)
         return buf.getvalue()
     except ImportError:
-        return dosya_bytes  # PIL yoksa orijinal döndür
+        return dosya_bytes
