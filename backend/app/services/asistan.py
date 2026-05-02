@@ -91,6 +91,9 @@ _PATTERNS = [
     (r'(?:musteri|müşteri)(?:ler)?(?:de|da|den|dan|i|ı|m|mda)?\s+(?:ara|bul)\s+\S', 'musteri_ara'),
     (r'(\S+)\s+(?:isminde|adında|adlı|isimli|diye)\s*(?:musteri|müşteri)', 'musteri_ara'),
     (r'(?:musteri|müşteri).*(?:var\s*m[ıi]|olmal)',           'musteri_ara'),
+    (r'(\w)\s*(?:ile|harfi|harfiyle)\s*(?:basla|başla)',      'harf_filtre'),
+    (r'(?:bas|baş)\s*(?:harf|harfi)\s*(\w)',                  'harf_filtre'),
+    (r'(\w)\s*ile\s*baslayan|(\w)\s*ile\s*başlayan',          'harf_filtre'),
     (r'(?:mulk|mülk|portfoy|portföy)(?:te|da|de)?\s+(?:ara|bul)\s+\S',    'mulk_ara'),
     (r'(?:musteri|müşteri).*(?:ara|bul|sec|seç)',             'musteri_liste'),
     (r'(?:musteri|müşteri).*(?:grup|etiket|filtre)',          'musteri_liste'),
@@ -306,15 +309,22 @@ def _komut_calistir(komut, emlakci, metin, session):
         return f'🌙 İyi akşamlar {emlakci.ad_soyad.split(" ")[0]}! Yarın için bir şey planlamak ister misiniz?'
 
     if komut == 'musteri_ara':
+        session['son_komut'] = 'musteri'
         return _musteri_ara(emlakci, metin)
 
     if komut == 'mulk_ara':
+        session['son_komut'] = 'mulk'
         return _mulk_ara(emlakci, metin)
 
+    if komut == 'harf_filtre':
+        return _harf_filtre(emlakci, metin, session)
+
     if komut == 'musteri_liste':
+        session['son_komut'] = 'musteri'
         return _musteri_listele(emlakci)
 
     if komut == 'mulk_liste':
+        session['son_komut'] = 'mulk'
         return _mulk_listele(emlakci)
 
     if komut == 'rapor':
@@ -519,6 +529,45 @@ def _musteri_listele(emlakci):
         return '📭 Henüz müşteriniz yok.\n\n_"Müşteri ekle" yazarak yeni müşteri ekleyebilirsiniz._'
     satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(musteriler)]
     return f'👥 *Müşterileriniz* ({len(musteriler)})\n\n' + '\n'.join(satirlar)
+
+
+def _harf_filtre(emlakci, metin, session):
+    """'A ile başlayanlar', 'baş harfi M' gibi bağlamsal filtreleme."""
+    # Harfi çıkar
+    m = re.search(r'(\w)\s*(?:ile|harfi|harfiyle)\s*(?:basla|başla)', metin.lower())
+    if not m:
+        m = re.search(r'(?:bas|baş)\s*(?:harf|harfi)\s*(\w)', metin.lower())
+    if not m:
+        m = re.search(r'(\w)\s*ile\s*(?:basla|başla)yan', metin.lower())
+    harf = m.group(1).upper() if m else metin.strip()[0].upper()
+
+    # Bağlamdan ne aradığını anla
+    metin_lower = metin.lower()
+    if 'müşteri' in metin_lower or 'musteri' in metin_lower:
+        hedef = 'musteri'
+    elif 'mülk' in metin_lower or 'mulk' in metin_lower or 'portföy' in metin_lower or 'portfoy' in metin_lower:
+        hedef = 'mulk'
+    else:
+        # Bağlamdan: son komut ne idi?
+        hedef = session.get('son_komut', 'musteri')
+
+    if hedef == 'mulk':
+        sonuclar = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+            Mulk.baslik.ilike(f'{harf}%')
+        ).limit(10).all()
+        if not sonuclar:
+            return f'🔍 "{harf}" harfi ile başlayan mülk bulunamadı.'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+        satirlar = [f'*{i+1}.* {m.baslik or "—"} — {f_tl(m.fiyat)} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+        return f'🏢 *"{harf}" ile başlayan mülkler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
+    else:
+        sonuclar = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+            Musteri.ad_soyad.ilike(f'{harf}%')
+        ).limit(10).all()
+        if not sonuclar:
+            return f'🔍 "{harf}" harfi ile başlayan müşteri bulunamadı.'
+        satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+        return f'👥 *"{harf}" ile başlayan müşteriler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
 
 
 def _musteri_ara(emlakci, metin):
