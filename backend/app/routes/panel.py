@@ -508,3 +508,66 @@ def _not(n):
         'tamamlandi': n.tamamlandi,
         'olusturma': n.olusturma.isoformat() if n.olusturma else None,
     }
+
+
+# ════════ GÖRSEL ANALİZ & SANAL STAGING ════════
+
+@bp.route('/gorsel-analiz', methods=['POST'])
+@jwt_required()
+def gorsel_analiz_endpoint():
+    """Fotoğraftan konut analizi ve değerleme."""
+    d = request.get_json() or {}
+    images = d.get('images', [])  # base64 encoded images
+    mulk_bilgi = d.get('mulk_bilgi')
+
+    if not images:
+        return jsonify({'message': 'En az 1 fotoğraf gerekli'}), 400
+
+    from app.services.gorsel_analiz import konut_analiz, coklu_analiz
+
+    if len(images) == 1:
+        sonuc = konut_analiz(images[0], mulk_bilgi)
+    else:
+        sonuc = coklu_analiz(images[:5], mulk_bilgi)
+
+    if sonuc.get('hata'):
+        return jsonify({'message': sonuc['hata']}), 500
+
+    return jsonify({'analiz': sonuc})
+
+
+@bp.route('/sanal-staging', methods=['POST'])
+@jwt_required()
+def sanal_staging_endpoint():
+    """Sanal ev düzenleme — boş odayı mobilyalı hale getir."""
+    d = request.get_json() or {}
+    image = d.get('image')  # base64
+    stil = d.get('stil', 'modern')
+    oda_tipi = d.get('oda_tipi')
+
+    if not image:
+        return jsonify({'message': 'Fotoğraf gerekli'}), 400
+
+    from app.services.gorsel_analiz import sanal_staging
+    sonuc = sanal_staging(image, stil, oda_tipi)
+
+    if sonuc.get('hata'):
+        return jsonify({'message': sonuc['hata']}), 500
+
+    return jsonify({'staging': sonuc})
+
+
+@bp.route('/mahalle-analiz', methods=['GET'])
+@jwt_required()
+def mahalle_analiz_endpoint():
+    """Mahalle/ilçe analizi."""
+    sehir = request.args.get('sehir', 'İstanbul')
+    ilce = request.args.get('ilce', '')
+    mahalle = request.args.get('mahalle', '')
+
+    if not ilce:
+        return jsonify({'message': 'İlçe gerekli'}), 400
+
+    from app.services.asistan import _mahalle_analiz
+    mesaj = _mahalle_analiz({'sehir': sehir, 'ilce': ilce, 'mahalle': mahalle})
+    return jsonify({'analiz': mesaj})

@@ -32,6 +32,8 @@ const MENU = [
       { ikon: '🏠', ad: 'Mülk Listesi', tab: 'mulkler', aciklama: 'Portföyü yönet, ara, filtrele' },
       { ikon: '📸', ad: 'İlan OCR & Karşılaştır', tab: 'ilan_ocr', aciklama: 'İlan fotoğrafı çek → bilgi çıkar → karşılaştır → portföye ekle' },
       { ikon: '🖊', ad: 'Resim İşaretleme', tab: 'isaretleme', aciklama: 'Fotoğraf üzerine daire/dikdörtgen çizerek işaretle, kaydet, paylaş' },
+      { ikon: '📸', ad: 'AI Görsel Analiz', tab: 'gorsel_analiz', aciklama: 'Fotoğraftan konut değerleme, durum puanı, renovasyon önerisi' },
+      { ikon: '🪑', ad: 'Sanal Ev Düzenleme', tab: 'sanal_staging', aciklama: 'AI ile boş odayı mobilyalı göster, stil seç, maliyet hesapla' },
       { ikon: '📄', ad: 'Belge Oluştur', tab: 'belgeler', aciklama: 'Yer gösterme, kontrat, yönlendirme PDF' },
     ],
   },

@@ -21,9 +21,10 @@ function ZekaOnerileri() {
   );
 }
 
-// Web Speech API — sesli yazma
-function useSesliYazma(onSonuc) {
+// Web Speech API — sesli asistan (STT + TTS)
+function useSesliYazma(onSonuc, otomatikGonder) {
   const [dinliyor, setDinliyor] = useState(false);
+  const [sesliMod, setSesliMod] = useState(false); // sürekli dinleme modu
   const recognition = useRef(null);
 
   useEffect(() => {
@@ -35,13 +36,25 @@ function useSesliYazma(onSonuc) {
       recognition.current.interimResults = false;
       recognition.current.onresult = (e) => {
         const text = e.results[0][0].transcript;
-        onSonuc(text);
+        if (sesliMod && otomatikGonder) {
+          otomatikGonder(text); // sesli modda direkt gönder
+        } else {
+          onSonuc(text);
+        }
         setDinliyor(false);
       };
       recognition.current.onerror = () => setDinliyor(false);
-      recognition.current.onend = () => setDinliyor(false);
+      recognition.current.onend = () => {
+        setDinliyor(false);
+        // Sesli modda tekrar dinlemeye başla
+        if (sesliMod && recognition.current) {
+          setTimeout(() => {
+            try { recognition.current.start(); setDinliyor(true); } catch {}
+          }, 500);
+        }
+      };
     }
-  }, [onSonuc]);
+  }, [onSonuc, otomatikGonder, sesliMod]);
 
   const baslat = () => {
     if (recognition.current && !dinliyor) {
@@ -50,7 +63,39 @@ function useSesliYazma(onSonuc) {
     }
   };
 
-  return { dinliyor, baslat, destekleniyor: !!recognition.current };
+  const durdur = () => {
+    setSesliMod(false);
+    if (recognition.current) { try { recognition.current.stop(); } catch {} }
+    setDinliyor(false);
+  };
+
+  const sesliModToggle = () => {
+    if (sesliMod) {
+      durdur();
+    } else {
+      setSesliMod(true);
+      baslat();
+    }
+  };
+
+  return { dinliyor, baslat, durdur, sesliMod, sesliModToggle, destekleniyor: !!recognition.current };
+}
+
+// Text-to-Speech — cevabı sesli oku
+function sesliOku(metin) {
+  if (!window.speechSynthesis) return;
+  // Markdown/emoji temizle
+  const temiz = metin.replace(/[*_#`]/g, '').replace(/[^\w\sğüşıöçĞÜŞİÖÇ.,!?:;()\-\n]/g, '').trim();
+  if (!temiz) return;
+  const utterance = new SpeechSynthesisUtterance(temiz.slice(0, 500));
+  utterance.lang = 'tr-TR';
+  utterance.rate = 1.1;
+  utterance.pitch = 1.0;
+  // Türkçe ses tercih et
+  const sesler = window.speechSynthesis.getVoices();
+  const turkce = sesler.find(s => s.lang.startsWith('tr'));
+  if (turkce) utterance.voice = turkce;
+  window.speechSynthesis.speak(utterance);
 }
 
 export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle, onTabAc }) {
@@ -60,7 +105,25 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
   const mesajlarRef = useRef(null);
   const inputRef = useRef(null);
   const sesliCallback = useCallback((text) => setGirdi(p => p ? p + ' ' + text : text), []);
-  const sesli = useSesliYazma(sesliCallback);
+  const sesliOtomatikGonder = useCallback((text) => {
+    // Sesli modda direkt mesaj gönder
+    setMesajlar(p => [...p, { rol: 'user', icerik: text, olusturma: new Date().toISOString() }]);
+    setYuk(true);
+    api.post('/api/panel/sohbet', { mesaj: text, sohbet_id: sohbetId || undefined })
+      .then(r => {
+        setMesajlar(p => [...p, { rol: 'assistant', icerik: r.data.cevap, olusturma: new Date().toISOString() }]);
+        if (!sohbetId) setSohbetId(r.data.sohbet_id);
+        if (r.data.kredi_kalan !== undefined) onKrediGuncelle(r.data.kredi_kalan);
+        if (r.data.tab && onTabAc) setTimeout(() => onTabAc(r.data.tab), 600);
+        // Sesli modda cevabı sesli oku
+        sesliOku(r.data.cevap);
+      })
+      .catch(() => {
+        setMesajlar(p => [...p, { rol: 'assistant', icerik: 'Bir hata oluştu.', olusturma: new Date().toISOString() }]);
+      })
+      .finally(() => setYuk(false));
+  }, [sohbetId, setSohbetId, setMesajlar, onKrediGuncelle, onTabAc]);
+  const sesli = useSesliYazma(sesliCallback, sesliOtomatikGonder);
 
   // Otomatik scroll
   useEffect(() => {
@@ -186,13 +249,22 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
         />
         {/* Sesli yazma */}
         {sesli.destekleniyor && (
-          <button onClick={sesli.baslat} style={{
-            background: sesli.dinliyor ? '#dc2626' : 'none', border: 'none',
-            fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0,
-            color: sesli.dinliyor ? '#fff' : '#94a3b8', borderRadius: 8,
-          }} title="Sesli yaz">
-            🎤
-          </button>
+          <>
+            <button onClick={sesli.baslat} style={{
+              background: sesli.dinliyor ? '#dc2626' : 'none', border: 'none',
+              fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0,
+              color: sesli.dinliyor ? '#fff' : '#94a3b8', borderRadius: 8,
+            }} title="Sesli yaz">
+              🎤
+            </button>
+            <button onClick={sesli.sesliModToggle} style={{
+              background: sesli.sesliMod ? '#16a34a' : 'none', border: 'none',
+              fontSize: 14, cursor: 'pointer', padding: '2px 6px', flexShrink: 0,
+              color: sesli.sesliMod ? '#fff' : '#94a3b8', borderRadius: 6,
+            }} title={sesli.sesliMod ? 'Sesli asistan kapatma' : 'Sesli asistan — konuş, otomatik gönder, cevabı dinle'}>
+              {sesli.sesliMod ? '🔊' : '🔇'}
+            </button>
+          </>
         )}
         <button className="sohbet-gonder" onClick={gonder} disabled={!girdi.trim() || yukleniyor}>
           ➤

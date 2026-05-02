@@ -230,6 +230,9 @@ _NAVIGASYON_PATTERNS = [
     (r'(?:admin|yonetim|yönetim)\s*(?:panel|sayfa|git|aç|ac)',        'admin_dash',  '🛡 Admin paneli açılıyor...'),
     (r'(?:ilan\s*ocr|ocr)\s*(?:sayfa|git|aç|ac)',                      'ilan_ocr',    '📸 İlan OCR açılıyor...'),
     (r'(?:isaretleme|işaretleme|resim\s*isaret)\s*(?:sayfa|git|aç|ac)','isaretleme', '🖊 Resim işaretleme açılıyor...'),
+    (r'(?:gorsel|görsel)\s*(?:analiz|değerleme|sayfa|git|aç|ac)',     'gorsel_analiz', '📸 AI Görsel Analiz açılıyor...'),
+    (r'(?:sanal|staging|düzenleme)\s*(?:sayfa|git|aç|ac)',            'sanal_staging', '🪑 Sanal Ev Düzenleme açılıyor...'),
+    (r'(?:mahalle|semt)\s*(?:analiz|rapor|puan|sayfa)',               'gorsel_analiz', '📍 Mahalle analizi — sohbetten "Kadıköy Moda nasıl?" yazın'),
     (r'(?:emlakci|emlakçı)\s*(?:dizin|sayfa|git|aç|ac)\s*(?:sayfa|git|aç|ac)?', 'emlakcilar', '📒 Emlakçı dizini açılıyor...'),
     (r'(?:grup)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'gruplar',     '👥 Gruplar sayfası açılıyor...'),
     (r'(?:profil)\s*(?:sayfa|git|aç|ac|göster|goster)',                'profil',      '👤 Profil sayfası açılıyor...'),
@@ -1449,6 +1452,51 @@ _FUNCTIONS = [
             'required': ['sorgu'],
         },
     },
+    {
+        'name': 'gelismis_mulk_ara',
+        'description': 'Portföydeki mülkleri doğal dil ile arar ve filtreler. Kullanıcı "Kadıköy\'de 3+1 kiralık 15bin altı daire" gibi konuşunca bu fonksiyon çağrılır.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sehir': {'type': 'string', 'description': 'Şehir adı (İstanbul, Ankara vb.)'},
+                'ilce': {'type': 'string', 'description': 'İlçe adı (Kadıköy, Beşiktaş vb.)'},
+                'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis', 'mustakil'], 'description': 'Mülk tipi'},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
+                'fiyat_min': {'type': 'number', 'description': 'Minimum fiyat TL'},
+                'fiyat_max': {'type': 'number', 'description': 'Maksimum fiyat TL'},
+                'oda_sayisi': {'type': 'string', 'description': 'Oda sayısı: 1+1, 2+1, 3+1, 4+1 vb.'},
+                'metrekare_min': {'type': 'number', 'description': 'Minimum metrekare'},
+                'ozellikler': {'type': 'string', 'description': 'Ek özellikler: deniz manzaralı, asansörlü, eşyalı, krediye uygun vb.'},
+            },
+        },
+    },
+    {
+        'name': 'gelismis_musteri_ara',
+        'description': 'Müşterileri doğal dil ile arar ve filtreler. "Satılık arayan sıcak müşteriler" veya "bütçesi 1 milyon üstü kiracılar" gibi sorgular.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
+                'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL'},
+                'butce_max': {'type': 'number', 'description': 'Maksimum bütçe TL'},
+                'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk'], 'description': 'Müşteri sıcaklığı'},
+                'sorgu': {'type': 'string', 'description': 'İsim veya not içinde arama'},
+            },
+        },
+    },
+    {
+        'name': 'mahalle_analiz',
+        'description': 'Bir ilçe veya mahallenin detaylı analizini yapar. Güvenlik, ulaşım, eğitim, sağlık, sosyal tesis puanları ve yatırım önerisi verir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sehir': {'type': 'string', 'description': 'Şehir adı'},
+                'ilce': {'type': 'string', 'description': 'İlçe adı'},
+                'mahalle': {'type': 'string', 'description': 'Mahalle adı (opsiyonel)'},
+            },
+            'required': ['ilce'],
+        },
+    },
 ]
 
 def _ai_function_call(fonksiyon_adi, args, emlakci):
@@ -1522,7 +1570,238 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         satirlar = [f'{s["ikon"]} *{s["baslik"]}* — {s["detay"]}' for s in sonuc['sonuclar'][:8]]
         return f'🔍 *Arama sonuçları:*\n\n' + '\n'.join(satirlar)
 
+    if fonksiyon_adi == 'gelismis_mulk_ara':
+        return _gelismis_mulk_ara(emlakci, args)
+
+    if fonksiyon_adi == 'gelismis_musteri_ara':
+        return _gelismis_musteri_ara(emlakci, args)
+
+    if fonksiyon_adi == 'mahalle_analiz':
+        return _mahalle_analiz(args)
+
     return None
+
+
+def _gelismis_mulk_ara(emlakci, args):
+    """Doğal dil ile portföy arama — AI function calling handler."""
+    sorgu = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True)
+
+    if args.get('sehir'):
+        sorgu = sorgu.filter(Mulk.sehir.ilike(f'%{args["sehir"]}%'))
+    if args.get('ilce'):
+        sorgu = sorgu.filter(Mulk.ilce.ilike(f'%{args["ilce"]}%'))
+    if args.get('tip'):
+        sorgu = sorgu.filter(Mulk.tip.ilike(f'%{args["tip"]}%'))
+    if args.get('islem_turu'):
+        sorgu = sorgu.filter(Mulk.islem_turu == args['islem_turu'])
+    if args.get('fiyat_min'):
+        sorgu = sorgu.filter(Mulk.fiyat >= float(args['fiyat_min']))
+    if args.get('fiyat_max'):
+        sorgu = sorgu.filter(Mulk.fiyat <= float(args['fiyat_max']))
+    if args.get('oda_sayisi'):
+        sorgu = sorgu.filter(Mulk.oda_sayisi.ilike(f'%{args["oda_sayisi"]}%'))
+    if args.get('metrekare_min'):
+        sorgu = sorgu.filter(Mulk.metrekare >= float(args['metrekare_min']))
+    if args.get('ozellikler'):
+        # Detaylar JSON alanında veya başlık/adreste ara
+        ozel = args['ozellikler']
+        sorgu = sorgu.filter(db.or_(
+            Mulk.baslik.ilike(f'%{ozel}%'),
+            Mulk.adres.ilike(f'%{ozel}%'),
+            db.cast(Mulk.detaylar, db.String).ilike(f'%{ozel}%'),
+        ))
+
+    # Grup portföylerinden de ara
+    from app.models.grup import GrupUyelik
+    grup_mulkler = []
+    uyelikler = GrupUyelik.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+    for u in uyelikler:
+        acik_uyeler = GrupUyelik.query.filter(
+            GrupUyelik.grup_id == u.grup_id,
+            GrupUyelik.emlakci_id != emlakci.id,
+            GrupUyelik.durum == 'aktif',
+            GrupUyelik.portfoy_acik == True,
+        ).all()
+        for au in acik_uyeler:
+            g_sorgu = Mulk.query.filter_by(emlakci_id=au.emlakci_id, aktif=True)
+            if args.get('islem_turu'):
+                g_sorgu = g_sorgu.filter(Mulk.islem_turu == args['islem_turu'])
+            if args.get('fiyat_max'):
+                g_sorgu = g_sorgu.filter(Mulk.fiyat <= float(args['fiyat_max']))
+            if args.get('ilce'):
+                g_sorgu = g_sorgu.filter(Mulk.ilce.ilike(f'%{args["ilce"]}%'))
+            grup_mulkler.extend(g_sorgu.limit(5).all())
+
+    sonuclar = sorgu.order_by(Mulk.fiyat.asc()).limit(10).all()
+
+    if not sonuclar and not grup_mulkler:
+        filtreler = []
+        if args.get('ilce'): filtreler.append(args['ilce'])
+        if args.get('tip'): filtreler.append(args['tip'])
+        if args.get('islem_turu'): filtreler.append('kiralık' if args['islem_turu'] == 'kira' else 'satılık')
+        return f'📭 {" ".join(filtreler)} aramasında sonuç bulunamadı.\n\n_Portföyünüzde {Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()} mülk var._'
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+    satirlar = []
+    for m in sonuclar:
+        satirlar.append(
+            f'🏢 *{m.baslik or m.adres or "—"}*\n'
+            f'   📍 {m.ilce or "?"}, {m.sehir or "?"} · {m.oda_sayisi or "?"} · {m.metrekare or "?"}m²\n'
+            f'   💰 {f_tl(m.fiyat)} · {m.islem_turu or "?"}'
+        )
+    # Grup sonuçları
+    if grup_mulkler:
+        satirlar.append(f'\n👥 *Grup portföylerinden ({len(grup_mulkler)}):*')
+        for m in grup_mulkler[:5]:
+            satirlar.append(
+                f'   🏢 {m.tip or "?"} · {m.ilce or "?"} · {m.oda_sayisi or "?"} · {f_tl(m.fiyat)}'
+            )
+
+    return f'🔍 *{len(sonuclar)} mülk bulundu:*\n\n' + '\n'.join(satirlar)
+
+
+def _gelismis_musteri_ara(emlakci, args):
+    """Doğal dil ile müşteri arama — AI function calling handler."""
+    sorgu = Musteri.query.filter_by(emlakci_id=emlakci.id)
+
+    if args.get('islem_turu'):
+        sorgu = sorgu.filter(Musteri.islem_turu == args['islem_turu'])
+    if args.get('butce_min'):
+        sorgu = sorgu.filter(Musteri.butce_max >= float(args['butce_min']))
+    if args.get('butce_max'):
+        sorgu = sorgu.filter(Musteri.butce_min <= float(args['butce_max']))
+    if args.get('sicaklik'):
+        sorgu = sorgu.filter(Musteri.sicaklik == args['sicaklik'])
+    if args.get('sorgu'):
+        s = args['sorgu']
+        sorgu = sorgu.filter(db.or_(
+            Musteri.ad_soyad.ilike(f'%{s}%'),
+            Musteri.tercih_notlar.ilike(f'%{s}%'),
+            Musteri.telefon.ilike(f'%{s}%'),
+        ))
+
+    sonuclar = sorgu.order_by(Musteri.olusturma.desc()).limit(10).all()
+
+    if not sonuclar:
+        return '📭 Arama kriterlerinize uygun müşteri bulunamadı.'
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+    sicaklik_ikon = {'sicak': '🔥', 'ilgili': '🟡', 'soguk': '❄️'}
+    satirlar = []
+    for m in sonuclar:
+        ikon = sicaklik_ikon.get(m.sicaklik, '⚪')
+        butce = ''
+        if m.butce_min or m.butce_max:
+            butce = f' · Bütçe: {f_tl(m.butce_min)}-{f_tl(m.butce_max)}'
+        satirlar.append(
+            f'{ikon} *{m.ad_soyad}* — {m.telefon or "tel yok"}\n'
+            f'   {m.islem_turu or "?"}{butce}'
+            + (f'\n   📝 {m.tercih_notlar[:60]}' if m.tercih_notlar else '')
+        )
+
+    return f'👥 *{len(sonuclar)} müşteri bulundu:*\n\n' + '\n'.join(satirlar)
+
+
+def _mahalle_analiz(args):
+    """Mahalle/ilçe analizi — Gemini ile."""
+    sehir = args.get('sehir', 'İstanbul')
+    ilce = args.get('ilce', '')
+    mahalle = args.get('mahalle', '')
+    konum = f'{mahalle + ", " if mahalle else ""}{ilce}, {sehir}'
+
+    # Cache kontrol
+    cache_key = f'mahalle_{sehir}_{ilce}_{mahalle}'.lower().replace(' ', '_')
+    try:
+        from app.models.ayarlar import SistemParametre
+        cached = SistemParametre.query.filter_by(anahtar=cache_key).first()
+        if cached and cached.deger:
+            import json
+            data = json.loads(cached.deger)
+            # 24 saat cache
+            from datetime import datetime, timedelta
+            if cached.guncelleme and (datetime.utcnow() - cached.guncelleme) < timedelta(hours=24):
+                return _mahalle_format(data, konum)
+    except Exception:
+        pass
+
+    # Gemini API ile analiz
+    import os, requests
+    api_key = os.environ.get('GEMINI_API_KEY', '')
+    if not api_key:
+        return f'📍 *{konum}* analizi için AI API anahtarı gerekli.'
+
+    prompt = f"""Türkiye {konum} bölgesini emlak yatırımı perspektifinden analiz et.
+
+Aşağıdaki JSON formatında cevap ver (Türkçe):
+{{
+    "guvenlik": 1-10 arası puan,
+    "ulasim": 1-10 arası puan,
+    "egitim": 1-10 arası puan,
+    "saglik": 1-10 arası puan,
+    "sosyal_tesis": 1-10 arası puan,
+    "yesil_alan": 1-10 arası puan,
+    "genel_puan": 1-10 arası ortalama,
+    "ortalama_m2_fiyat_satis": tahmini TL,
+    "ortalama_m2_fiyat_kira": tahmini TL,
+    "trend": "yukseliyor" veya "stabil" veya "dususte",
+    "yatirim_onerisi": kısa yatırım tavsiyesi,
+    "one_cikan_ozellik": bölgenin en güçlü yanı,
+    "dikkat_edilecek": bölgenin zayıf yanı
+}}
+
+Sadece JSON döndür, açıklama yazma."""
+
+    try:
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        r = requests.post(url, json={
+            'contents': [{'parts': [{'text': prompt}]}],
+            'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 1024},
+        }, timeout=15)
+        metin = r.json()['candidates'][0]['content']['parts'][0]['text']
+        metin = metin.strip().removeprefix('```json').removeprefix('```').removesuffix('```').strip()
+        import json
+        data = json.loads(metin)
+
+        # Cache kaydet
+        try:
+            from app.models.ayarlar import SistemParametre
+            param = SistemParametre.query.filter_by(anahtar=cache_key).first()
+            if param:
+                param.deger = json.dumps(data)
+            else:
+                param = SistemParametre(anahtar=cache_key, deger=json.dumps(data), aciklama=f'Mahalle analizi: {konum}')
+                db.session.add(param)
+            db.session.commit()
+        except Exception:
+            pass
+
+        return _mahalle_format(data, konum)
+    except Exception:
+        return f'📍 *{konum}* analizi şu an yapılamadı. Lütfen tekrar deneyin.'
+
+
+def _mahalle_format(data, konum):
+    """Mahalle analiz verilerini formatlı mesaja çevir."""
+    puan_bar = lambda p: '🟢' if p >= 7 else '🟡' if p >= 5 else '🔴'
+    trend_ikon = {'yukseliyor': '📈', 'stabil': '➡️', 'dususte': '📉'}
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+
+    return (
+        f'📍 *{konum} — Bölge Analizi*\n\n'
+        f'{puan_bar(data.get("guvenlik", 0))} Güvenlik: *{data.get("guvenlik", "?")}/10*\n'
+        f'{puan_bar(data.get("ulasim", 0))} Ulaşım: *{data.get("ulasim", "?")}/10*\n'
+        f'{puan_bar(data.get("egitim", 0))} Eğitim: *{data.get("egitim", "?")}/10*\n'
+        f'{puan_bar(data.get("saglik", 0))} Sağlık: *{data.get("saglik", "?")}/10*\n'
+        f'{puan_bar(data.get("sosyal_tesis", 0))} Sosyal Tesis: *{data.get("sosyal_tesis", "?")}/10*\n'
+        f'{puan_bar(data.get("yesil_alan", 0))} Yeşil Alan: *{data.get("yesil_alan", "?")}/10*\n\n'
+        f'⭐ Genel Puan: *{data.get("genel_puan", "?")}/10*\n'
+        f'{trend_ikon.get(data.get("trend", ""), "❓")} Trend: *{data.get("trend", "?")}*\n\n'
+        f'💰 Satış m²: ~{f_tl(data.get("ortalama_m2_fiyat_satis"))} TL\n'
+        f'💰 Kira m²: ~{f_tl(data.get("ortalama_m2_fiyat_kira"))} TL\n\n'
+        f'✅ *Güçlü:* {data.get("one_cikan_ozellik", "—")}\n'
+        f'⚠️ *Dikkat:* {data.get("dikkat_edilecek", "—")}\n\n'
+        f'💡 *Yatırım:* {data.get("yatirim_onerisi", "—")}'
+    )
 
 
 # ─── AI Model Çağrıları ───────────────────────────────────
