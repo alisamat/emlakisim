@@ -861,6 +861,32 @@ def _yardim_mesaji(emlakci):
     except Exception:
         pass
 
+    # Yaklaşan doğum günleri
+    try:
+        from datetime import date
+        bugun_tarih = date.today()
+        dogum_musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.dogum_tarihi.isnot(None)).all()
+        for m in dogum_musteriler:
+            dg = m.dogum_tarihi.replace(year=bugun_tarih.year)
+            if dg < bugun_tarih:
+                dg = dg.replace(year=bugun_tarih.year + 1)
+            kalan = (dg - bugun_tarih).days
+            if kalan == 0:
+                uyarilar += f'\n🎉 *{m.ad_soyad}* bugün doğum günü!'
+            elif kalan <= 3:
+                uyarilar += f'\n🎂 {m.ad_soyad} doğum günü {kalan} gün sonra'
+    except Exception:
+        pass
+
+    # Bekleyen teklifler
+    try:
+        from app.models import Teklif
+        bekleyen = Teklif.query.filter_by(emlakci_id=emlakci.id, durum='bekliyor').count()
+        if bekleyen > 0:
+            uyarilar += f'\n💰 *{bekleyen} bekleyen teklif* var'
+    except Exception:
+        pass
+
     return (f'👋 *Merhaba {emlakci.ad_soyad.split(" ")[0]}!*\n{ozet_ek}{uyarilar}\n'
             'Ben Emlakisim AI Asistanınızım. İşte yapabileceklerim:\n\n'
             '👥 *Müşteri:* "müşteri ekle", "müşteri listele"\n'
@@ -1697,6 +1723,244 @@ def _grup_uye_davet_isle(emlakci, metin, session):
     return f'✅ *{hedef.ad_soyad}* adlı emlakçıya *{grup.ad}* grubu için davet gönderildi!'
 
 
+# ─── Gösterim Geri Bildirim ────────────────────────────────
+def _gosterim_geri_bildirim(emlakci, args):
+    """Gösterim sonrası not kaydet ve/veya müşteriye anket gönder."""
+    sonuclar = []
+
+    # Not kaydet
+    if args.get('not'):
+        musteri_ref = args.get('musteri_adi', '')
+        mulk_ref = args.get('mulk_baslik', '')
+        not_icerik = f'🏠 Gösterim notu'
+        if mulk_ref:
+            not_icerik += f' — {mulk_ref}'
+        if musteri_ref:
+            not_icerik += f' ({musteri_ref})'
+        not_icerik += f': {args["not"]}'
+
+        not_obj = Not(emlakci_id=emlakci.id, icerik=not_icerik, etiket='gosterim')
+        db.session.add(not_obj)
+        db.session.commit()
+        sonuclar.append(f'✅ *Gösterim notu kaydedildi:*\n📝 {args["not"][:150]}')
+
+    # Geri bildirim anketi gönder
+    if args.get('mesaj_gonder') and args.get('musteri_adi'):
+        mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+            Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+        ).first()
+        if mus and mus.telefon:
+            import os
+            pid = os.environ.get('WA_PHONE_NUMBER_ID', '')
+            tok = os.environ.get('WA_ACCESS_TOKEN', '')
+            if pid and tok:
+                mulk_ref = args.get('mulk_baslik', 'gösterdiğimiz mülk')
+                anket_mesaj = (f'Merhaba {mus.ad_soyad.split(" ")[0]}, '
+                              f'{mulk_ref} hakkında görüşlerinizi merak ediyorum. '
+                              f'Daire hakkında ne düşündünüz? Fiyatı uygun buldunuz mu? '
+                              f'Tekrar görmek ister misiniz? — {emlakci.ad_soyad}')
+                tel = mus.telefon.replace('+', '').replace(' ', '').replace('-', '')
+                if tel.startswith('0'):
+                    tel = '90' + tel[1:]
+                from app.services import whatsapp as wa
+                wa.mesaj_gonder(pid, tok, tel, anket_mesaj)
+                sonuclar.append(f'📱 *Geri bildirim anketi gönderildi:* {mus.ad_soyad}')
+            else:
+                sonuclar.append('⚠️ WhatsApp henüz aktif değil')
+        else:
+            sonuclar.append(f'⚠️ Müşteri bulunamadı veya telefon yok')
+
+    if not sonuclar:
+        return '⚠️ Not veya mesaj gönderimi belirtilmedi.'
+    return '\n\n'.join(sonuclar)
+
+
+# ─── Müşteri Detaylı Analiz ───────────────────────────────
+def _musteri_analiz(emlakci, args):
+    """Müşterinin tam analizi: gösterim, teklif, etkileşim, ciddiyet."""
+    mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+        Musteri.ad_soyad.ilike(f'%{args.get("musteri_adi", "")}%')
+    ).first()
+    if not mus:
+        return f'⚠️ "{args.get("musteri_adi")}" adında müşteri bulunamadı.'
+
+    from app.models import YerGosterme, Teklif
+    gosterimler = YerGosterme.query.filter_by(emlakci_id=emlakci.id, musteri_id=mus.id).all()
+    teklifler = Teklif.query.filter_by(emlakci_id=emlakci.id, musteri_id=mus.id).all()
+
+    # İletişim geçmişi
+    iletisim_sayi = 0
+    son_iletisim = None
+    try:
+        from app.models.iletisim_gecmisi import IletisimKayit
+        iletisim_sayi = IletisimKayit.query.filter_by(emlakci_id=emlakci.id, musteri_id=mus.id).count()
+        son = IletisimKayit.query.filter_by(emlakci_id=emlakci.id, musteri_id=mus.id).order_by(IletisimKayit.olusturma.desc()).first()
+        if son:
+            son_iletisim = son.olusturma
+    except Exception:
+        pass
+
+    # Kayıt süresi
+    gun = (datetime.utcnow() - mus.olusturma).days if mus.olusturma else 0
+
+    # Ciddiyet puanı
+    puan = 0
+    nedenler = []
+    if len(gosterimler) >= 3:
+        puan += 25
+        nedenler.append(f'📋 {len(gosterimler)} gösterim yaptı (+25)')
+    elif len(gosterimler) >= 1:
+        puan += 15
+        nedenler.append(f'📋 {len(gosterimler)} gösterim yaptı (+15)')
+    else:
+        nedenler.append('📋 Henüz gösterim yapmadı')
+
+    if teklifler:
+        puan += 30
+        nedenler.append(f'💰 {len(teklifler)} teklif verdi (+30)')
+    else:
+        nedenler.append('💰 Henüz teklif vermedi')
+
+    if mus.sicaklik == 'sicak':
+        puan += 20
+        nedenler.append('🔥 Sıcak müşteri (+20)')
+    if mus.butce_max and mus.butce_max > 0:
+        puan += 15
+        nedenler.append('💳 Bütçe belirlemiş (+15)')
+    if iletisim_sayi > 5:
+        puan += 10
+        nedenler.append(f'📞 {iletisim_sayi} iletişim (+10)')
+
+    puan = min(puan, 100)
+    ciddiyet = '🟢 Çok ciddi' if puan >= 70 else '🟡 İlgili' if puan >= 40 else '🟠 Belirsiz' if puan >= 20 else '⚪ Düşük'
+
+    # Neden almadı analizi
+    almadi_analiz = ''
+    if len(gosterimler) >= 2 and not teklifler:
+        almadi_analiz = '\n\n🤔 *Neden almadı olabilir:*\n'
+        if not mus.butce_max:
+            almadi_analiz += '• Bütçe belirsiz — fiyat uyumsuzluğu olabilir\n'
+        elif mus.butce_max:
+            uygun = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True, islem_turu=mus.islem_turu).filter(Mulk.fiyat <= mus.butce_max).count()
+            if uygun == 0:
+                almadi_analiz += '• Bütçesine uygun portföyde mülk yok!\n'
+        almadi_analiz += '• Kredi onayı bekleniyor olabilir\n'
+        almadi_analiz += '• Konum/özellik beklentisi karşılanmamış olabilir\n'
+        almadi_analiz += f'_Öneri: Müşteriye ulaşıp beklentilerini netleştirin._'
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+    butce = ''
+    if mus.butce_min or mus.butce_max:
+        butce = f'\n💰 Bütçe: {f_tl(mus.butce_min)} - {f_tl(mus.butce_max)} TL'
+
+    return (f'👤 *{mus.ad_soyad} — Detaylı Analiz*\n\n'
+            f'📞 {mus.telefon or "—"} · {mus.islem_turu or "?"}'
+            f'{butce}\n'
+            f'📅 {gun} gündür kayıtlı · {iletisim_sayi} iletişim\n'
+            f'📋 {len(gosterimler)} gösterim · 💰 {len(teklifler)} teklif\n\n'
+            f'⭐ *Ciddiyet: {ciddiyet}* (%{puan})\n\n'
+            + '\n'.join(nedenler)
+            + almadi_analiz)
+
+
+# ─── Tarih Bazlı Muhasebe ─────────────────────────────────
+def _muhasebe_donem(emlakci, args):
+    """Dönem bazlı muhasebe özeti."""
+    from app.models.muhasebe import GelirGider
+    from datetime import timedelta
+    donem = args.get('donem', 'bu_ay')
+    tip = args.get('tip', 'hepsi')
+
+    bugun = datetime.utcnow()
+    if donem == 'bu_ay':
+        baslangic = bugun.replace(day=1, hour=0, minute=0, second=0)
+        donem_ad = 'Bu ay'
+    elif donem == 'gecen_ay':
+        ilk_gun = bugun.replace(day=1) - timedelta(days=1)
+        baslangic = ilk_gun.replace(day=1, hour=0, minute=0, second=0)
+        bitis = bugun.replace(day=1, hour=0, minute=0, second=0)
+        donem_ad = 'Geçen ay'
+    elif donem == 'bu_yil':
+        baslangic = bugun.replace(month=1, day=1, hour=0, minute=0, second=0)
+        donem_ad = 'Bu yıl'
+    elif donem == 'gecen_yil':
+        baslangic = bugun.replace(year=bugun.year - 1, month=1, day=1, hour=0, minute=0, second=0)
+        bitis = bugun.replace(month=1, day=1, hour=0, minute=0, second=0)
+        donem_ad = 'Geçen yıl'
+    elif donem == 'bu_hafta':
+        baslangic = bugun - timedelta(days=bugun.weekday())
+        baslangic = baslangic.replace(hour=0, minute=0, second=0)
+        donem_ad = 'Bu hafta'
+    elif donem == 'son_3_ay':
+        baslangic = bugun - timedelta(days=90)
+        donem_ad = 'Son 3 ay'
+    else:
+        baslangic = bugun.replace(day=1, hour=0, minute=0, second=0)
+        donem_ad = 'Bu ay'
+
+    bitis = locals().get('bitis', bugun)
+
+    sorgu = GelirGider.query.filter(
+        GelirGider.emlakci_id == emlakci.id,
+        GelirGider.tarih >= baslangic,
+        GelirGider.tarih <= bitis,
+    )
+
+    if tip == 'gelir':
+        kayitlar = sorgu.filter(GelirGider.tip == 'gelir').all()
+    elif tip == 'gider':
+        kayitlar = sorgu.filter(GelirGider.tip == 'gider').all()
+    else:
+        kayitlar = sorgu.all()
+
+    gelir = sum(k.tutar for k in kayitlar if k.tip == 'gelir')
+    gider = sum(k.tutar for k in kayitlar if k.tip == 'gider')
+    kar = gelir - gider
+    f = lambda v: f'{int(v):,}'.replace(',', '.')
+
+    # Kategori dağılımı
+    from collections import Counter
+    kategoriler = Counter()
+    for k in kayitlar:
+        kategoriler[f'{k.tip}/{k.kategori or "diğer"}'] += k.tutar
+
+    kat_str = ''
+    if kategoriler:
+        kat_str = '\n\n📊 *Dağılım:*\n'
+        for k, v in kategoriler.most_common(8):
+            kat_str += f'  • {k}: {f(v)} TL\n'
+
+    return (f'💰 *{donem_ad} — Muhasebe Özeti*\n\n'
+            f'📈 Gelir: *{f(gelir)} TL*\n'
+            f'📉 Gider: *{f(gider)} TL*\n'
+            f'{"🟢" if kar >= 0 else "🔴"} {"Kâr" if kar >= 0 else "Zarar"}: *{f(abs(kar))} TL*\n'
+            f'📄 {len(kayitlar)} işlem'
+            + kat_str)
+
+
+# ─── İsimle Eşleştirme ────────────────────────────────────
+def _musteri_eslesme_bul(emlakci, args):
+    """Müşteri adıyla portföydeki uygun mülkleri bul."""
+    mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+        Musteri.ad_soyad.ilike(f'%{args.get("musteri_adi", "")}%')
+    ).first()
+    if not mus:
+        return f'⚠️ "{args.get("musteri_adi")}" adında müşteri bulunamadı.'
+
+    from app.services.eslestirme import eslesdir
+    sonuclar = eslesdir(emlakci.id, musteri_id=mus.id, limit=8)
+
+    if not sonuclar:
+        return (f'📭 *{mus.ad_soyad}* için uygun mülk bulunamadı.\n\n'
+                f'Aranan: {mus.islem_turu or "?"}'
+                + (f' · Bütçe: {int(mus.butce_max):,} TL'.replace(',', '.') if mus.butce_max else '')
+                + '\n\n_Portföye yeni mülk ekledikçe eşleşmeler artacak._')
+
+    satirlar = [f'• *{s["baslik"]}* — {s["fiyat_str"]} (Uyum: %{s["puan"]})' for s in sonuclar]
+    return (f'🔗 *{mus.ad_soyad} için {len(sonuclar)} uygun mülk:*\n\n'
+            + '\n'.join(satirlar))
+
+
 # ─── WhatsApp Mesaj Gönderme (sohbetten) ──────────────────
 def _wa_mesaj_gonder(emlakci, args):
     """Sohbetten müşteriye WhatsApp mesajı gönder."""
@@ -2265,6 +2529,57 @@ _FUNCTIONS = [
             'required': ['islem_turu', 'bedel'],
         },
     },
+    # ── Gösterim Geri Bildirim ──
+    {
+        'name': 'gosterim_geri_bildirim',
+        'description': 'Gösterimden sonra müşteriye geri bildirim mesajı gönderir veya gösterim notu kaydeder. "Müşteri balkonu beğendi ama mutfağı küçük buldu" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Müşterinin adı'},
+                'mulk_baslik': {'type': 'string', 'description': 'Gösterilen mülkün başlığı'},
+                'not': {'type': 'string', 'description': 'Gösterim notu — müşteri ne dedi, ne beğendi, ne beğenmedi'},
+                'mesaj_gonder': {'type': 'boolean', 'description': 'Müşteriye WhatsApp ile geri bildirim anketi gönder'},
+            },
+        },
+    },
+    # ── Müşteri Analiz ──
+    {
+        'name': 'musteri_analiz',
+        'description': 'Bir müşterinin detaylı analizini yapar: kaç gösterim yaptı, teklif verdi mi, ne kadar süredir kayıtlı, ciddi mi, neden almadı.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Müşterinin adı'},
+            },
+            'required': ['musteri_adi'],
+        },
+    },
+    # ── Tarih Bazlı Muhasebe ──
+    {
+        'name': 'muhasebe_donem',
+        'description': 'Belirli dönemin muhasebe özetini verir. "Geçen ayki komisyon geliri", "bu yılki toplam gider" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'donem': {'type': 'string', 'enum': ['bu_ay', 'gecen_ay', 'bu_yil', 'gecen_yil', 'bu_hafta', 'son_3_ay'], 'description': 'Dönem filtresi'},
+                'tip': {'type': 'string', 'enum': ['gelir', 'gider', 'hepsi'], 'description': 'Gelir mi gider mi hepsi mi'},
+            },
+            'required': ['donem'],
+        },
+    },
+    # ── İsimle Eşleştirme ──
+    {
+        'name': 'musteri_eslesme_bul',
+        'description': 'Müşteri adıyla portföydeki uygun mülkleri bulur. "Ahmet Beye uygun ne var?" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Müşterinin adı'},
+            },
+            'required': ['musteri_adi'],
+        },
+    },
     # ── WhatsApp Mesaj Gönderme ──
     {
         'name': 'whatsapp_mesaj_gonder',
@@ -2576,6 +2891,22 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
                 f'Komisyon: {f_tl(s["komisyon"])} TL\n'
                 f'KDV: {f_tl(s["kdv"])} TL\n'
                 f'*Toplam: {f_tl(s["toplam"])} TL*')
+
+    # ── Gösterim Geri Bildirim ──
+    if fonksiyon_adi == 'gosterim_geri_bildirim':
+        return _gosterim_geri_bildirim(emlakci, args)
+
+    # ── Müşteri Analiz ──
+    if fonksiyon_adi == 'musteri_analiz':
+        return _musteri_analiz(emlakci, args)
+
+    # ── Tarih Bazlı Muhasebe ──
+    if fonksiyon_adi == 'muhasebe_donem':
+        return _muhasebe_donem(emlakci, args)
+
+    # ── İsimle Eşleştirme ──
+    if fonksiyon_adi == 'musteri_eslesme_bul':
+        return _musteri_eslesme_bul(emlakci, args)
 
     # ── WhatsApp Mesaj ──
     if fonksiyon_adi == 'whatsapp_mesaj_gonder':
