@@ -2514,14 +2514,22 @@ def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
     chat = model.start_chat(history=history)
     response = chat.send_message(gecmis[-1]['content'])
 
-    # Function call kontrolü
+    # Function call kontrolü — çoklu komut desteği
+    sonuclar = []
+    nav = None
     for part in response.parts:
         if hasattr(part, 'function_call') and part.function_call:
             fc = part.function_call
             args = dict(fc.args) if fc.args else {}
             sonuc = _ai_function_call(fc.name, args, emlakci)
-            if sonuc:
-                return sonuc
+            if isinstance(sonuc, tuple):
+                sonuclar.append(sonuc[0])
+                nav = sonuc[1]
+            elif sonuc:
+                sonuclar.append(sonuc)
+    if sonuclar:
+        birlesik = '\n\n'.join(sonuclar)
+        return (birlesik, nav) if nav else birlesik
 
     return response.text
 
@@ -2566,10 +2574,19 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci):
 
     msg = r.choices[0].message
     if msg.tool_calls:
-        tc = msg.tool_calls[0]
-        args = json.loads(tc.function.arguments)
-        sonuc = _ai_function_call(tc.function.name, args, emlakci)
-        return sonuc or msg.content or 'İşlem tamamlandı.'
+        sonuclar = []
+        nav = None
+        for tc in msg.tool_calls:
+            args = json.loads(tc.function.arguments)
+            sonuc = _ai_function_call(tc.function.name, args, emlakci)
+            if isinstance(sonuc, tuple):
+                sonuclar.append(sonuc[0])
+                nav = sonuc[1]
+            elif sonuc:
+                sonuclar.append(sonuc)
+        if nav:
+            return ('\n\n'.join(sonuclar), nav) if sonuclar else ('İşlem tamamlandı.', nav)
+        return '\n\n'.join(sonuclar) if sonuclar else msg.content or 'İşlem tamamlandı.'
 
     return msg.content
 
@@ -2617,16 +2634,31 @@ YETENEKLERİN (function calling ile yapabileceklerin):
 DB İŞLEMLERİ — doğrudan yapabilirsin:
 • musteri_ekle(ad_soyad, telefon, islem_turu, butce_min/max, tercih) — müşteri kaydet
 • musteri_listele() — tüm müşterileri getir
+• gelismis_musteri_ara(islem_turu, butce_min/max, sicaklik, sorgu) — filtreleyerek müşteri ara
 • mulk_ekle(baslik, adres, sehir, ilce, tip, islem_turu, fiyat, oda) — mülk ekle
 • mulk_listele() — portföyü getir
+• gelismis_mulk_ara(sehir, ilce, tip, islem_turu, fiyat_min/max, oda, ozellikler) — filtreleyerek mülk ara
 • gorev_ekle(baslik, tip, aciklama) — görev/hatırlatma oluştur
+• gorev_listele(durum, tip) — görevleri filtrele
+• gorev_guncelle(gorev_id, durum, baslik) — görev güncelle/tamamla
 • fatura_olustur(alici_ad, tutar, tip) — fatura kes
-• eslestir(musteri_id) — müşteriye uygun mülkleri bul ve puanla
+• fatura_listele(durum) — faturaları listele
+• lead_listele(durum, kaynak) — leadleri listele
+• gelir_gider_ozet() — muhasebe raporu
+• cari_ozet() — cari hesap özeti
+• eslestir(musteri_id) — müşteriye uygun mülkleri bul
 • kira_vergisi_hesapla(yillik_kira) — vergi hesapla
 • kira_getirisi_hesapla(mulk_fiyati, aylik_kira) — ROI hesapla
+• tapu_masrafi_hesapla(satis_bedeli) — tapu masrafı hesapla
+• komisyon_hesapla(islem_turu, bedel) — komisyon hesapla
+• mahalle_analiz(sehir, ilce, mahalle) — bölge analizi
+• emlakci_dizin_ara(sorgu) — emlakçı rehberinde ara
+• grup_bilgi(islem) — grup bilgileri
+• veri_indir(tip, format) — Excel/ZIP indirme linki
 • genel_arama(sorgu) — tüm verilerde ara
 • not_ekle(icerik) — not kaydet
 • rapor() — genel durum raporu
+• sayfa_ac(sayfa) — uygulama sayfası aç
 
 BİLGİ BANKASI — sıfır maliyetle cevap verebileceğin konular:
 • Tapu masrafları, tapu devir süreci (8 adım), tapu çeşitleri (kat mülkiyeti vs irtifakı)
@@ -2665,7 +2697,14 @@ DAVRANIŞ KURALLARI:
 • PROAKTİF OL: sadece sorulan cevapla yetinme. "Bu müşteriye uygun 3 mülk var" gibi önerilerde bulun.
 • HATIRLA: önceki konuşmalardan bilgi kullan. "Geçen sefer bahsettiğimiz daire" gibi ifadeleri anla.
 • ZAMİR ÇÖZ: "onu ara" → yukarıda SON MÜŞTERİ kimse onun telefonunu ver. "bunu ekle" → son mülkü portföye ekle.
-• ZİNCİRLE: "müşteri ekle sonra uygun mülk bul" gibi zincirleme istekleri tek seferde yap.
+• ÇOKLU KOMUT: Tek mesajda birden fazla istek varsa HEPSİNİ yap.
+  Örnek: "Adnan beyi müşterilere ekle numarası 02123221722, ayrıca saat 14'te toplantı görevi oluştur"
+  → 1. musteri_ekle(ad_soyad="Adnan Bey", telefon="02123221722")
+  → 2. gorev_ekle(baslik="Adnan Bey ile toplantı saat 14:00", tip="toplanti")
+  İKİ fonksiyonu da çağır, ikisinin sonucunu da raporla.
+• DOĞAL DİLDEN BİLGİ ÇIKAR: Kullanıcı bilgiyi doğal cümle içinde verirse, bilgiyi çıkar ve direkt işlemi yap.
+  Örnek: "saat 14'te Adnan bey ile toplantımız var" → gorev_ekle(baslik="Adnan Bey ile toplantı - 14:00", tip="toplanti")
+  Geri soru SORMA, bilgi yeterliyse hemen yap.
 • AKILLI OL: "ara" kelimesi bağlama göre farklı anlam taşır:
   - Müşteri ile konuşuluyorsa → telefon ile ara
   - Mülk aranıyorsa → portföyde ara
