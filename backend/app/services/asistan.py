@@ -259,7 +259,11 @@ _NAVIGASYON_PATTERNS = [
     (r'(?:emlakci|emlakçı)\s*(?:dizin|sayfa|git|aç|ac)\s*(?:sayfa|git|aç|ac)?', 'emlakcilar', '📒 Emlakçı dizini açılıyor...'),
     (r'(?:grup)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'gruplar',     '👥 Gruplar sayfası açılıyor...'),
     (r'(?:profil)\s*(?:sayfa|git|aç|ac|göster|goster)',                'profil',      '👤 Profil sayfası açılıyor...'),
-    (r'(?:kredi)\s*(?:sayfa|git|aç|ac|göster|goster|satin|satın)',     'kredi',       '💎 Kredi paneli açılıyor...'),
+    (r'(?:kredi)\s*(?:satin|satın|yukle|yükle|al|paketle)',            'kredi',       '💎 Kredi paneli açılıyor...'),
+    (r'(?:kredi)\s*(?:sayfa|git|aç|ac|göster|goster)',               'kredi',       '💎 Kredi paneli açılıyor...'),
+    (r'^kredi$',                                                      'kredi',       '💎 Kredi paneli açılıyor...'),
+    (r'(?:kredim|kontör|kontor)\s*(?:bitti|yok|kalmadı|kalmadi|az)',  'kredi',       '💎 Kredi paneli açılıyor...'),
+    (r'(?:uygulama)\s*(?:kredi)',                                     'kredi',       '💎 Kredi paneli açılıyor...'),
     # Kısa navigasyonlar — "X aç" / "X'e git" / "X göster"
     (r'müsterilere?\s*git',           'musteriler',  '👥 Müşteriler sayfası açılıyor...'),
     (r'portföye?\s*git',              'mulkler',     '🏢 Portföy sayfası açılıyor...'),
@@ -3460,6 +3464,10 @@ DAVRANIŞ KURALLARI:
   - Mülk aranıyorsa → portföyde ara
   - Genel soruysa → veritabanında ara
 • BİLGİ EKSİKSE SOR, tahmin etme. Ama bilgi yeterliyse hemen yap, gereksiz soru sorma.
+• KREDİ KAVRAMI: "Kredi" kelimesi iki farklı anlama gelebilir:
+  1. UYGULAMA KREDİSİ: Emlakisim'i kullanmak için gereken kredi bakiyesi. AI sohbet, belge oluşturma vb. işlemler kredi harcar. Kullanıcı "kredi al", "kredi satın al", "kredi yükle", "kredim bitti", "uygulama kredisi" derse → KREDİ PANELİNİ AÇ (sayfa_ac fonksiyonu ile sayfa="kredi").
+  2. KONUT KREDİSİ: Müşterinin ev almak için bankadan alacağı konut kredisi. Kullanıcı "konut kredisi hesapla", "müşterim kredi çekecek", "kredi faizi" derse → konut kredisi bilgisi ver.
+  VARSAYILAN: Bağlam belirsizse "kredi" = uygulama kredisi. Kredi panelini aç.
 • GÜVENLİ OL: silme/toplu değişiklik işlemlerinde önce onay iste.
 • ÖNERİ SUN: "Excel'den toplu ekleyebilirsiniz", "Fotoğraf çekerek sahibinden ilanlarını aktarabilirsiniz" gibi proaktif önerilerde bulun.
 • HATA YAPMA: müşteri bilgisi yanlışsa düzelt, tutarsızlık varsa uyar.
