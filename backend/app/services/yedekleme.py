@@ -1,10 +1,12 @@
 """
-YEDEKLEME SERVİSİ — Excel export, email ile gönderim
+YEDEKLEME SERVİSİ — Excel, ZIP, JSON export + email ile gönderim
 Kullanıcı kendi verisinin yedeğinden sorumludur.
 """
 import io
+import csv
 import json
 import logging
+import zipfile
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -157,6 +159,112 @@ def musteri_excel_export(emlakci):
         ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 30)
     buf = io.BytesIO()
     wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def zip_export(emlakci):
+    """Tüm veriyi ZIP olarak export — her tablo ayrı CSV dosyası."""
+    from app.models import Musteri, Mulk, YerGosterme, Not
+    from app.models.muhasebe import GelirGider, Cari
+    from app.models.planlama import Gorev
+    from app.models.fatura import Fatura
+    from app.models.lead import Lead
+    from app.models.iletisim_gecmisi import IletisimKayit
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+
+        # Müşteriler
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Ad Soyad', 'Telefon', 'Email', 'TC', 'Islem Turu', 'Butce Min', 'Butce Max', 'Sicaklik', 'Tercihler', 'Tarih'])
+        for m in Musteri.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([m.id, m.ad_soyad, m.telefon, m.email, m.tc_kimlik, m.islem_turu, m.butce_min, m.butce_max, m.sicaklik, m.tercih_notlar, str(m.olusturma or '')])
+        zf.writestr('musteriler.csv', csv_buf.getvalue())
+
+        # Portföy
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Baslik', 'Adres', 'Sehir', 'Ilce', 'Tip', 'Islem', 'Fiyat', 'Metrekare', 'Oda', 'Kat', 'Bina Yasi', 'Isitma', 'Esyali', 'Sahibi', 'Sahip Tel', 'Tarih'])
+        for m in Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all():
+            d = m.detaylar or {}
+            sahip_ad, sahip_tel = '', ''
+            if m.musteri_id:
+                sahip = Musteri.query.get(m.musteri_id)
+                if sahip:
+                    sahip_ad, sahip_tel = sahip.ad_soyad or '', sahip.telefon or ''
+            w.writerow([m.id, m.baslik, m.adres, m.sehir, m.ilce, m.tip, m.islem_turu, m.fiyat, m.metrekare, m.oda_sayisi,
+                        d.get('kat'), d.get('bina_yasi'), d.get('isitma'), d.get('esyali'), sahip_ad, sahip_tel, str(m.olusturma or '')])
+        zf.writestr('portfoy.csv', csv_buf.getvalue())
+
+        # Gelir/Gider
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Tip', 'Kategori', 'Tutar', 'Aciklama', 'Tarih'])
+        for k in GelirGider.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([k.id, k.tip, k.kategori, k.tutar, k.aciklama, str(k.tarih or '')])
+        zf.writestr('gelir_gider.csv', csv_buf.getvalue())
+
+        # Görevler
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Baslik', 'Tip', 'Oncelik', 'Durum', 'Baslangic', 'Aciklama'])
+        for g in Gorev.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([g.id, g.baslik, g.tip, g.oncelik, g.durum, str(g.baslangic or ''), g.aciklama])
+        zf.writestr('gorevler.csv', csv_buf.getvalue())
+
+        # Notlar
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Icerik', 'Etiket', 'Tarih'])
+        for n in Not.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([n.id, n.icerik, n.etiket, str(n.olusturma or '')])
+        zf.writestr('notlar.csv', csv_buf.getvalue())
+
+        # Yer Göstermeler
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Musteri', 'Mulk', 'Tarih', 'Notlar', 'Durum'])
+        for y in YerGosterme.query.filter_by(emlakci_id=emlakci.id).all():
+            musteri_ad = Musteri.query.get(y.musteri_id).ad_soyad if y.musteri_id and Musteri.query.get(y.musteri_id) else ''
+            mulk_ad = Mulk.query.get(y.mulk_id).baslik if y.mulk_id and Mulk.query.get(y.mulk_id) else ''
+            w.writerow([y.id, musteri_ad, mulk_ad, str(y.tarih or y.olusturma or ''), y.notlar, y.durum])
+        zf.writestr('yer_gostermeler.csv', csv_buf.getvalue())
+
+        # Faturalar
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Fatura No', 'Tip', 'Alici', 'Tutar', 'KDV', 'Toplam', 'Durum', 'Tarih'])
+        for f in Fatura.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([f.id, f.fatura_no, f.tip, f.alici_ad, f.tutar, f.kdv_tutar, f.toplam, f.durum, str(f.olusturma or '')])
+        zf.writestr('faturalar.csv', csv_buf.getvalue())
+
+        # Cariler
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Ad', 'Tip', 'Bakiye', 'Tarih'])
+        for c in Cari.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([c.id, c.ad, c.tip, c.bakiye, str(c.olusturma or '')])
+        zf.writestr('cariler.csv', csv_buf.getvalue())
+
+        # Leadler
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Ad Soyad', 'Telefon', 'Kaynak', 'Durum', 'Puan', 'Notlar', 'Tarih'])
+        for l in Lead.query.filter_by(emlakci_id=emlakci.id).all():
+            w.writerow([l.id, l.ad_soyad, l.telefon, l.kaynak, l.durum, l.puan, l.notlar, str(l.olusturma or '')])
+        zf.writestr('leadler.csv', csv_buf.getvalue())
+
+        # İletişim Geçmişi
+        csv_buf = io.StringIO()
+        w = csv.writer(csv_buf)
+        w.writerow(['ID', 'Musteri', 'Tip', 'Yon', 'Ozet', 'Tarih'])
+        for k in IletisimKayit.query.filter_by(emlakci_id=emlakci.id).order_by(IletisimKayit.olusturma.desc()).limit(1000).all():
+            musteri_ad = Musteri.query.get(k.musteri_id).ad_soyad if k.musteri_id and Musteri.query.get(k.musteri_id) else ''
+            w.writerow([k.id, musteri_ad, k.tip, k.yon, k.ozet, str(k.olusturma or '')])
+        zf.writestr('iletisim_gecmisi.csv', csv_buf.getvalue())
+
     buf.seek(0)
     return buf.getvalue()
 

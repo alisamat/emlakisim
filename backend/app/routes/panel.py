@@ -358,18 +358,25 @@ def email_portfoy():
 @bp.route('/yedek/indir', methods=['GET'])
 @jwt_required()
 def yedek_indir():
-    """Tüm veriyi Excel olarak indir."""
+    """Tüm veriyi Excel veya ZIP olarak indir."""
     emlakci = Emlakci.query.get(_eid())
-    fmt = request.args.get('format', 'excel')  # excel veya json
+    fmt = request.args.get('format', 'excel')  # excel, json, zip
+    dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
+
     if fmt == 'json':
         from app.services.yedekleme import _json_export
         data = _json_export(emlakci)
         yedek_logla(emlakci)
-        dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
         return send_file(io.BytesIO(data), mimetype='application/json', as_attachment=True, download_name=f'{dosya_adi}.json')
+
+    if fmt == 'zip':
+        from app.services.yedekleme import zip_export
+        data = zip_export(emlakci)
+        yedek_logla(emlakci)
+        return send_file(io.BytesIO(data), mimetype='application/zip', as_attachment=True, download_name=f'{dosya_adi}.zip')
+
     data = excel_export(emlakci)
     yedek_logla(emlakci)
-    dosya_adi = f'emlakisim_yedek_{emlakci.id}_{__import__("datetime").datetime.now().strftime("%Y%m%d")}'
     if data[:2] == b'PK':  # xlsx
         return send_file(io.BytesIO(data), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                          as_attachment=True, download_name=f'{dosya_adi}.xlsx')

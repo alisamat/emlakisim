@@ -166,6 +166,8 @@ _PATTERNS = [
     (r'(?:excel)\s*(?:.*portfoy|.*portföy|.*mulk|.*mülk)',               'portfoy_excel'),
     (r'(?:musteri|müşteri)\s*(?:.*excel|.*indir|.*liste.*ver)',           'musteri_excel'),
     (r'(?:excel)\s*(?:.*musteri|.*müşteri)',                              'musteri_excel'),
+    (r'(?:tum|tüm|hep).*(?:zip)',                                        'tum_zip'),
+    (r'(?:zip).*(?:indir|ver|export)',                                    'tum_zip'),
     (r'(?:tum|tüm|hep).*(?:excel|indir|export)',                         'tum_excel'),
     # ── Tahmin & Analiz ──
     (r'(?:satici|satıcı)\s*(?:tahmin|olasil|olasıl|ihtimal)', 'satici_tahmin'),
@@ -385,6 +387,15 @@ def _komut_calistir(komut, emlakci, metin, session):
                 f'👥 {sayi} müşteri · Ad soyad, telefon, email, TC, işlem türü, bütçe, sıcaklık, tercihler...\n\n'
                 '[📥 Excel İndir](/api/panel/yedek/musteri-excel)\n\n'
                 '_Dosya otomatik indirilecek._')
+
+    if komut == 'tum_zip':
+        return ('📥 *Tüm veriniz ZIP olarak hazır!*\n\n'
+                '10 ayrı CSV dosyası, tek ZIP:\n'
+                'musteriler.csv · portfoy.csv · gelir_gider.csv\n'
+                'gorevler.csv · notlar.csv · yer_gostermeler.csv\n'
+                'faturalar.csv · cariler.csv · leadler.csv · iletisim_gecmisi.csv\n\n'
+                '[📥 ZIP İndir](/api/panel/yedek/indir?format=zip)\n\n'
+                '_Her tablo ayrı dosya — başka sisteme aktarım için ideal._')
 
     if komut == 'tum_excel':
         return ('📥 *Tüm veriniz Excel olarak hazır!*\n\n'
