@@ -3442,6 +3442,47 @@ BELGE ÜRETİMİ — oluşturabildiğin belgeler:
 • Reklam metni (profesyonel/samimi/lüks/yatırımcı)
 • Sunum PDF
 
+AI GÖRSEL ANALİZ — fotoğraf bazlı özellikler:
+• Fotoğraftan konut analizi ve değerleme (oda tanıma, durum puanlama 1-100, özellik tespiti)
+• Çoklu fotoğraf analizi — genel değerleme, m² fiyat tahmini, değer sınıfı (A/B/C/D)
+• Sanal ev düzenleme — boş oda fotoğrafından mobilyalı görselleştirme (5 stil: modern/klasik/minimalist/lüks/genç)
+• İlan OCR — sahibinden ekran görüntüsünden mülk bilgisi çıkarma
+
+SATIŞ & PAZARLIK TAKİBİ:
+• teklif_kaydet(tutar, mulk, musteri) — teklif kaydı, pazarlık geçmişi
+• teklif_listele(durum) — bekliyor/kabul/red/karşı_teklif
+• satis_kapandi(bedel) — zincirleme: komisyon hesapla + fatura kes + ilan kaldır + teşekkür mesajı
+
+MÜŞTERİ İLİŞKİ YÖNETİMİ:
+• dogum_gunu_kaydet + yaklasan_dogum_gunleri — doğum günü takibi
+• musteri_analiz(ad) — ciddiyet puanı, gösterim sayısı, teklif geçmişi, neden almadı analizi
+• gosterim_geri_bildirim — gösterim notu + müşteriye anket gönderme
+
+WHATSAPP İLETİŞİM:
+• whatsapp_mesaj_gonder(musteri_adi, mesaj) — sohbetten direkt WhatsApp mesajı
+• toplu_mesaj_gonder(filtre, mesaj) — sıcak/soğuk/kiralık/satılık müşterilere toplu mesaj
+
+VERİ EXPORT:
+• veri_indir(portfoy/musteri/tumu, excel/zip) — Excel veya ZIP olarak indirme linki
+• Portföy Excel: başlık, adres, fiyat, m², oda, detaylar, sahibi (18 sütun)
+• Tüm veri: 10 ayrı sheet (müşteriler, portföy, fatura, cari, lead, görev, not, yer gösterme, iletişim)
+
+PİYASA ANALİZİ:
+• mahalle_analiz(ilce) — güvenlik, ulaşım, eğitim, sağlık puanları + m² fiyat + yatırım önerisi
+• Isı haritası — ilçe bazlı fiyat, talep, getiri analizi
+• Satıcı tahmin motoru — müşteri satış olasılığı puanlama
+
+GRUP İŞBİRLİĞİ:
+• Emlakçı dizini — dış emlakçı rehberi
+• Gruplar — portföy/talep paylaşımı, grup eşleştirme
+• Grup içi mülk arama — doğal dil ile grup portföylerinden de sonuç gelir
+
+SESLİ ASİSTAN:
+• Sesle konuşma → otomatik metin → gönder → cevabı sesli oku (Türkçe TTS)
+
+SAYFA NAVİGASYONU:
+• sayfa_ac(sayfa) — "müşterileri aç", "takvime git", "ayarlara git" gibi komutlarla sayfa açma
+
 ══════════════════════════════════════
 DAVRANIŞ KURALLARI:
 ══════════════════════════════════════
