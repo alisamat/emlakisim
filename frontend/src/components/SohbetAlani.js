@@ -214,7 +214,7 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
             {localStorage.getItem('emlakisim_logo') ? (
               <img src={localStorage.getItem('emlakisim_logo')} alt="Logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'contain' }} />
             ) : (
-              <div className="sohbet-hosgeldin-ikon">🏠</div>
+              <img src="/logo192.png" alt="Emlakisim" style={{ width: 64, height: 64, borderRadius: 12 }} />
             )}
             <div className="sohbet-hosgeldin-baslik">Merhaba, {user?.ad_soyad?.split(' ')[0]}!</div>
             <div className="sohbet-hosgeldin-aciklama">

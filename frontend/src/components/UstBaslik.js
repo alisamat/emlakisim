@@ -39,7 +39,10 @@ export default function UstBaslik({ kredi, onSolToggle, onSagToggle, onSohbetGit
     <div className="ust-baslik">
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <button className="mobil-hamburger" onClick={onSolToggle}>☰</button>
-        <div className="ust-baslik-logo" onClick={onSohbetGit}>🏠 Emlakisim AI</div>
+        <div className="ust-baslik-logo" onClick={onSohbetGit} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <img src="/logo192.png" alt="Emlakisim" style={{ width: 28, height: 28, borderRadius: 6 }} />
+          <span>Emlakisim AI</span>
+        </div>
       </div>
       {/* Global Arama */}
       <div style={{ position: 'relative', flex: '0 1 300px' }} className="hide-mobile">
