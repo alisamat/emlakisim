@@ -527,6 +527,7 @@ def _mulk(m):
         'fiyat': m.fiyat, 'metrekare': m.metrekare, 'oda_sayisi': m.oda_sayisi,
         'ada': m.ada, 'parsel': m.parsel, 'notlar': m.notlar, 'grup': m.grup,
         'detaylar': m.detaylar or {},
+        'resimler': m.resimler or [],
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }
 
@@ -628,3 +629,102 @@ def isi_haritasi_endpoint():
     from app.services.tahmin_motoru import isi_haritasi
     sonuc = isi_haritasi(_eid())
     return jsonify({'harita': sonuc})
+
+
+# ════════ MÜLK RESİM YÖNETİMİ ════════
+
+@bp.route('/mulkler/<int:mid>/resim', methods=['POST'])
+@jwt_required()
+def mulk_resim_ekle(mid):
+    """Mülke fotoğraf ekle (multipart veya base64)."""
+    mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+
+    resimler = mulk.resimler or []
+    if len(resimler) >= 20:
+        return jsonify({'message': 'En fazla 20 fotoğraf eklenebilir'}), 400
+
+    # Multipart file upload
+    if request.files.get('image'):
+        dosya = request.files['image']
+        dosya_bytes = dosya.read()
+        # Boyut sınırı: 5MB
+        if len(dosya_bytes) > 5 * 1024 * 1024:
+            return jsonify({'message': 'Fotoğraf 5MB\'dan küçük olmalı'}), 400
+        # Resmi küçült
+        dosya_bytes = _resim_kucult(dosya_bytes)
+        from app.services.dosya import dosya_yukle
+        basarili, url = dosya_yukle(dosya_bytes, dosya.filename, f'mulk/{mid}')
+        if not basarili:
+            return jsonify({'message': f'Yükleme hatası: {url}'}), 500
+    elif request.json and request.json.get('image_base64'):
+        import base64
+        b64 = request.json['image_base64']
+        dosya_bytes = base64.b64decode(b64)
+        if len(dosya_bytes) > 5 * 1024 * 1024:
+            return jsonify({'message': 'Fotoğraf 5MB\'dan küçük olmalı'}), 400
+        dosya_bytes = _resim_kucult(dosya_bytes)
+        from app.services.dosya import dosya_yukle
+        basarili, url = dosya_yukle(dosya_bytes, f'mulk_{mid}_{len(resimler)}.jpg', f'mulk/{mid}')
+        if not basarili:
+            return jsonify({'message': f'Yükleme hatası: {url}'}), 500
+    else:
+        return jsonify({'message': 'Fotoğraf gerekli'}), 400
+
+    aciklama = (request.form or request.json or {}).get('aciklama', '')
+    ana = len(resimler) == 0  # İlk resim = kapak
+
+    resimler.append({'url': url, 'aciklama': aciklama, 'ana': ana})
+    mulk.resimler = resimler
+    db.session.commit()
+
+    return jsonify({'resimler': resimler, 'eklenen': resimler[-1]})
+
+
+@bp.route('/mulkler/<int:mid>/resim/<int:idx>', methods=['DELETE'])
+@jwt_required()
+def mulk_resim_sil(mid, idx):
+    """Mülkten fotoğraf sil."""
+    mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    resimler = mulk.resimler or []
+    if idx < 0 or idx >= len(resimler):
+        return jsonify({'message': 'Geçersiz index'}), 400
+    resimler.pop(idx)
+    # İlk resmi kapak yap
+    if resimler and not any(r.get('ana') for r in resimler):
+        resimler[0]['ana'] = True
+    mulk.resimler = resimler
+    db.session.commit()
+    return jsonify({'resimler': resimler})
+
+
+@bp.route('/mulkler/<int:mid>/resim/<int:idx>/kapak', methods=['PUT'])
+@jwt_required()
+def mulk_kapak_yap(mid, idx):
+    """Belirli resmi kapak fotoğrafı yap."""
+    mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    resimler = mulk.resimler or []
+    if idx < 0 or idx >= len(resimler):
+        return jsonify({'message': 'Geçersiz index'}), 400
+    for r in resimler:
+        r['ana'] = False
+    resimler[idx]['ana'] = True
+    mulk.resimler = resimler
+    db.session.commit()
+    return jsonify({'resimler': resimler})
+
+
+def _resim_kucult(dosya_bytes, max_boyut=1200):
+    """Resmi max 1200px genişliğe küçült (kalite koruyarak)."""
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(dosya_bytes))
+        if img.width > max_boyut:
+            oran = max_boyut / img.width
+            yeni_boy = int(img.height * oran)
+            img = img.resize((max_boyut, yeni_boy), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=80, optimize=True)
+        buf.seek(0)
+        return buf.getvalue()
+    except ImportError:
+        return dosya_bytes  # PIL yoksa orijinal döndür

@@ -32,13 +32,12 @@ def dosya_yukle(dosya_bytes, dosya_adi, klasor='genel'):
 
 
 def _local_yukle(dosya_bytes, dosya_adi, klasor):
-    """Geçici local storage (production'da kullanılmamalı)."""
+    """Local storage — base64 data URL olarak döndür (Supabase/S3 yokken geçerli)."""
     import base64
-    # Base64 olarak encode et ve URL olarak döndür
     b64 = base64.b64encode(dosya_bytes).decode()
-    ext = dosya_adi.rsplit('.', 1)[-1] if '.' in dosya_adi else 'bin'
-    mime = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'pdf': 'application/pdf'}.get(ext, 'application/octet-stream')
-    return True, f'data:{mime};base64,{b64[:100]}...'  # Kısaltılmış — gerçek storage gerekli
+    ext = dosya_adi.rsplit('.', 1)[-1].lower() if '.' in dosya_adi else 'bin'
+    mime = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp', 'pdf': 'application/pdf'}.get(ext, 'application/octet-stream')
+    return True, f'data:{mime};base64,{b64}'
 
 
 def _supabase_yukle(dosya_bytes, dosya_adi, klasor):

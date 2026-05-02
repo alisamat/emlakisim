@@ -198,7 +198,85 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
   );
 }
 
-function MulkKarti({ m, onDuzenle, onSil }) {
+// Fotoğraf Galeri Bileşeni
+function FotoGaleri({ resimler, mulkId, onGuncelle }) {
+  const [buyuk, setBuyuk] = useState(null);
+  const [yukleniyor, setYuk] = useState(false);
+
+  const resimEkle = async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) { alert('Fotoğraf 5MB\'dan küçük olmalı'); continue; }
+      setYuk(true);
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const r = await api.post(`/api/panel/mulkler/${mulkId}/resim`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (onGuncelle) onGuncelle(r.data.resimler);
+      } catch (err) { alert(err.response?.data?.message || 'Yükleme hatası'); }
+      finally { setYuk(false); }
+    }
+  };
+
+  const resimSil = async (idx) => {
+    if (!window.confirm('Bu fotoğrafı silmek istediğinize emin misiniz?')) return;
+    try {
+      const r = await api.delete(`/api/panel/mulkler/${mulkId}/resim/${idx}`);
+      if (onGuncelle) onGuncelle(r.data.resimler);
+    } catch {}
+  };
+
+  const kapakYap = async (idx) => {
+    try {
+      const r = await api.put(`/api/panel/mulkler/${mulkId}/resim/${idx}/kapak`);
+      if (onGuncelle) onGuncelle(r.data.resimler);
+    } catch {}
+  };
+
+  const kapak = resimler?.find(r => r.ana) || resimler?.[0];
+
+  return (
+    <>
+      {/* Kapak fotoğraf */}
+      {kapak && (
+        <div style={{ marginBottom: 8, cursor: 'pointer' }} onClick={() => setBuyuk(0)}>
+          <img src={kapak.url} alt="Kapak" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 8 }} />
+        </div>
+      )}
+      {/* Küçük fotoğraflar */}
+      {resimler && resimler.length > 1 && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 8, overflowX: 'auto' }}>
+          {resimler.map((r, i) => (
+            <img key={i} src={r.url} alt="" onClick={() => setBuyuk(i)}
+              style={{ width: 60, height: 45, objectFit: 'cover', borderRadius: 6, cursor: 'pointer', border: r.ana ? '2px solid #16a34a' : '1px solid #e2e8f0' }} />
+          ))}
+        </div>
+      )}
+      {/* Fotoğraf ekle */}
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#16a34a', cursor: 'pointer', marginBottom: 6 }}>
+        {yukleniyor ? '⏳ Yükleniyor...' : `📸 Fotoğraf Ekle (${resimler?.length || 0}/20)`}
+        <input type="file" accept="image/*" multiple onChange={resimEkle} style={{ display: 'none' }} disabled={yukleniyor} />
+      </label>
+      {/* Büyük görüntü modal */}
+      {buyuk !== null && resimler && resimler[buyuk] && (
+        <div onClick={() => setBuyuk(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+          <img src={resimler[buyuk].url} alt="" style={{ maxWidth: '90%', maxHeight: '70vh', borderRadius: 12 }} onClick={e => e.stopPropagation()} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }} onClick={e => e.stopPropagation()}>
+            {buyuk > 0 && <button onClick={() => setBuyuk(buyuk - 1)} style={{ padding: '8px 16px', background: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 16 }}>◀</button>}
+            <button onClick={() => kapakYap(buyuk)} style={{ padding: '8px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>⭐ Kapak Yap</button>
+            <button onClick={() => { resimSil(buyuk); setBuyuk(null); }} style={{ padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>🗑 Sil</button>
+            {buyuk < resimler.length - 1 && <button onClick={() => setBuyuk(buyuk + 1)} style={{ padding: '8px 16px', background: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 16 }}>▶</button>}
+          </div>
+          <div style={{ color: '#fff', fontSize: 13, marginTop: 8 }}>{buyuk + 1} / {resimler.length}</div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function MulkKarti({ m, onDuzenle, onSil, onResimGuncelle }) {
   const renk = m.islem_turu === 'kira' ? '#3b82f6' : '#f59e0b';
   const [menuAcik, setMenuAcik] = useState(false);
   const [detayAcik, setDetayAcik] = useState(false);
@@ -211,6 +289,8 @@ function MulkKarti({ m, onDuzenle, onSil }) {
 
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #e2e8f0', borderLeft: `3px solid ${renk}` }}>
+      {/* Fotoğraf Galeri */}
+      <FotoGaleri resimler={m.resimler} mulkId={m.id} onGuncelle={(r) => onResimGuncelle(m.id, r)} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
@@ -362,7 +442,7 @@ export default function Mulkler() {
           {arama || filtreIslem || filtreTip ? 'Filtreye uygun mülk yok' : 'Henüz mülk eklenmedi'}
         </div>
       ) : (
-        liste.map(m => <MulkKarti key={m.id} m={m} onDuzenle={m => { setDuzenle(m); setFormAcik(true); }} onSil={onSil} />)
+        liste.map(m => <MulkKarti key={m.id} m={m} onDuzenle={m => { setDuzenle(m); setFormAcik(true); }} onSil={onSil} onResimGuncelle={(id, resimler) => setMulkler(p => p.map(x => x.id === id ? { ...x, resimler } : x))} />)
       )}
     </>
   );

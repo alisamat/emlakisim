@@ -83,6 +83,8 @@ class Mulk(db.Model):
     detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
     grup          = db.Column(db.String(50))              # kullanıcı tanımlı grup
     yasal_durum   = db.Column(db.JSON, default=dict)     # iskan, ipotek, haciz, dask, imar
+    resimler      = db.Column(db.JSON, default=list)     # [{"url": "...", "aciklama": "salon", "ana": true}]
+    musteri_id    = db.Column(db.Integer, db.ForeignKey('musteri.id'), nullable=True)  # mülk sahibi
     aktif         = db.Column(db.Boolean, default=True)
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
 
