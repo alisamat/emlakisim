@@ -6,6 +6,7 @@ import './index.css';
 import Giris          from './components/Giris';
 import Kayit          from './components/Kayit';
 import SohbetArayuz   from './components/SohbetArayuz';
+import PublicPortfoy  from './components/PublicPortfoy';
 
 // Hata yakalama
 class ErrorBoundary extends Component {
@@ -79,6 +80,7 @@ export default function App() {
         <Routes>
           <Route path="/giris" element={<Giris />} />
           <Route path="/kayit" element={<Kayit />} />
+          <Route path="/e/:emlakciId" element={<PublicPortfoy />} />
           <Route path="/"      element={<Koruma><SohbetArayuz /></Koruma>} />
           <Route path="*"      element={<Navigate to="/" replace />} />
         </Routes>

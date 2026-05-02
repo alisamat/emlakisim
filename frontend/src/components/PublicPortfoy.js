@@ -1,0 +1,185 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import api from '../api';
+
+const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina' };
+
+function PublicMulkDetay({ m, emlakci, onGeri }) {
+  const [aktifResim, setAktifResim] = useState(0);
+  const resimler = m.resimler || [];
+  const det = m.detaylar || {};
+  const detaylar = Object.entries(det).filter(([, v]) => v);
+  const f = v => v ? Number(v).toLocaleString('tr-TR') : '—';
+
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: 20, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+      <button onClick={onGeri} style={{ background: 'none', border: 'none', color: '#16a34a', fontSize: 14, cursor: 'pointer', marginBottom: 16 }}>← Portföye Dön</button>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>{m.baslik || m.adres || '—'}</h1>
+      <div style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>📍 {m.ilce || ''}{m.sehir ? `, ${m.sehir}` : ''}</div>
+      {resimler.length > 0 ? (
+        <div style={{ marginBottom: 16 }}>
+          <img src={resimler[aktifResim]?.url} alt="" style={{ width: '100%', height: 400, objectFit: 'cover', borderRadius: 12, background: '#f1f5f9' }} />
+          {resimler.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto' }}>
+              {resimler.map((r, i) => (
+                <img key={i} src={r.url} alt="" onClick={() => setAktifResim(i)}
+                  style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, cursor: 'pointer', border: aktifResim === i ? '3px solid #16a34a' : '2px solid #e2e8f0', flexShrink: 0 }} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ width: '100%', height: 200, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: '#94a3b8' }}>Fotoğraf yok</div>
+      )}
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 280px' }}>
+          <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid #bbf7d0' }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#16a34a' }}>{f(m.fiyat)} TL</div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#2563eb' : '#d97706', borderRadius: 6, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>
+                {m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}
+              </span>
+              <span style={{ background: '#f1f5f9', borderRadius: 6, padding: '4px 12px', fontSize: 12 }}>{TIP_LABEL[m.tip] || m.tip}</span>
+            </div>
+          </div>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📞 İletişim</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{emlakci.ad_soyad}</div>
+            {emlakci.acente_adi && <div style={{ fontSize: 12, color: '#64748b' }}>{emlakci.acente_adi}</div>}
+            {emlakci.telefon && (
+              <a href={`https://wa.me/9${emlakci.telefon.replace(/\D/g, '').replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'block', marginTop: 12, padding: '10px 16px', background: '#25d366', color: '#fff', borderRadius: 8, textAlign: 'center', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+                💬 WhatsApp ile İletişim
+              </a>
+            )}
+            {emlakci.telefon && (
+              <a href={`tel:${emlakci.telefon}`} style={{ display: 'block', marginTop: 8, padding: '10px 16px', background: '#3b82f6', color: '#fff', borderRadius: 8, textAlign: 'center', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+                📞 Ara: {emlakci.telefon}
+              </a>
+            )}
+          </div>
+        </div>
+        <div style={{ flex: '1 1 280px' }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📋 Özellikler</div>
+            {m.oda_sayisi && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span>Oda Sayısı</span><strong>{m.oda_sayisi}</strong></div>}
+            {m.metrekare && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span>m²</span><strong>{m.metrekare}</strong></div>}
+            {detaylar.map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}>
+                <span>{k.replace(/_/g, ' ')}</span><strong>{v}</strong>
+              </div>
+            ))}
+            {m.adres && <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>📍 {m.adres}</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PublicPortfoy() {
+  const { emlakciId } = useParams();
+  const [data, setData] = useState(null);
+  const [secili, setSecili] = useState(null);
+  const [filtreIslem, setFiltreIslem] = useState('');
+  const [filtreTip, setFiltreTip] = useState('');
+  const [yuk, setYuk] = useState(true);
+
+  useEffect(() => {
+    api.get(`/api/public/emlakci/${emlakciId}/portfoy`).then(r => setData(r.data)).catch(() => {}).finally(() => setYuk(false));
+  }, [emlakciId]);
+
+  if (yuk) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc' }}><div style={{ fontSize: 48 }}>🏠</div></div>;
+  if (!data) return <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>Emlakçı bulunamadı</div>;
+
+  const { emlakci, mulkler } = data;
+  const f = v => v ? Number(v).toLocaleString('tr-TR') : '—';
+
+  let liste = mulkler;
+  if (filtreIslem) liste = liste.filter(m => m.islem_turu === filtreIslem);
+  if (filtreTip) liste = liste.filter(m => m.tip === filtreTip);
+
+  // Mülk Detay
+  if (secili) {
+    return <PublicMulkDetay m={secili} emlakci={emlakci} onGeri={() => setSecili(null)} />;
+  }
+
+  // Portföy Listesi
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: 20, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <img src="/logo192.png" alt="Emlakisim" style={{ width: 48, height: 48, borderRadius: 12, marginBottom: 8 }} />
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>{emlakci.ad_soyad}</h1>
+        {emlakci.acente_adi && <div style={{ fontSize: 14, color: '#64748b' }}>{emlakci.acente_adi}</div>}
+        {emlakci.telefon && <div style={{ fontSize: 13, color: '#16a34a', marginTop: 4 }}>📞 {emlakci.telefon}</div>}
+        <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>{mulkler.length} aktif ilan</div>
+      </div>
+
+      {/* Filtreler */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {[['', 'Tümü'], ['kira', '🔵 Kiralık'], ['satis', '🟡 Satılık']].map(([v, l]) => (
+          <button key={v} onClick={() => setFiltreIslem(v)} style={{
+            padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            background: filtreIslem === v ? '#16a34a' : '#fff', color: filtreIslem === v ? '#fff' : '#374151',
+            border: `1px solid ${filtreIslem === v ? '#16a34a' : '#e2e8f0'}`,
+          }}>{l}</button>
+        ))}
+        <span style={{ color: '#e2e8f0' }}>|</span>
+        {[['', 'Hepsi'], ...Object.entries(TIP_LABEL)].map(([v, l]) => (
+          <button key={v} onClick={() => setFiltreTip(v)} style={{
+            padding: '4px 12px', borderRadius: 16, fontSize: 12, cursor: 'pointer',
+            background: filtreTip === v ? '#475569' : '#fff', color: filtreTip === v ? '#fff' : '#64748b',
+            border: `1px solid ${filtreTip === v ? '#475569' : '#e2e8f0'}`,
+          }}>{l}</button>
+        ))}
+      </div>
+
+      {/* Mülk Kartları */}
+      {liste.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Filtreye uygun ilan yok</div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {liste.map(m => {
+            const kapak = m.resimler?.find(r => r.ana) || m.resimler?.[0];
+            return (
+              <div key={m.id} onClick={() => setSecili(m)} style={{
+                background: '#fff', borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}>
+                {kapak ? (
+                  <img src={kapak.url} alt="" style={{ width: '100%', height: 180, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: 180, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 32 }}>🏠</div>
+                )}
+                <div style={{ padding: 14 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a', marginBottom: 4 }}>{m.baslik || m.adres || '—'}</div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>📍 {m.ilce || ''}{m.sehir ? `, ${m.sehir}` : ''}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#16a34a' }}>{f(m.fiyat)} TL</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#2563eb' : '#d97706', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                        {m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 12, color: '#64748b' }}>
+                    {m.oda_sayisi && <span>🛏 {m.oda_sayisi}</span>}
+                    {m.metrekare && <span>📐 {m.metrekare}m²</span>}
+                    {m.tip && <span>{TIP_LABEL[m.tip] || m.tip}</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ textAlign: 'center', marginTop: 32, padding: 16, color: '#94a3b8', fontSize: 12 }}>
+        <img src="/logo192.png" alt="" style={{ width: 24, height: 24, borderRadius: 6, verticalAlign: 'middle', marginRight: 4 }} />
+        Emlakisim AI ile oluşturuldu · <a href="https://emlakisim.com" style={{ color: '#16a34a' }}>emlakisim.com</a>
+      </div>
+    </div>
+  );
+}

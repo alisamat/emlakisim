@@ -170,6 +170,11 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── Web Sayfası ──
+    (r'(?:web\s*sayfa|sayfa)\s*(?:link|adres|url)',                   'web_sayfa_link'),
+    (r'(?:web\s*sayfa|portfoy\s*sayfa|ilan\s*sayfa)\s*(?:aç|ac|göster|goster)', 'web_sayfa_link'),
+    (r'(?:sayfam|web\s*sayfam|portfoy\s*link|ilan\s*link)',          'web_sayfa_link'),
+    (r'(?:musteri|müşteri).*(?:paylas|paylaş).*(?:link|adres)',      'web_sayfa_link'),
     # ── Excel Export ──
     (r'(?:portfoy|portföy|mulk|mülk)\s*(?:.*excel|.*indir|.*liste.*ver)', 'portfoy_excel'),
     (r'(?:excel)\s*(?:.*portfoy|.*portföy|.*mulk|.*mülk)',               'portfoy_excel'),
@@ -498,6 +503,18 @@ def _komut_calistir(komut, emlakci, metin, session):
         session['son_offset'] = 10
         sonuc, liste = _mulk_listele(emlakci, session)
         return sonuc
+
+    if komut == 'web_sayfa_link':
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.vercel.app')
+        link = f'{frontend}/e/{emlakci.id}'
+        mulk_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+        return (f'🌐 *Web Sayfanız Hazır!*\n\n'
+                f'🔗 {link}\n\n'
+                f'👤 {emlakci.ad_soyad}\n'
+                + (f'🏢 {emlakci.acente_adi}\n' if emlakci.acente_adi else '')
+                + f'🏠 {mulk_sayi} aktif ilan\n\n'
+                f'_Bu linki müşterilerinize, sosyal medyada veya kartvizitinizde paylaşabilirsiniz._')
 
     if komut == 'yedek_durum':
         try:
@@ -2509,6 +2526,12 @@ _FUNCTIONS = [
             'required': ['islem'],
         },
     },
+    # ── Web Sayfası ──
+    {
+        'name': 'web_sayfa_bilgi',
+        'description': 'Emlakçının herkese açık web sayfasının linkini verir. "Sayfamın linkini ver", "web sayfamı göster" gibi komutlarda.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
     # ── Yedekleme ──
     {
         'name': 'yedek_durumu_sorgula',
@@ -2878,6 +2901,14 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         elif islem == 'davetler':
             return _grup_komut('grup_davet', emlakci, '', {})
         return _grup_komut('grup_liste', emlakci, '', {})
+
+    if fonksiyon_adi == 'web_sayfa_bilgi':
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.vercel.app')
+        link = f'{frontend}/e/{emlakci.id}'
+        mulk_sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+        return (f'🌐 *Web Sayfanız:*\n\n🔗 {link}\n\n🏠 {mulk_sayi} aktif ilan gösteriliyor.\n'
+                '_Linki müşterilerinize paylaşabilirsiniz._')
 
     if fonksiyon_adi == 'yedek_durumu_sorgula':
         try:

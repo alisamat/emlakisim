@@ -32,7 +32,7 @@ def create_app(env='production'):
     except ImportError:
         pass
 
-    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis, bildirim, fatura, islem_takip, ofis, ekip, admin, ayarlar as ayarlar_route, grup, odeme
+    from .routes import auth, webhook, panel, musteri, sohbet, muhasebe, hesaplama, planlama, egitim, toplu, tanitim, lead, gelismis, bildirim, fatura, islem_takip, ofis, ekip, admin, ayarlar as ayarlar_route, grup, odeme, public
     app.register_blueprint(auth.bp)
     app.register_blueprint(webhook.bp)
     app.register_blueprint(panel.bp)
@@ -55,6 +55,7 @@ def create_app(env='production'):
     app.register_blueprint(ayarlar_route.bp)
     app.register_blueprint(grup.bp)
     app.register_blueprint(odeme.bp)
+    app.register_blueprint(public.bp)
 
     # Zamanlayıcı başlat (otomatik hatırlatma, günlük özet, yedek uyarısı)
     try:
