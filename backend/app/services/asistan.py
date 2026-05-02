@@ -88,6 +88,10 @@ _PATTERNS = [
     # ── Yardım ──
     # ── Müşteri detay ──
     (r'(?:musteri|müşteri).*(?:bilgi|detay|profil)',          'musteri_liste'),
+    (r'(?:musteri|müşteri)(?:ler)?(?:de|da|den|dan|i|ı|m|mda)?\s+(?:ara|bul)\s+\S', 'musteri_ara'),
+    (r'(\S+)\s+(?:isminde|adında|adlı|isimli|diye)\s*(?:musteri|müşteri)', 'musteri_ara'),
+    (r'(?:musteri|müşteri).*(?:var\s*m[ıi]|olmal)',           'musteri_ara'),
+    (r'(?:mulk|mülk|portfoy|portföy)(?:te|da|de)?\s+(?:ara|bul)\s+\S',    'mulk_ara'),
     (r'(?:musteri|müşteri).*(?:ara|bul|sec|seç)',             'musteri_liste'),
     (r'(?:musteri|müşteri).*(?:grup|etiket|filtre)',          'musteri_liste'),
     (r'(?:musteri|müşteri).*(?:mail|email|gonder)',           'musteri_liste'),
@@ -301,6 +305,12 @@ def _komut_calistir(komut, emlakci, metin, session):
     if komut == 'iyi_aksam':
         return f'🌙 İyi akşamlar {emlakci.ad_soyad.split(" ")[0]}! Yarın için bir şey planlamak ister misiniz?'
 
+    if komut == 'musteri_ara':
+        return _musteri_ara(emlakci, metin)
+
+    if komut == 'mulk_ara':
+        return _mulk_ara(emlakci, metin)
+
     if komut == 'musteri_liste':
         return _musteri_listele(emlakci)
 
@@ -509,6 +519,64 @@ def _musteri_listele(emlakci):
         return '📭 Henüz müşteriniz yok.\n\n_"Müşteri ekle" yazarak yeni müşteri ekleyebilirsiniz._'
     satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(musteriler)]
     return f'👥 *Müşterileriniz* ({len(musteriler)})\n\n' + '\n'.join(satirlar)
+
+
+def _musteri_ara(emlakci, metin):
+    """İsim/telefon ile müşteri ara."""
+    # Arama kelimesini çıkar
+    metin_lower = metin.lower()
+    # "müşterilerde ara Ali" → "ali"
+    # "Ali isminde müşteri var mı" → "ali"
+    # "müşterilerde Ali ara" → "ali"
+    sorgu = re.sub(r'(?:musteri|müşteri)(?:ler)?(?:de|da|den|dan|i|ı|m|mda)?\s*(?:ara|bul)?\s*', '', metin_lower).strip()
+    sorgu = re.sub(r'\s*(?:ara|bul|var\s*m[ıi]|olmal[ıi]|isminde|adında|adlı|isimli|diye)\s*', ' ', sorgu).strip()
+    sorgu = re.sub(r'(?:musteri|müşteri)\s*', '', sorgu).strip()
+    if not sorgu or len(sorgu) < 2:
+        return '🔍 Kimi aramak istiyorsunuz? Örnek: "müşterilerde Ali ara"'
+
+    sonuclar = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+        db.or_(
+            Musteri.ad_soyad.ilike(f'%{sorgu}%'),
+            Musteri.telefon.ilike(f'%{sorgu}%'),
+            Musteri.tercih_notlar.ilike(f'%{sorgu}%'),
+        )
+    ).limit(10).all()
+
+    if not sonuclar:
+        return f'🔍 "{sorgu}" ile eşleşen müşteri bulunamadı.\n\n_Toplam {Musteri.query.filter_by(emlakci_id=emlakci.id).count()} müşteriniz var._'
+
+    satirlar = []
+    for i, m in enumerate(sonuclar):
+        sicaklik_ikon = {'sicak': '🔥', 'ilgili': '🟡', 'soguk': '❄️'}.get(m.sicaklik, '⚪')
+        satirlar.append(f'*{i+1}.* {sicaklik_ikon} {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})')
+    return f'🔍 *"{sorgu}" arama sonuçları:* ({len(sonuclar)})\n\n' + '\n'.join(satirlar)
+
+
+def _mulk_ara(emlakci, metin):
+    """İsim/adres/ilçe ile mülk ara."""
+    metin_lower = metin.lower()
+    sorgu = re.sub(r'(?:mulk|mülk|portfoy|portföy)(?:te|da|de)?\s*(?:ara|bul)?\s*', '', metin_lower).strip()
+    sorgu = re.sub(r'\s*(?:ara|bul)\s*', ' ', sorgu).strip()
+    if not sorgu or len(sorgu) < 2:
+        return '🔍 Ne aramak istiyorsunuz? Örnek: "portföyde Kadıköy ara"'
+
+    sonuclar = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+        db.or_(
+            Mulk.baslik.ilike(f'%{sorgu}%'),
+            Mulk.adres.ilike(f'%{sorgu}%'),
+            Mulk.sehir.ilike(f'%{sorgu}%'),
+            Mulk.ilce.ilike(f'%{sorgu}%'),
+        )
+    ).limit(10).all()
+
+    if not sonuclar:
+        return f'🔍 "{sorgu}" ile eşleşen mülk bulunamadı.\n\n_Portföyünüzde {Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()} mülk var._'
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
+    satirlar = []
+    for i, m in enumerate(sonuclar):
+        satirlar.append(f'*{i+1}.* {m.baslik or m.adres or "—"} — {f_tl(m.fiyat)} ({m.islem_turu or "?"})')
+    return f'🔍 *"{sorgu}" arama sonuçları:* ({len(sonuclar)})\n\n' + '\n'.join(satirlar)
 
 
 def _mulk_listele(emlakci):
