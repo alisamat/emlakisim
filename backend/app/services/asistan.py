@@ -1697,6 +1697,275 @@ def _grup_uye_davet_isle(emlakci, metin, session):
     return f'✅ *{hedef.ad_soyad}* adlı emlakçıya *{grup.ad}* grubu için davet gönderildi!'
 
 
+# ─── WhatsApp Mesaj Gönderme (sohbetten) ──────────────────
+def _wa_mesaj_gonder(emlakci, args):
+    """Sohbetten müşteriye WhatsApp mesajı gönder."""
+    import os
+    pid = os.environ.get('WA_PHONE_NUMBER_ID', '')
+    tok = os.environ.get('WA_ACCESS_TOKEN', '')
+    if not pid or not tok:
+        return '⚠️ WhatsApp yapılandırması henüz aktif değil.'
+
+    mesaj = args.get('mesaj', '')
+    telefon = args.get('telefon', '')
+
+    # Müşteri adından telefon bul
+    if not telefon and args.get('musteri_adi'):
+        mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+            Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+        ).first()
+        if mus and mus.telefon:
+            telefon = mus.telefon
+        else:
+            return f'⚠️ "{args["musteri_adi"]}" adında müşteri bulunamadı veya telefon numarası yok.'
+
+    if not telefon:
+        return '⚠️ Telefon numarası gerekli. Müşteri adı veya telefon belirtin.'
+
+    # Telefon formatla
+    telefon = telefon.replace('+', '').replace(' ', '').replace('-', '')
+    if telefon.startswith('0'):
+        telefon = '90' + telefon[1:]
+    if not telefon.startswith('90'):
+        telefon = '90' + telefon
+
+    from app.services import whatsapp as wa
+    basarili = wa.mesaj_gonder(pid, tok, telefon, mesaj)
+    if basarili:
+        return f'✅ WhatsApp mesajı gönderildi!\n📱 {telefon}\n💬 {mesaj[:100]}'
+    return '❌ Mesaj gönderilemedi.'
+
+
+def _wa_toplu_mesaj(emlakci, args):
+    """Filtreye göre müşterilere toplu WhatsApp mesajı."""
+    import os
+    pid = os.environ.get('WA_PHONE_NUMBER_ID', '')
+    tok = os.environ.get('WA_ACCESS_TOKEN', '')
+    if not pid or not tok:
+        return '⚠️ WhatsApp yapılandırması henüz aktif değil.'
+
+    mesaj_sablon = args.get('mesaj', '')
+    filtre = args.get('filtre', 'hepsi')
+
+    sorgu = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.telefon.isnot(None))
+    if filtre == 'sicak':
+        sorgu = sorgu.filter(Musteri.sicaklik == 'sicak')
+    elif filtre == 'ilgili':
+        sorgu = sorgu.filter(Musteri.sicaklik == 'ilgili')
+    elif filtre == 'soguk':
+        sorgu = sorgu.filter(Musteri.sicaklik == 'soguk')
+    elif filtre == 'kira':
+        sorgu = sorgu.filter(Musteri.islem_turu == 'kira')
+    elif filtre == 'satis':
+        sorgu = sorgu.filter(Musteri.islem_turu == 'satis')
+
+    musteriler = sorgu.limit(50).all()
+    if not musteriler:
+        return f'📭 "{filtre}" filtresine uygun telefonu olan müşteri bulunamadı.'
+
+    from app.services import whatsapp as wa
+    gonderilen = 0
+    for m in musteriler:
+        tel = m.telefon.replace('+', '').replace(' ', '').replace('-', '')
+        if tel.startswith('0'):
+            tel = '90' + tel[1:]
+        if not tel.startswith('90'):
+            tel = '90' + tel
+        kisi_mesaj = mesaj_sablon.replace('{isim}', m.ad_soyad.split(' ')[0])
+        if wa.mesaj_gonder(pid, tok, tel, kisi_mesaj):
+            gonderilen += 1
+
+    return f'✅ *Toplu mesaj gönderildi!*\n\n📱 {gonderilen}/{len(musteriler)} kişiye ulaştı\n💬 {mesaj_sablon[:80]}'
+
+
+# ─── Teklif / Pazarlık Takibi ─────────────────────────────
+def _teklif_kaydet(emlakci, args):
+    """Teklif kaydı oluştur."""
+    from app.models import Teklif
+    tutar = float(args.get('teklif_tutar', 0))
+
+    # Mülk bul
+    mulk_id = None
+    if args.get('mulk_baslik'):
+        mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+            Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')
+        ).first()
+        if mulk:
+            mulk_id = mulk.id
+
+    # Müşteri bul
+    musteri_id = None
+    if args.get('musteri_adi'):
+        mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+            Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+        ).first()
+        if mus:
+            musteri_id = mus.id
+
+    t = Teklif(
+        emlakci_id=emlakci.id, mulk_id=mulk_id, musteri_id=musteri_id,
+        teklif_tutar=tutar, istenen_tutar=args.get('istenen_tutar'),
+        notlar=args.get('notlar'),
+    )
+    db.session.add(t)
+    db.session.commit()
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+    return (f'✅ *Teklif kaydedildi!*\n\n'
+            f'💰 Teklif: {f_tl(tutar)} TL\n'
+            + (f'🏷 İstenen: {f_tl(args.get("istenen_tutar"))} TL\n' if args.get('istenen_tutar') else '')
+            + (f'🏢 Mülk: {args.get("mulk_baslik", "—")}\n' if args.get('mulk_baslik') else '')
+            + (f'👤 Müşteri: {args.get("musteri_adi", "—")}' if args.get('musteri_adi') else ''))
+
+
+def _teklif_listele(emlakci, args):
+    """Teklif geçmişini listele."""
+    from app.models import Teklif
+    sorgu = Teklif.query.filter_by(emlakci_id=emlakci.id)
+    if args.get('durum'):
+        sorgu = sorgu.filter(Teklif.durum == args['durum'])
+    if args.get('mulk_baslik'):
+        mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+        if mulk:
+            sorgu = sorgu.filter(Teklif.mulk_id == mulk.id)
+
+    teklifler = sorgu.order_by(Teklif.olusturma.desc()).limit(15).all()
+    if not teklifler:
+        return '📭 Teklif kaydı bulunamadı.'
+
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+    satirlar = []
+    for i, t in enumerate(teklifler):
+        mulk_ad = Mulk.query.get(t.mulk_id).baslik if t.mulk_id and Mulk.query.get(t.mulk_id) else '—'
+        mus_ad = Musteri.query.get(t.musteri_id).ad_soyad if t.musteri_id and Musteri.query.get(t.musteri_id) else '—'
+        durum_ikon = {'bekliyor': '⏳', 'kabul': '✅', 'red': '❌', 'karsi_teklif': '🔄'}.get(t.durum, '⏳')
+        tarih = t.olusturma.strftime('%d.%m') if t.olusturma else ''
+        satirlar.append(f'*{i+1}.* {durum_ikon} {f_tl(t.teklif_tutar)} TL — {mus_ad} → {mulk_ad} _{tarih}_')
+
+    return f'💰 *Teklif Geçmişi ({len(teklifler)}):*\n\n' + '\n'.join(satirlar)
+
+
+# ─── Doğum Günü Takibi ────────────────────────────────────
+def _dogum_gunu_kaydet(emlakci, args):
+    """Müşterinin doğum tarihini kaydet."""
+    from datetime import datetime as dt
+    mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+        Musteri.ad_soyad.ilike(f'%{args.get("musteri_adi", "")}%')
+    ).first()
+    if not mus:
+        return f'⚠️ "{args.get("musteri_adi")}" adında müşteri bulunamadı.'
+
+    tarih_str = args.get('tarih', '')
+    tarih = None
+    for fmt in ('%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d', '%d.%m'):
+        try:
+            tarih = dt.strptime(tarih_str, fmt).date()
+            if tarih.year == 1900:  # sadece gün-ay verildi
+                tarih = tarih.replace(year=2000)
+            break
+        except ValueError:
+            continue
+
+    if not tarih:
+        # Ay ismiyle dene: "15 Mart"
+        ay_map = {'ocak': 1, 'subat': 2, 'şubat': 2, 'mart': 3, 'nisan': 4, 'mayis': 5, 'mayıs': 5,
+                  'haziran': 6, 'temmuz': 7, 'agustos': 8, 'ağustos': 8, 'eylul': 9, 'eylül': 9,
+                  'ekim': 10, 'kasim': 11, 'kasım': 11, 'aralik': 12, 'aralık': 12}
+        import re as _re
+        m = _re.search(r'(\d{1,2})\s*(\w+)', tarih_str.lower())
+        if m and m.group(2) in ay_map:
+            from datetime import date
+            tarih = date(2000, ay_map[m.group(2)], int(m.group(1)))
+
+    if not tarih:
+        return '⚠️ Tarih anlaşılamadı. Örnek: "15.03.1990" veya "15 Mart"'
+
+    mus.dogum_tarihi = tarih
+    db.session.commit()
+    return f'✅ *{mus.ad_soyad}* doğum tarihi kaydedildi: {tarih.strftime("%d %B").replace("January","Ocak").replace("February","Şubat").replace("March","Mart").replace("April","Nisan").replace("May","Mayıs").replace("June","Haziran").replace("July","Temmuz").replace("August","Ağustos").replace("September","Eylül").replace("October","Ekim").replace("November","Kasım").replace("December","Aralık")}'
+
+
+def _yaklasan_dogum_gunleri(emlakci):
+    """Yaklaşan 30 gün içindeki doğum günlerini listele."""
+    from datetime import date, timedelta
+    bugun = date.today()
+    musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.dogum_tarihi.isnot(None)).all()
+
+    yaklasan = []
+    for m in musteriler:
+        dg = m.dogum_tarihi.replace(year=bugun.year)
+        if dg < bugun:
+            dg = dg.replace(year=bugun.year + 1)
+        kalan = (dg - bugun).days
+        if kalan <= 30:
+            yaklasan.append((m, kalan, dg))
+
+    yaklasan.sort(key=lambda x: x[1])
+
+    if not yaklasan:
+        return '🎂 Önümüzdeki 30 gün içinde doğum günü olan müşteri yok.\n\n_Doğum tarihi kaydetmek için: "Ahmet Beyin doğum günü 15 Mart"_'
+
+    satirlar = []
+    for m, kalan, dg in yaklasan:
+        if kalan == 0:
+            satirlar.append(f'🎉 *BUGÜN!* {m.ad_soyad} — {m.telefon or ""}')
+        elif kalan <= 3:
+            satirlar.append(f'🎂 *{kalan} gün sonra!* {m.ad_soyad} — {dg.strftime("%d.%m")}')
+        else:
+            satirlar.append(f'📅 {kalan} gün — {m.ad_soyad} — {dg.strftime("%d.%m")}')
+
+    return f'🎂 *Yaklaşan Doğum Günleri:*\n\n' + '\n'.join(satirlar)
+
+
+# ─── Satış Kapandı — Zincirleme Süreç ─────────────────────
+def _satis_kapandi(emlakci, args):
+    """Satış kapandığında zincirleme işlem: komisyon hesapla, fatura kes, ilan kaldır, mesaj hazırla."""
+    satis_bedeli = float(args.get('satis_bedeli', 0))
+    komisyon_oran = float(args.get('komisyon_oran', 0.02))
+    komisyon = satis_bedeli * komisyon_oran
+    kdv = komisyon * 0.20
+    toplam = komisyon + kdv
+    f_tl = lambda v: f'{int(v):,}'.replace(',', '.')
+
+    sonuclar = [f'🎉 *Satış Kapandı — Tebrikler!*\n']
+
+    # 1. Komisyon hesapla
+    sonuclar.append(f'💰 *Komisyon:*\n  Bedel: {f_tl(satis_bedeli)} TL\n  Komisyon (%{int(komisyon_oran*100)}): {f_tl(komisyon)} TL\n  KDV: {f_tl(kdv)} TL\n  *Toplam: {f_tl(toplam)} TL*')
+
+    # 2. Fatura oluştur
+    try:
+        from app.models.fatura import Fatura
+        fatura = Fatura(
+            emlakci_id=emlakci.id, alici_ad=args.get('musteri_adi', ''),
+            tutar=komisyon, kdv_oran=20, kdv_tutar=round(kdv, 2), toplam=round(toplam, 2),
+            tip='komisyon', fatura_no=f'F-{datetime.now().strftime("%Y%m%d%H%M")}',
+        )
+        db.session.add(fatura)
+        sonuclar.append(f'\n🧾 *Fatura:* {fatura.fatura_no} — {f_tl(toplam)} TL oluşturuldu')
+    except Exception:
+        sonuclar.append('\n⚠️ Fatura oluşturulamadı')
+
+    # 3. İlanı kaldır
+    if args.get('mulk_baslik'):
+        mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+            Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')
+        ).first()
+        if mulk:
+            mulk.aktif = False
+            sonuclar.append(f'\n🏢 *İlan kaldırıldı:* {mulk.baslik}')
+
+    # 4. Müşteriye teşekkür mesajı hazırla
+    musteri_adi = args.get('musteri_adi', 'Müşterimiz')
+    tesekkur = f'Sayın {musteri_adi}, emlak alım süreciniz başarıyla tamamlanmıştır. Bizi tercih ettiğiniz için teşekkür ederiz. Herhangi bir konuda yardıma ihtiyacınız olursa lütfen bize ulaşın. — {emlakci.ad_soyad}'
+    sonuclar.append(f'\n💬 *Teşekkür mesajı hazırlandı:*\n_{tesekkur}_')
+
+    # 5. Tapu randevusu hatırlatması
+    sonuclar.append('\n📋 *Yapılacaklar:*\n  • Tapu randevusu alın\n  • DASK poliçesi kontrol edin\n  • Gerekli belgeleri toplayın')
+
+    db.session.commit()
+    return '\n'.join(sonuclar)
+
+
 # ─── AI Fonksiyonları (function calling) ───────────────────
 _FUNCTIONS = [
     {
@@ -1996,6 +2265,92 @@ _FUNCTIONS = [
             'required': ['islem_turu', 'bedel'],
         },
     },
+    # ── WhatsApp Mesaj Gönderme ──
+    {
+        'name': 'whatsapp_mesaj_gonder',
+        'description': 'Müşteriye WhatsApp mesajı gönderir. "Ahmet Beye yaz: fiyat düştü" gibi komutlarda kullanılır.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Müşterinin adı (veritabanından telefon bulunur)'},
+                'telefon': {'type': 'string', 'description': 'Telefon numarası (müşteri adı bilinmiyorsa)'},
+                'mesaj': {'type': 'string', 'description': 'Gönderilecek mesaj metni'},
+            },
+            'required': ['mesaj'],
+        },
+    },
+    {
+        'name': 'toplu_mesaj_gonder',
+        'description': 'Birden fazla müşteriye WhatsApp mesajı gönderir. "Tüm sıcak müşterilere yaz" gibi komutlarda.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'filtre': {'type': 'string', 'enum': ['hepsi', 'sicak', 'ilgili', 'soguk', 'kira', 'satis'], 'description': 'Müşteri filtresi'},
+                'mesaj': {'type': 'string', 'description': 'Gönderilecek mesaj (isim otomatik kişiselleştirilir)'},
+            },
+            'required': ['mesaj'],
+        },
+    },
+    # ── Teklif / Pazarlık ──
+    {
+        'name': 'teklif_kaydet',
+        'description': 'Bir mülk için gelen teklifi kaydeder. Pazarlık takibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı veya tanımı'},
+                'musteri_adi': {'type': 'string', 'description': 'Teklif veren müşterinin adı'},
+                'teklif_tutar': {'type': 'number', 'description': 'Teklif tutarı TL'},
+                'istenen_tutar': {'type': 'number', 'description': 'Mal sahibinin istediği tutar TL'},
+                'notlar': {'type': 'string', 'description': 'Ek notlar'},
+            },
+            'required': ['teklif_tutar'],
+        },
+    },
+    {
+        'name': 'teklif_listele',
+        'description': 'Teklif geçmişini listeler. Mülk veya müşteri bazında filtrelenebilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülk başlığı ile filtrele'},
+                'durum': {'type': 'string', 'enum': ['bekliyor', 'kabul', 'red', 'karsi_teklif'], 'description': 'Teklif durumu'},
+            },
+        },
+    },
+    # ── Doğum Günü ──
+    {
+        'name': 'dogum_gunu_kaydet',
+        'description': 'Müşterinin doğum tarihini kaydeder. "Ahmet Beyin doğum günü 15 Mart" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Müşteri adı'},
+                'tarih': {'type': 'string', 'description': 'Doğum tarihi (GG.AA.YYYY veya GG Ay)'},
+            },
+            'required': ['musteri_adi', 'tarih'],
+        },
+    },
+    {
+        'name': 'yaklasan_dogum_gunleri',
+        'description': 'Yaklaşan doğum günlerini listeler.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
+    # ── Satış Süreci ──
+    {
+        'name': 'satis_kapandi',
+        'description': 'Satış kapandığında zincirleme süreç başlatır: komisyon hesapla, fatura oluştur, ilanı kaldır, müşteriye teşekkür mesajı hazırla.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Satılan mülkün başlığı'},
+                'musteri_adi': {'type': 'string', 'description': 'Alan müşterinin adı'},
+                'satis_bedeli': {'type': 'number', 'description': 'Satış bedeli TL'},
+                'komisyon_oran': {'type': 'number', 'description': 'Komisyon oranı (varsayılan 0.02 = %2)'},
+            },
+            'required': ['satis_bedeli'],
+        },
+    },
     # ── Kişiselleştirme ──
     {
         'name': 'asistan_ismi_degistir',
@@ -2221,6 +2576,31 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
                 f'Komisyon: {f_tl(s["komisyon"])} TL\n'
                 f'KDV: {f_tl(s["kdv"])} TL\n'
                 f'*Toplam: {f_tl(s["toplam"])} TL*')
+
+    # ── WhatsApp Mesaj ──
+    if fonksiyon_adi == 'whatsapp_mesaj_gonder':
+        return _wa_mesaj_gonder(emlakci, args)
+
+    if fonksiyon_adi == 'toplu_mesaj_gonder':
+        return _wa_toplu_mesaj(emlakci, args)
+
+    # ── Teklif / Pazarlık ──
+    if fonksiyon_adi == 'teklif_kaydet':
+        return _teklif_kaydet(emlakci, args)
+
+    if fonksiyon_adi == 'teklif_listele':
+        return _teklif_listele(emlakci, args)
+
+    # ── Doğum Günü ──
+    if fonksiyon_adi == 'dogum_gunu_kaydet':
+        return _dogum_gunu_kaydet(emlakci, args)
+
+    if fonksiyon_adi == 'yaklasan_dogum_gunleri':
+        return _yaklasan_dogum_gunleri(emlakci)
+
+    # ── Satış Süreci ──
+    if fonksiyon_adi == 'satis_kapandi':
+        return _satis_kapandi(emlakci, args)
 
     if fonksiyon_adi == 'asistan_ismi_degistir':
         yeni_isim = args.get('isim', '').strip()

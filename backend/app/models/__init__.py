@@ -55,11 +55,27 @@ class Musteri(db.Model):
     tercih_notlar = db.Column(db.Text)                  # AI tarafından işlenen tercihler
     sicaklik      = db.Column(db.String(10), default='orta')  # soguk/orta/sicak
     grup          = db.Column(db.String(50))              # kullanıcı tanımlı grup
+    dogum_tarihi  = db.Column(db.Date)                   # doğum günü takibi için
     detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)
     guncelleme    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     yer_gostermeler = db.relationship('YerGosterme', backref='musteri', lazy=True)
+
+
+class Teklif(db.Model):
+    """Mülk için gelen/verilen teklifler — pazarlık takibi"""
+    __tablename__ = 'teklif'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    emlakci_id  = db.Column(db.Integer, db.ForeignKey('emlakci.id'), nullable=False)
+    mulk_id     = db.Column(db.Integer, db.ForeignKey('mulk.id'), nullable=True)
+    musteri_id  = db.Column(db.Integer, db.ForeignKey('musteri.id'), nullable=True)
+    teklif_tutar = db.Column(db.Float, nullable=False)
+    istenen_tutar = db.Column(db.Float)                 # mal sahibinin istediği
+    durum       = db.Column(db.String(20), default='bekliyor')  # bekliyor/kabul/red/karsi_teklif
+    notlar      = db.Column(db.Text)
+    olusturma   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Mulk(db.Model):
