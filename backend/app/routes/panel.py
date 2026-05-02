@@ -631,6 +631,66 @@ def isi_haritasi_endpoint():
     return jsonify({'harita': sonuc})
 
 
+# ════════ QR KOD ════════
+
+@bp.route('/qr/portfoy', methods=['GET'])
+@jwt_required()
+def qr_portfoy():
+    """Portföy sayfası QR kodu."""
+    emlakci = Emlakci.query.get(_eid())
+    from app.services.qr_kod import mulk_qr
+    sonuc = mulk_qr(emlakci)
+    return jsonify(sonuc)
+
+
+@bp.route('/qr/kartvizit', methods=['GET'])
+@jwt_required()
+def qr_kartvizit():
+    """Kartvizit QR kodu (vCard)."""
+    emlakci = Emlakci.query.get(_eid())
+    from app.services.qr_kod import kartvizit_qr
+    sonuc = kartvizit_qr(emlakci)
+    return jsonify(sonuc)
+
+
+@bp.route('/qr/mulk/<int:mid>', methods=['GET'])
+@jwt_required()
+def qr_mulk(mid):
+    """Tek mülk QR kodu."""
+    emlakci = Emlakci.query.get(_eid())
+    from app.services.qr_kod import mulk_qr
+    sonuc = mulk_qr(emlakci, mid)
+    return jsonify(sonuc)
+
+
+# ════════ SESLİ NOT ════════
+
+@bp.route('/sesli-not', methods=['POST'])
+@jwt_required()
+def sesli_not_endpoint():
+    """Ses dosyasını yazıya çevir (Whisper)."""
+    if request.files.get('audio'):
+        audio_bytes = request.files['audio'].read()
+        dosya_adi = request.files['audio'].filename or 'ses.webm'
+    elif request.json and request.json.get('audio_base64'):
+        import base64
+        audio_bytes = base64.b64decode(request.json['audio_base64'])
+        dosya_adi = 'ses.webm'
+    else:
+        return jsonify({'message': 'Ses dosyası gerekli'}), 400
+
+    from app.services.sesli_not import ses_to_yazi
+    sonuc = ses_to_yazi(audio_bytes, dosya_adi)
+
+    if sonuc['basarili']:
+        # Otomatik not olarak kaydet
+        not_obj = Not(emlakci_id=_eid(), icerik=f'🎤 Sesli not: {sonuc["metin"]}', etiket='sesli_not')
+        db.session.add(not_obj)
+        db.session.commit()
+        return jsonify({'metin': sonuc['metin'], 'not_id': not_obj.id})
+    return jsonify({'message': sonuc.get('hata', 'Transkript yapılamadı')}), 500
+
+
 # ════════ MÜLK RESİM YÖNETİMİ ════════
 
 @bp.route('/mulkler/<int:mid>/resim', methods=['POST'])

@@ -170,6 +170,9 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── QR Kod ──
+    (r'(?:qr|kare\s*kod)\s*(?:olustur|oluştur|ver|yap)',             'qr_cmd'),
+    (r'(?:kartvizit)\s*(?:qr|kare\s*kod)',                           'qr_kartvizit_cmd'),
     # ── Hava Durumu ──
     (r'(?:hava|hava\s*durumu)\s*(?:nasil|nasıl|ne)',                  'hava_durumu_cmd'),
     (r'(?:yarin|yarın|bugun|bugün).*(?:hava|yagmur|yağmur)',         'hava_durumu_cmd'),
@@ -510,6 +513,19 @@ def _komut_calistir(komut, emlakci, metin, session):
         session['son_offset'] = 10
         sonuc, liste = _mulk_listele(emlakci, session)
         return sonuc
+
+    if komut == 'qr_cmd':
+        from app.services.qr_kod import mulk_qr
+        sonuc = mulk_qr(emlakci)
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+        link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+        return f'📱 *Portföy QR kodunuz hazır!*\n\n🔗 {link}\n\nBroşür veya kartvizite ekleyebilirsiniz.\n_"kartvizit QR" yazarak vCard QR de oluşturabilirsiniz._'
+
+    if komut == 'qr_kartvizit_cmd':
+        from app.services.qr_kod import kartvizit_qr
+        kartvizit_qr(emlakci)
+        return f'📱 *Kartvizit QR hazır!*\n\n👤 {emlakci.ad_soyad}\n📞 {emlakci.telefon or "—"}\n📧 {emlakci.email or "—"}\n\nTelefonla tarandığında rehbere otomatik ekler.'
 
     if komut == 'hava_durumu_cmd':
         from app.services.hava_durumu import hava_getir, hava_formatla
@@ -2549,6 +2565,19 @@ _FUNCTIONS = [
             'required': ['islem'],
         },
     },
+    # ── QR Kod ──
+    {
+        'name': 'qr_kod_olustur',
+        'description': 'QR kod oluşturur. Portföy linki, mülk linki veya kartvizit QR. "QR kod oluştur", "kartvizit QR", "bu mülkün QR kodunu ver" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'tip': {'type': 'string', 'enum': ['portfoy', 'kartvizit', 'mulk'], 'description': 'QR tipi'},
+                'mulk_baslik': {'type': 'string', 'description': 'Mülk QR için mülk başlığı'},
+            },
+            'required': ['tip'],
+        },
+    },
     # ── Hava Durumu ──
     {
         'name': 'hava_durumu',
@@ -2960,6 +2989,31 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         elif islem == 'davetler':
             return _grup_komut('grup_davet', emlakci, '', {})
         return _grup_komut('grup_liste', emlakci, '', {})
+
+    if fonksiyon_adi == 'qr_kod_olustur':
+        from app.services.qr_kod import mulk_qr, kartvizit_qr
+        tip = args.get('tip', 'portfoy')
+        if tip == 'kartvizit':
+            sonuc = kartvizit_qr(emlakci)
+            if sonuc.get('basarili'):
+                return f'📱 *Kartvizit QR kodunuz hazır!*\n\nTelefonla tarandığında rehbere otomatik ekler.\n\n_QR görselini indirmek için Ayarlar → QR Kod sayfasını açın._'
+        elif tip == 'mulk' and args.get('mulk_baslik'):
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+                Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')
+            ).first()
+            if mulk:
+                sonuc = mulk_qr(emlakci, mulk.id)
+                if sonuc.get('basarili'):
+                    return f'📱 *{mulk.baslik} — QR kod hazır!*\n\nTarandığında mülk detay sayfası açılır.'
+            return '⚠️ Mülk bulunamadı.'
+        else:
+            sonuc = mulk_qr(emlakci)
+            if sonuc.get('basarili'):
+                import os
+                frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+                link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+                return f'📱 *Portföy QR kodunuz hazır!*\n\n🔗 {link}\n\nTarandığında portföy sayfanız açılır.'
+        return '⚠️ QR kod oluşturulamadı.'
 
     if fonksiyon_adi == 'hava_durumu':
         from app.services.hava_durumu import hava_getir, hava_formatla
@@ -3614,6 +3668,14 @@ GRUP İŞBİRLİĞİ:
 • Emlakçı dizini — dış emlakçı rehberi
 • Gruplar — portföy/talep paylaşımı, grup eşleştirme
 • Grup içi mülk arama — doğal dil ile grup portföylerinden de sonuç gelir
+
+QR KOD:
+• qr_kod_olustur(tip, mulk_baslik) — portföy QR, kartvizit QR, mülk QR
+• Broşüre, kartvizite, ilana QR kod ekle → müşteri telefonla tarar
+
+SESLİ NOT:
+• Ses kaydı gönder → Whisper ile yazıya çevir → otomatik not kaydet
+• Gösterimden dönerken sesli not alma
 
 HAVA DURUMU:
 • hava_durumu(sehir, gun) — "yarın hava nasıl?", gösterim için uygunluk bilgisi
