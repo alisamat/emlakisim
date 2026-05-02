@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = 'g1_mulk_resimler'
-down_revision = 'f68c57f4836b'
+down_revision = 'e7a0be6e1b05'
 branch_labels = None
 depends_on = None
 
