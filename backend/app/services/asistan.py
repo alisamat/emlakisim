@@ -136,6 +136,8 @@ _PATTERNS = [
     (r'(?:ekip|takim|takım)\s*(?:göster|listele)',            'rapor'),
     # ── Yedek ──
     (r'(?:yedek|backup)\s*(?:al|indir|gonder)',               'rapor'),
+    (r'(?:yedek|yedekleme)\s*(?:durum|ne\s*zaman|son|yapti|yaptı)', 'yedek_durum'),
+    (r'(?:ne\s*zaman|en\s*son).*(?:yedek|yedekleme)',              'yedek_durum'),
     (r'(?:veri.*(?:export|indir|gonder))',                    'rapor'),
     # ── Ayarlar ──
     (r'(?:ayar|setting|profil)\s*(?:degistir|değiştir|güncelle)', 'rapor'),
@@ -496,6 +498,17 @@ def _komut_calistir(komut, emlakci, metin, session):
         session['son_offset'] = 10
         sonuc, liste = _mulk_listele(emlakci, session)
         return sonuc
+
+    if komut == 'yedek_durum':
+        try:
+            from app.services.yedekleme import yedek_durumu
+            yd = yedek_durumu(emlakci)
+            return (f'💾 *Yedekleme Durumu*\n\n'
+                    f'📅 Son yedek: {yd.get("son_yedek", "Hiç alınmadı")}\n'
+                    f'{"🟢" if not yd.get("uyari") else "🔴"} {yd.get("mesaj", "Bilgi yok")}\n\n'
+                    '_"Tüm veriyi excel indir" veya "zip indir" yazarak yedek alabilirsiniz._')
+        except Exception:
+            return '💾 Yedekleme bilgisi alınamadı. _"Tüm veriyi indir" yazarak yedek alabilirsiniz._'
 
     if komut == 'rapor':
         session['son_komut'] = 'rapor'
@@ -3512,6 +3525,9 @@ DAVRANIŞ KURALLARI:
 • GÜVENLİ OL: silme/toplu değişiklik işlemlerinde önce onay iste.
 • ÖNERİ SUN: "Excel'den toplu ekleyebilirsiniz", "Fotoğraf çekerek sahibinden ilanlarını aktarabilirsiniz" gibi proaktif önerilerde bulun.
 • HATA YAPMA: müşteri bilgisi yanlışsa düzelt, tutarsızlık varsa uyar.
+• YANLIŞ CEVAP VERME: Soruyu tam anlamadıysan veya cevaplayacak fonksiyonun yoksa, "Bu konuda yardımcı olamıyorum" DEME. Bunun yerine soruyu netleştirmek için karşı soru sor veya en yakın fonksiyonu kullanmayı dene.
+• İLGİSİZ CEVAP VERME: Kullanıcı "yedekleme ne zaman yapıldı" sorunca günlük özet verme. Sorunun konusuyla ilgili fonksiyonu çağır.
+• UYGULAMA ÖZELLİKLERİ HAKKINDA BİLGİ: Kullanıcı "uygulamayı anlat", "ne yapabilirsin", "özellikler" derse, yukarıdaki TÜM yetenek listesini kullan. Eksik bırakma.
 • HER ZAMAN ÇÖZÜM ODAKLI OL.
 """
 
