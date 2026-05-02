@@ -571,3 +571,23 @@ def mahalle_analiz_endpoint():
     from app.services.asistan import _mahalle_analiz
     mesaj = _mahalle_analiz({'sehir': sehir, 'ilce': ilce, 'mahalle': mahalle})
     return jsonify({'analiz': mesaj})
+
+
+# ════════ SATICI TAHMİN & ISI HARİTASI ════════
+
+@bp.route('/tahmin/satici', methods=['GET'])
+@jwt_required()
+def satici_tahmin_endpoint():
+    """Müşteri satış olasılığı tahmini."""
+    from app.services.tahmin_motoru import satici_tahmin
+    sonuclar = satici_tahmin(_eid())
+    return jsonify({'tahminler': sonuclar})
+
+
+@bp.route('/isi-haritasi', methods=['GET'])
+@jwt_required()
+def isi_haritasi_endpoint():
+    """İlçe bazında portföy ısı haritası."""
+    from app.services.tahmin_motoru import isi_haritasi
+    sonuc = isi_haritasi(_eid())
+    return jsonify({'harita': sonuc})

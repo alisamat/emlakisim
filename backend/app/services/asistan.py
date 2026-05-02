@@ -161,6 +161,12 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── Tahmin & Analiz ──
+    (r'(?:satici|satıcı)\s*(?:tahmin|olasil|olasıl|ihtimal)', 'satici_tahmin'),
+    (r'(?:kim)\s*(?:sat|alacak|ilgili)',                     'satici_tahmin'),
+    (r'(?:isi|ısı)\s*(?:harita|haritas)',                    'isi_haritasi'),
+    (r'(?:ilce|ilçe)\s*(?:analiz|istatistik|karsilastir)',   'isi_haritasi'),
+    (r'(?:piyasa|market)\s*(?:isi|ısı|sicak|sıcak|hareket)', 'isi_haritasi'),
     # ── Emlakçı Dizini ──
     (r'(?:emlakci|emlakçı)\s*(?:ekle|kaydet|kayıt)',          'emlakci_ekle'),
     (r'(?:emlakci|emlakçı)\s*(?:liste|listele|rehber|dizin|göster|goster)', 'emlakci_liste'),
@@ -233,6 +239,8 @@ _NAVIGASYON_PATTERNS = [
     (r'(?:gorsel|görsel)\s*(?:analiz|değerleme|sayfa|git|aç|ac)',     'gorsel_analiz', '📸 AI Görsel Analiz açılıyor...'),
     (r'(?:sanal|staging|düzenleme)\s*(?:sayfa|git|aç|ac)',            'sanal_staging', '🪑 Sanal Ev Düzenleme açılıyor...'),
     (r'(?:mahalle|semt)\s*(?:analiz|rapor|puan|sayfa)',               'gorsel_analiz', '📍 Mahalle analizi — sohbetten "Kadıköy Moda nasıl?" yazın'),
+    (r'(?:isi|ısı)\s*(?:harita|sayfa|git|aç|ac)',                   'isi_haritasi',  '🗺 Isı Haritası açılıyor...'),
+    (r'(?:tahmin|prediction)\s*(?:sayfa|git|aç|ac)',                'isi_haritasi',  '🔮 Tahmin sayfası açılıyor...'),
     (r'(?:emlakci|emlakçı)\s*(?:dizin|sayfa|git|aç|ac)\s*(?:sayfa|git|aç|ac)?', 'emlakcilar', '📒 Emlakçı dizini açılıyor...'),
     (r'(?:grup)\s*(?:sayfa|git|aç|ac|göster|goster)',                   'gruplar',     '👥 Gruplar sayfası açılıyor...'),
     (r'(?:profil)\s*(?:sayfa|git|aç|ac|göster|goster)',                'profil',      '👤 Profil sayfası açılıyor...'),
@@ -352,6 +360,30 @@ def _komut_calistir(komut, emlakci, metin, session):
                 'Portföy sayfasında mülkün ⋮ menüsünden *"Piyasa Değeri"* butonuna tıklayın.\n'
                 'Portföy ortalaması, ilçe karşılaştırması, m² fiyat ve değerlendirme göreceksiniz.\n'
                 'PDF rapor da indirebilirsiniz.')
+
+    # ── Tahmin & Analiz ──
+    if komut == 'satici_tahmin':
+        from app.services.tahmin_motoru import satici_tahmin
+        sonuclar = satici_tahmin(emlakci.id)
+        if not sonuclar:
+            return '🔮 Henüz yeterli veri yok. Müşteri ekledikçe tahminler oluşacak.'
+        satirlar = []
+        for t in sonuclar[:8]:
+            ikon = '🟢' if t['puan'] >= 75 else '🟡' if t['puan'] >= 50 else '🟠' if t['puan'] >= 25 else '⚪'
+            satirlar.append(f'{ikon} *{t["ad_soyad"]}* — %{t["puan"]} ({t["yorum"].split("—")[0].strip()})')
+        return f'🔮 *Satıcı/Alıcı Tahmin Raporu:*\n\n' + '\n'.join(satirlar) + '\n\n_Detaylar için Isı Haritası sayfasını açın._'
+
+    if komut == 'isi_haritasi':
+        from app.services.tahmin_motoru import isi_haritasi
+        sonuc = isi_haritasi(emlakci.id)
+        if not sonuc:
+            return '🗺 Henüz portföyünüzde yeterli veri yok. Mülk ekledikçe harita oluşacak.'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        satirlar = []
+        for h in sonuc[:8]:
+            isi = '🔴' if h['isi_skoru'] >= 70 else '🟡' if h['isi_skoru'] >= 50 else '🔵'
+            satirlar.append(f'{isi} *{h["ilce"]}* — {h["mulk_sayisi"]} mülk · {f_tl(h["m2_fiyat"])} TL/m² · %{h["kira_getirisi"]} getiri')
+        return ('🗺 *Piyasa Isı Haritası:*\n\n' + '\n'.join(satirlar),  'isi_haritasi')
 
     # ── Emlakçı Dizini ──
     if komut in ('emlakci_ekle', 'emlakci_sil', 'emlakci_liste', 'emlakci_ara', 'emlakci_sayisi'):

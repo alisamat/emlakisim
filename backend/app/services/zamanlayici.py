@@ -40,8 +40,17 @@ def zamanlayici_baslat(app):
         # Her gün 09:00 — döviz kurları güncelle
         _scheduler.add_job(lambda: _with_app(app, _doviz_guncelle), 'cron', hour=9, minute=5, id='doviz')
 
+        # Her gün 09:30 — WhatsApp günlük özet (otonom agent)
+        _scheduler.add_job(lambda: _with_app(app, _otonom_gunluk_ozet), 'cron', hour=9, minute=30, id='otonom_ozet')
+
+        # Her 12 saat — müşteri takip hatırlatma (otonom agent)
+        _scheduler.add_job(lambda: _with_app(app, _otonom_takip), 'interval', hours=12, id='otonom_takip')
+
+        # Her 6 saat — yeni eşleşme bildirimi (otonom agent)
+        _scheduler.add_job(lambda: _with_app(app, _otonom_eslesme), 'interval', hours=6, id='otonom_eslesme')
+
         _scheduler.start()
-        logger.info('[Zamanlayıcı] Başlatıldı — 8 görev aktif')
+        logger.info('[Zamanlayıcı] Başlatıldı — 11 görev aktif')
     except ImportError:
         logger.warning('[Zamanlayıcı] apscheduler yüklü değil, atlanıyor')
     except Exception as e:
@@ -192,3 +201,33 @@ def _otomatik_ogren():
     eklenen = otomatik_ogren()
     if eklenen:
         logger.info(f'[Zamanlayıcı] {eklenen} pattern otomatik öğrenildi')
+
+
+def _otonom_gunluk_ozet():
+    """WhatsApp günlük özet — otonom agent."""
+    try:
+        from app.services.otonom_agent import gunluk_ozet
+        gunluk_ozet()
+        logger.info('[Zamanlayıcı] Otonom günlük özet gönderildi')
+    except Exception as e:
+        logger.error(f'[Zamanlayıcı] Otonom özet hatası: {e}')
+
+
+def _otonom_takip():
+    """Müşteri takip hatırlatma — otonom agent."""
+    try:
+        from app.services.otonom_agent import takip_hatirlatma
+        takip_hatirlatma()
+        logger.info('[Zamanlayıcı] Otonom takip hatırlatması yapıldı')
+    except Exception as e:
+        logger.error(f'[Zamanlayıcı] Otonom takip hatası: {e}')
+
+
+def _otonom_eslesme():
+    """Yeni eşleşme bildirimi — otonom agent."""
+    try:
+        from app.services.otonom_agent import yeni_eslesme_bildirimi
+        yeni_eslesme_bildirimi()
+        logger.info('[Zamanlayıcı] Otonom eşleşme bildirimi yapıldı')
+    except Exception as e:
+        logger.error(f'[Zamanlayıcı] Otonom eşleşme hatası: {e}')

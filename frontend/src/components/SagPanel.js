@@ -49,6 +49,13 @@ const MENU = [
     ],
   },
   {
+    baslik: '🗺 Piyasa & Tahmin',
+    items: [
+      { ikon: '🗺', ad: 'Isı Haritası & Tahmin', tab: 'isi_haritasi', aciklama: 'İlçe bazlı fiyat, talep, getiri analizi + satıcı tahmin' },
+      { ikon: '📍', ad: 'Mahalle Analizi', mesaj: 'Kadıköy Moda mahallesi nasıl?', aciklama: 'AI ile mahalle puanlama, yatırım önerisi' },
+    ],
+  },
+  {
     baslik: '🧮 Hesaplamalar',
     items: [
       { ikon: '🧮', ad: 'Hesaplama Araçları', tab: 'hesaplamalar', aciklama: 'Kira vergisi, ROI, değer artış, aidat analizi' },

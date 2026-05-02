@@ -41,6 +41,7 @@ import Emlakcilar from './Emlakcilar';
 import Gruplar from './Gruplar';
 import GorselAnaliz from './GorselAnaliz';
 import SanalStaging from './SanalStaging';
+import IsiHaritasi from './IsiHaritasi';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -155,6 +156,7 @@ export default function SohbetArayuz() {
       case 'gruplar':      return <div className="sayfa-icerik"><Gruplar /></div>;
       case 'gorsel_analiz': return <div className="sayfa-icerik"><GorselAnaliz /></div>;
       case 'sanal_staging': return <div className="sayfa-icerik"><SanalStaging /></div>;
+      case 'isi_haritasi': return <div className="sayfa-icerik"><IsiHaritasi /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (
