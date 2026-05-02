@@ -146,12 +146,20 @@ def mesaj_gonder():
                         gemini_key = os.environ.get('GEMINI_API_KEY', '')
                         if openai_key:
                             from app.services.asistan import _openai_with_functions as owf
-                            cevap = owf(openai_key, sistem, gecmis, emlakci)
+                            ai_sonuc = owf(openai_key, sistem, gecmis, emlakci)
+                            if isinstance(ai_sonuc, tuple):
+                                cevap, nav_tab = ai_sonuc
+                            else:
+                                cevap = ai_sonuc
                             kullanilan_model = 'openai'
                         elif gemini_key:
                             from app.services.asistan import _gemini_with_functions as gwf
                             try:
-                                cevap = gwf(gemini_key, sistem, gecmis, emlakci)
+                                ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci)
+                                if isinstance(ai_sonuc, tuple):
+                                    cevap, nav_tab = ai_sonuc
+                                else:
+                                    cevap = ai_sonuc
                                 kullanilan_model = 'gemini'
                             except Exception:
                                 cevap = _ai_cevap(metin, gecmis, sistem)

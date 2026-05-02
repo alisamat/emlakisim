@@ -1876,6 +1876,138 @@ _FUNCTIONS = [
             'required': ['ilce'],
         },
     },
+    # ── Görev Yönetimi ──
+    {
+        'name': 'gorev_listele',
+        'description': 'Aktif görevleri, hatırlatmaları ve planları listeler. Filtreleme yapılabilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'durum': {'type': 'string', 'enum': ['bekliyor', 'devam', 'tamamlandi', 'iptal'], 'description': 'Görev durumuna göre filtrele'},
+                'tip': {'type': 'string', 'enum': ['gorev', 'hatirlatma', 'yer_gosterme', 'toplanti'], 'description': 'Görev tipine göre filtrele'},
+            },
+        },
+    },
+    {
+        'name': 'gorev_guncelle',
+        'description': 'Mevcut görevi günceller — durumunu değiştirir (tamamla, iptal et), başlık düzenler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'gorev_id': {'type': 'integer', 'description': 'Görev ID'},
+                'durum': {'type': 'string', 'enum': ['bekliyor', 'devam', 'tamamlandi', 'iptal']},
+                'baslik': {'type': 'string', 'description': 'Yeni başlık (opsiyonel)'},
+            },
+            'required': ['gorev_id'],
+        },
+    },
+    # ── Fatura ──
+    {
+        'name': 'fatura_listele',
+        'description': 'Faturaları listeler. Duruma göre filtrelenebilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'durum': {'type': 'string', 'enum': ['taslak', 'gonderildi', 'odendi', 'iptal'], 'description': 'Fatura durumu filtresi'},
+            },
+        },
+    },
+    # ── Muhasebe ──
+    {
+        'name': 'gelir_gider_ozet',
+        'description': 'Gelir/gider muhasebe özetini verir. Toplam gelir, gider, kâr/zarar.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
+    {
+        'name': 'cari_ozet',
+        'description': 'Cari hesap özetini verir. Alacak, borç bakiyeleri.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
+    # ── Lead Yönetimi ──
+    {
+        'name': 'lead_listele',
+        'description': 'Potansiyel müşteri (lead) listesini getirir. Duruma ve kaynağa göre filtrelenebilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'durum': {'type': 'string', 'enum': ['yeni', 'iletisimde', 'gorusmede', 'kazanildi', 'kaybedildi'], 'description': 'Lead durumu'},
+                'kaynak': {'type': 'string', 'description': 'Lead kaynağı (whatsapp, web, referans vb.)'},
+            },
+        },
+    },
+    # ── Emlakçı Dizini ──
+    {
+        'name': 'emlakci_dizin_ara',
+        'description': 'Emlakçı dizininde arama yapar. İsim, bölge, uzmanlık veya acente ile aranabilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sorgu': {'type': 'string', 'description': 'Arama kelimesi (isim, bölge, acente)'},
+            },
+            'required': ['sorgu'],
+        },
+    },
+    # ── Grup ──
+    {
+        'name': 'grup_bilgi',
+        'description': 'Grup bilgilerini, üyelerini, ayarlarını veya eşleştirme sonuçlarını getirir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'islem': {'type': 'string', 'enum': ['liste', 'uyeler', 'ayarlar', 'eslestirme', 'davetler'], 'description': 'İstenen bilgi türü'},
+            },
+            'required': ['islem'],
+        },
+    },
+    # ── Export ──
+    {
+        'name': 'veri_indir',
+        'description': 'Veriyi Excel veya ZIP olarak indirme linki verir. Portföy, müşteri veya tüm veri indirilebilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'tip': {'type': 'string', 'enum': ['portfoy', 'musteri', 'tumu'], 'description': 'İndirilecek veri tipi'},
+                'format': {'type': 'string', 'enum': ['excel', 'zip'], 'description': 'Dosya formatı'},
+            },
+            'required': ['tip'],
+        },
+    },
+    # ── Hesaplamalar ──
+    {
+        'name': 'tapu_masrafi_hesapla',
+        'description': 'Tapu devir masrafını hesaplar.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'satis_bedeli': {'type': 'number', 'description': 'Satış bedeli TL'},
+            },
+            'required': ['satis_bedeli'],
+        },
+    },
+    {
+        'name': 'komisyon_hesapla',
+        'description': 'Emlakçı komisyonu hesaplar.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'islem_turu': {'type': 'string', 'enum': ['satis', 'kira'], 'description': 'İşlem türü'},
+                'bedel': {'type': 'number', 'description': 'Satış bedeli veya kira tutarı TL'},
+            },
+            'required': ['islem_turu', 'bedel'],
+        },
+    },
+    # ── Sayfa Navigasyonu ──
+    {
+        'name': 'sayfa_ac',
+        'description': 'Uygulama içinde bir sayfayı açar. Müşteriler, portföy, muhasebe, takvim, ayarlar vb.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sayfa': {'type': 'string', 'enum': ['musteriler', 'mulkler', 'muhasebe', 'planlama', 'takvim', 'ayarlar', 'faturalar', 'cariler', 'leadler', 'eslestirme', 'gruplar', 'emlakcilar', 'hesaplamalar', 'isi_haritasi', 'gorsel_analiz', 'sanal_staging', 'belgeler', 'toplu', 'yedekleme', 'ekip', 'performans'], 'description': 'Açılacak sayfa'},
+            },
+            'required': ['sayfa'],
+        },
+    },
 ]
 
 def _ai_function_call(fonksiyon_adi, args, emlakci):
@@ -1959,6 +2091,139 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
 
     if fonksiyon_adi == 'mahalle_analiz':
         return _mahalle_analiz(args)
+
+    if fonksiyon_adi == 'gorev_listele':
+        from app.models.planlama import Gorev
+        sorgu = Gorev.query.filter_by(emlakci_id=emlakci.id)
+        if args.get('durum'):
+            sorgu = sorgu.filter(Gorev.durum == args['durum'])
+        else:
+            sorgu = sorgu.filter(Gorev.durum != 'tamamlandi')
+        if args.get('tip'):
+            sorgu = sorgu.filter(Gorev.tip == args['tip'])
+        gorevler = sorgu.order_by(Gorev.olusturma.desc()).limit(15).all()
+        if not gorevler:
+            return '📅 Görev bulunamadı.'
+        satirlar = [f'*{i+1}.* {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik} — {g.durum or "bekliyor"}' for i, g in enumerate(gorevler)]
+        return f'📅 *Görevler ({len(gorevler)}):*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'gorev_guncelle':
+        from app.models.planlama import Gorev
+        g = Gorev.query.filter_by(id=args.get('gorev_id'), emlakci_id=emlakci.id).first()
+        if not g:
+            return '⚠️ Görev bulunamadı.'
+        if args.get('durum'):
+            g.durum = args['durum']
+        if args.get('baslik'):
+            g.baslik = args['baslik']
+        db.session.commit()
+        return f'✅ Görev güncellendi: {g.baslik} → {g.durum}'
+
+    if fonksiyon_adi == 'fatura_listele':
+        from app.models.fatura import Fatura
+        sorgu = Fatura.query.filter_by(emlakci_id=emlakci.id)
+        if args.get('durum'):
+            sorgu = sorgu.filter(Fatura.durum == args['durum'])
+        faturalar = sorgu.order_by(Fatura.olusturma.desc()).limit(10).all()
+        if not faturalar:
+            return '🧾 Fatura bulunamadı.'
+        satirlar = [f'*{i+1}.* {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for i, f in enumerate(faturalar)]
+        return f'🧾 *Faturalar ({len(faturalar)}):*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'gelir_gider_ozet':
+        return _muhasebe_rapor(emlakci)
+
+    if fonksiyon_adi == 'cari_ozet':
+        return _cari_rapor(emlakci)
+
+    if fonksiyon_adi == 'lead_listele':
+        from app.models.lead import Lead
+        sorgu = Lead.query.filter_by(emlakci_id=emlakci.id)
+        if args.get('durum'):
+            sorgu = sorgu.filter(Lead.durum == args['durum'])
+        if args.get('kaynak'):
+            sorgu = sorgu.filter(Lead.kaynak.ilike(f'%{args["kaynak"]}%'))
+        leadler = sorgu.order_by(Lead.olusturma.desc()).limit(10).all()
+        if not leadler:
+            return '🎯 Lead bulunamadı.'
+        satirlar = [f'*{i+1}.* {l.ad_soyad} — {l.telefon or "?"} · {l.durum} · {l.kaynak or "?"}' for i, l in enumerate(leadler)]
+        return f'🎯 *Leadler ({len(leadler)}):*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'emlakci_dizin_ara':
+        from app.models.grup import EmlakciDizin
+        s = args.get('sorgu', '')
+        kayitlar = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).filter(
+            db.or_(EmlakciDizin.ad_soyad.ilike(f'%{s}%'), EmlakciDizin.bolge.ilike(f'%{s}%'), EmlakciDizin.acente.ilike(f'%{s}%'))
+        ).limit(10).all()
+        if not kayitlar:
+            return f'📒 "{s}" ile eşleşen emlakçı bulunamadı.'
+        satirlar = [f'*{i+1}.* {e.ad_soyad} — {e.telefon or "?"} · {e.bolge or "?"}' for i, e in enumerate(kayitlar)]
+        return f'📒 *Emlakçı Dizini — "{s}":*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'grup_bilgi':
+        islem = args.get('islem', 'liste')
+        if islem == 'liste':
+            return _grup_komut('grup_liste', emlakci, '', {})
+        elif islem == 'uyeler':
+            return _grup_komut('grup_uyeleri', emlakci, '', {})
+        elif islem == 'ayarlar':
+            return _grup_komut('grup_ayar', emlakci, '', {})
+        elif islem == 'eslestirme':
+            return _grup_komut('grup_esles', emlakci, '', {})
+        elif islem == 'davetler':
+            return _grup_komut('grup_davet', emlakci, '', {})
+        return _grup_komut('grup_liste', emlakci, '', {})
+
+    if fonksiyon_adi == 'veri_indir':
+        tip = args.get('tip', 'tumu')
+        fmt = args.get('format', 'excel')
+        if tip == 'portfoy':
+            sayi = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
+            return f'📥 *Portföy Excel hazır!* ({sayi} mülk)\n\n[📥 İndir](/api/panel/yedek/portfoy-excel)'
+        elif tip == 'musteri':
+            sayi = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
+            return f'📥 *Müşteri Excel hazır!* ({sayi} müşteri)\n\n[📥 İndir](/api/panel/yedek/musteri-excel)'
+        else:
+            url = '/api/panel/yedek/indir' + ('?format=zip' if fmt == 'zip' else '')
+            return f'📥 *Tüm veri {"ZIP" if fmt == "zip" else "Excel"} hazır!*\n\n[📥 İndir]({url})'
+
+    if fonksiyon_adi == 'tapu_masrafi_hesapla':
+        from app.services.hesaplama import tapu_masrafi
+        s = tapu_masrafi(float(args.get('satis_bedeli', 0)))
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.')
+        return (f'🏛 *Tapu Masrafı*\n\n'
+                f'Satış bedeli: {f_tl(s["satis_bedeli"])} TL\n'
+                f'Alıcı harcı: {f_tl(s["alici_harci"])} TL\n'
+                f'Satıcı harcı: {f_tl(s["satici_harci"])} TL\n'
+                f'DASK: {f_tl(s["dask"])} TL\n'
+                f'Döner sermaye: {f_tl(s["doner_sermaye"])} TL\n'
+                f'*Toplam: {f_tl(s["toplam_masraf"])} TL*')
+
+    if fonksiyon_adi == 'komisyon_hesapla':
+        from app.services.hesaplama import komisyon_hesapla
+        s = komisyon_hesapla(args.get('islem_turu', 'satis'), float(args.get('bedel', 0)))
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.')
+        return (f'💰 *{s["islem"]} Komisyonu*\n\n'
+                f'Bedel: {f_tl(s["bedel"])} TL\n'
+                f'Oran: {s["oran"]}\n'
+                f'Komisyon: {f_tl(s["komisyon"])} TL\n'
+                f'KDV: {f_tl(s["kdv"])} TL\n'
+                f'*Toplam: {f_tl(s["toplam"])} TL*')
+
+    if fonksiyon_adi == 'sayfa_ac':
+        sayfa = args.get('sayfa', 'musteriler')
+        sayfa_adlari = {
+            'musteriler': '👥 Müşteriler', 'mulkler': '🏢 Portföy', 'muhasebe': '💰 Muhasebe',
+            'planlama': '📅 Planlama', 'takvim': '📅 Takvim', 'ayarlar': '⚙️ Ayarlar',
+            'faturalar': '🧾 Faturalar', 'cariler': '📒 Cariler', 'leadler': '🎯 Leadler',
+            'eslestirme': '🔗 Eşleştirme', 'gruplar': '👥 Gruplar', 'emlakcilar': '📒 Emlakçı Dizini',
+            'hesaplamalar': '🧮 Hesaplamalar', 'isi_haritasi': '🗺 Isı Haritası',
+            'gorsel_analiz': '📸 Görsel Analiz', 'sanal_staging': '🪑 Sanal Staging',
+            'belgeler': '📄 Belgeler', 'toplu': '📦 Toplu İşlem', 'yedekleme': '💾 Yedekleme',
+            'ekip': '👔 Ekip', 'performans': '🏆 Performans',
+        }
+        ad = sayfa_adlari.get(sayfa, sayfa)
+        return (f'{ad} sayfası açılıyor...', sayfa)
 
     return None
 
