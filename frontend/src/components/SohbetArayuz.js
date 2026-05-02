@@ -115,7 +115,7 @@ export default function SohbetArayuz() {
       .catch(() => {
         setMesajlar(p => [...p, { rol: 'assistant', icerik: 'Bir hata oluştu.', olusturma: new Date().toISOString() }]);
       });
-  }, [sohbetId]);
+  }, [sohbetId, openTab]);
 
   const renderCenter = () => {
     switch (activeTab) {
