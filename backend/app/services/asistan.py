@@ -170,6 +170,13 @@ _PATTERNS = [
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    # ── Hava Durumu ──
+    (r'(?:hava|hava\s*durumu)\s*(?:nasil|nasıl|ne)',                  'hava_durumu_cmd'),
+    (r'(?:yarin|yarın|bugun|bugün).*(?:hava|yagmur|yağmur)',         'hava_durumu_cmd'),
+    (r'(?:gosterim|gösterim).*(?:hava|uygun)',                        'hava_durumu_cmd'),
+    # ── Haberler ──
+    (r'(?:emlak|sektor|sektör)\s*(?:haber|gelisme|gelişme)',          'haber_cmd'),
+    (r'(?:piyasa|market)\s*(?:haber|durum|ne\s*oldu)',               'haber_cmd'),
     # ── Web Sayfası ──
     (r'(?:web\s*sayfa|sayfa)\s*(?:link|adres|url)',                   'web_sayfa_link'),
     (r'(?:web\s*sayfa|portfoy\s*sayfa|ilan\s*sayfa)\s*(?:aç|ac|göster|goster)', 'web_sayfa_link'),
@@ -503,6 +510,22 @@ def _komut_calistir(komut, emlakci, metin, session):
         session['son_offset'] = 10
         sonuc, liste = _mulk_listele(emlakci, session)
         return sonuc
+
+    if komut == 'hava_durumu_cmd':
+        from app.services.hava_durumu import hava_getir, hava_formatla
+        # Şehir çıkar
+        import re as _re
+        sehir = 'istanbul'
+        m = _re.search(r'(istanbul|ankara|izmir|antalya|bursa|adana|konya|trabzon|mersin|bodrum|kadikoy|kadıköy|besiktas|beşiktaş|atasehir|ataşehir)', metin.lower())
+        if m:
+            sehir = m.group(1)
+        sonuc = hava_getir(sehir)
+        return hava_formatla(sonuc)
+
+    if komut == 'haber_cmd':
+        from app.services.haberler import emlak_haberleri, haber_formatla
+        sonuc = emlak_haberleri()
+        return haber_formatla(sonuc)
 
     if komut == 'web_sayfa_link':
         import os
@@ -2526,6 +2549,42 @@ _FUNCTIONS = [
             'required': ['islem'],
         },
     },
+    # ── Hava Durumu ──
+    {
+        'name': 'hava_durumu',
+        'description': 'Hava durumu sorgular. "Yarın hava nasıl?", "İstanbul hava durumu", "gösterim için hava uygun mu?" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'sehir': {'type': 'string', 'description': 'Şehir veya ilçe adı (varsayılan: İstanbul)'},
+                'gun': {'type': 'integer', 'description': 'Kaç günlük tahmin (1-7, varsayılan: 3)'},
+            },
+        },
+    },
+    # ── Çeviri ──
+    {
+        'name': 'cevir',
+        'description': 'Metni başka dile çevirir. "Bu ilanı Arapçaya çevir", "İngilizce çeviri yap" gibi. Yabancı müşteriler için ilan/mesaj çevirisi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'metin': {'type': 'string', 'description': 'Çevrilecek metin'},
+                'hedef_dil': {'type': 'string', 'description': 'Hedef dil: ingilizce, arapca, rusca, almanca, fransizca, farsca, cince'},
+            },
+            'required': ['metin', 'hedef_dil'],
+        },
+    },
+    # ── Haberler ──
+    {
+        'name': 'emlak_haberleri',
+        'description': 'Gerçek emlak sektörü haberlerini getirir. "Emlak haberleri", "piyasa son durum", "sektörde ne oldu" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'konu': {'type': 'string', 'description': 'Arama konusu (varsayılan: emlak piyasası türkiye)'},
+            },
+        },
+    },
     # ── Web Sayfası ──
     {
         'name': 'web_sayfa_bilgi',
@@ -2901,6 +2960,24 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         elif islem == 'davetler':
             return _grup_komut('grup_davet', emlakci, '', {})
         return _grup_komut('grup_liste', emlakci, '', {})
+
+    if fonksiyon_adi == 'hava_durumu':
+        from app.services.hava_durumu import hava_getir, hava_formatla
+        sonuc = hava_getir(args.get('sehir', 'istanbul'), args.get('gun', 3))
+        return hava_formatla(sonuc)
+
+    if fonksiyon_adi == 'cevir':
+        from app.services.ceviri import cevir, DIL_ADLARI
+        sonuc = cevir(args.get('metin', ''), args.get('hedef_dil', 'en'))
+        if sonuc['basarili']:
+            hedef_ad = DIL_ADLARI.get(sonuc['hedef'], sonuc['hedef'])
+            return f'🌐 *{hedef_ad} Çeviri:*\n\n{sonuc["ceviri"]}\n\n_Motor: {sonuc["motor"]}_'
+        return f'⚠️ {sonuc.get("hata", "Çeviri yapılamadı")}'
+
+    if fonksiyon_adi == 'emlak_haberleri':
+        from app.services.haberler import emlak_haberleri, haber_formatla
+        sonuc = emlak_haberleri(args.get('konu', 'emlak piyasası türkiye'))
+        return haber_formatla(sonuc)
 
     if fonksiyon_adi == 'web_sayfa_bilgi':
         import os
@@ -3537,6 +3614,17 @@ GRUP İŞBİRLİĞİ:
 • Emlakçı dizini — dış emlakçı rehberi
 • Gruplar — portföy/talep paylaşımı, grup eşleştirme
 • Grup içi mülk arama — doğal dil ile grup portföylerinden de sonuç gelir
+
+HAVA DURUMU:
+• hava_durumu(sehir, gun) — "yarın hava nasıl?", gösterim için uygunluk bilgisi
+• Türkiye'nin tüm şehirleri desteklenir, Open-Meteo (ücretsiz)
+
+ÇEVİRİ:
+• cevir(metin, hedef_dil) — ilan/mesaj çevirisi (İngilizce, Arapça, Rusça, Almanca, Farsça, Çince)
+• Yabancı müşteriler için ilan metni çevirisi
+
+HABERLER:
+• emlak_haberleri(konu) — gerçek emlak sektörü haberleri (piyasa, düzenleme, faiz)
 
 SESLİ ASİSTAN:
 • Sesle konuşma → otomatik metin → gönder → cevabı sesli oku (Türkçe TTS)
