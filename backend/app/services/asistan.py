@@ -2509,6 +2509,12 @@ _FUNCTIONS = [
             'required': ['islem'],
         },
     },
+    # ── Yedekleme ──
+    {
+        'name': 'yedek_durumu_sorgula',
+        'description': 'Yedekleme durumunu sorgular. En son ne zaman yedek alındı, kaç gün geçti, uyarı var mı.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
     # ── Export ──
     {
         'name': 'veri_indir',
@@ -2872,6 +2878,17 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         elif islem == 'davetler':
             return _grup_komut('grup_davet', emlakci, '', {})
         return _grup_komut('grup_liste', emlakci, '', {})
+
+    if fonksiyon_adi == 'yedek_durumu_sorgula':
+        try:
+            from app.services.yedekleme import yedek_durumu
+            yd = yedek_durumu(emlakci)
+            return (f'💾 *Yedekleme Durumu*\n\n'
+                    f'📅 Son yedek: {yd.get("son_yedek", "Hiç alınmadı")}\n'
+                    f'{"🟢" if not yd.get("uyari") else "🔴"} {yd.get("mesaj", "Bilgi yok")}\n\n'
+                    '_"Tüm veriyi excel indir" veya "zip indir" yazarak yedek alabilirsiniz._')
+        except Exception:
+            return '💾 Yedekleme bilgisi alınamadı.'
 
     if fonksiyon_adi == 'veri_indir':
         tip = args.get('tip', 'tumu')
@@ -3493,8 +3510,34 @@ GRUP İŞBİRLİĞİ:
 SESLİ ASİSTAN:
 • Sesle konuşma → otomatik metin → gönder → cevabı sesli oku (Türkçe TTS)
 
-SAYFA NAVİGASYONU:
-• sayfa_ac(sayfa) — "müşterileri aç", "takvime git", "ayarlara git" gibi komutlarla sayfa açma
+YEDEKLEME:
+• yedek_durumu_sorgula() — son yedek tarihi, kaç gün geçti, uyarı var mı
+• Yedekleme sayfası: Excel/JSON export, email ile gönderim, yedek geçmişi
+• "ne zaman yedek aldım", "son yedek", "yedekleme durumu" → yedek bilgisi ver
+
+UYGULAMA SAYFALARI (sayfa_ac ile açılabilir):
+• musteriler — Müşteri listesi, ekleme, düzenleme, filtreleme, detay kartı
+• mulkler — Portföy listesi, fotoğraf galerisi, mülk detay sayfası (sahibinden kalitesinde)
+• muhasebe — Gelir/gider kayıtları, fiş OCR, kategori dağılımı
+• planlama — Görev yönetimi, öncelik, durum takibi
+• takvim — Aylık takvim görünümü
+• faturalar — Fatura oluştur, takip et, PDF indir
+• cariler — Müşteri borç/alacak takibi
+• leadler — Potansiyel müşteri takibi ve durum
+• eslestirme — Müşteri-mülk otomatik eşleştirme ve puanlama
+• gruplar — İşbirliği grupları, portföy/talep paylaşımı
+• emlakcilar — Dış emlakçı rehberi
+• hesaplamalar — Kira vergisi, ROI, değer artış, tapu masrafı, komisyon
+• isi_haritasi — İlçe bazlı fiyat, talep, getiri analizi + satıcı tahmin
+• gorsel_analiz — Fotoğraftan konut değerleme, durum puanı
+• sanal_staging — Boş odayı mobilyalı göster
+• belgeler — Yer gösterme, kontrat, yönlendirme, broşür PDF
+• toplu — Excel/fotoğraf/rehberden toplu veri aktarımı
+• yedekleme — Excel/ZIP export, email ile gönderim, yedek geçmişi
+• ekip — Ofis danışmanları ve müşteri ataması
+• performans — KPI, gelir, sektör analizi
+• ayarlar — Profil, logo, tema, AI tonu, asistan ismi, grup ayarları
+• kredi — Kredi satın alma paneli (Kuveyt Türk 3D Secure ödeme)
 
 ══════════════════════════════════════
 DAVRANIŞ KURALLARI:
