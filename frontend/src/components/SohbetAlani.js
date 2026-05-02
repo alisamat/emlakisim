@@ -195,11 +195,12 @@ function satirIciBicimle(text) {
         >{label}</button>
       );
     }
-    // *bold* + _italic_ + `code`
-    return <span key={i}>{part.split(/(\*[^*]+\*|_[^_]+_|`[^`]+`)/).map((p, j) => {
+    // *bold* + _italic_ + `code` + URL link
+    return <span key={i}>{part.split(/(\*[^*]+\*|_[^_]+_|`[^`]+`|https?:\/\/[^\s]+)/).map((p, j) => {
       if (p.startsWith('*') && p.endsWith('*')) return <strong key={j} style={{ color: '#0f172a' }}>{p.slice(1, -1)}</strong>;
       if (p.startsWith('_') && p.endsWith('_')) return <em key={j} style={{ color: '#64748b' }}>{p.slice(1, -1)}</em>;
       if (p.startsWith('`') && p.endsWith('`')) return <code key={j} style={{ background: '#f1f5f9', padding: '1px 4px', borderRadius: 4, fontSize: 12, color: '#dc2626' }}>{p.slice(1, -1)}</code>;
+      if (p.match(/^https?:\/\//)) return <a key={j} href={p} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline', wordBreak: 'break-all' }}>{p}</a>;
       return p;
     })}</span>;
   });
