@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 
 const PAKETLER = [
-  { id: 'temel', ad: 'Temel Paket', kredi: 3000, usd: 8, aciklama: 'Küçük projeler için' },
-  { id: 'standart', ad: 'Standart Paket', kredi: 12000, usd: 32, aciklama: 'Orta ölçekli projeler için', populer: true },
-  { id: 'profesyonel', ad: 'Profesyonel Paket', kredi: 30000, usd: 80, aciklama: 'Yoğun kullanım için' },
-  { id: 'kurumsal', ad: 'Kurumsal Paket', kredi: 120000, usd: 320, aciklama: 'Büyük ölçekli projeler için' },
+  { id: 'temel', ad: 'Temel Paket', kredi: 3000, fiyat: 250, aciklama: 'Başlangıç için' },
+  { id: 'standart', ad: 'Standart Paket', kredi: 12000, fiyat: 800, aciklama: 'Aktif kullanım için', populer: true },
+  { id: 'profesyonel', ad: 'Profesyonel Paket', kredi: 30000, fiyat: 1800, aciklama: 'Yoğun kullanım için' },
+  { id: 'kurumsal', ad: 'Kurumsal Paket', kredi: 120000, fiyat: 6000, aciklama: 'Büyük ofisler için' },
 ];
-
-const KURU = 37.65; // USD/TRY tahmini
 
 export default function KrediPanel({ acik, onKapat, kredi }) {
   const [tab, setTab] = useState('genel');
@@ -17,6 +15,9 @@ export default function KrediPanel({ acik, onKapat, kredi }) {
   });
   const [faturalar] = useState([]);
   const [maliyet, setMaliyet] = useState(null);
+  const [secilenPaket, setSecilenPaket] = useState(null);
+  const [kartForm, setKartForm] = useState({ kart_sahibi: '', kart_no: '', kart_ay: '', kart_yil: '', kart_cvv: '' });
+  const [odemeYuk, setOdemeYuk] = useState(false);
 
   useEffect(() => {
     if (acik) {
@@ -27,11 +28,28 @@ export default function KrediPanel({ acik, onKapat, kredi }) {
   if (!acik) return null;
 
   const f = v => Number(v || 0).toLocaleString('tr-TR');
-  const tryFiyat = usd => (usd * KURU).toFixed(2);
-  const kdvliFiyat = usd => (usd * KURU * 1.20).toFixed(2);
 
-  const satirAl = (paket) => {
-    alert(`${paket.ad} — ${paket.kredi} kredi\n\nÖdeme entegrasyonu yakında aktif olacaktır.\n\nFiyat: ${tryFiyat(paket.usd)} TL (KDV Dahil ${kdvliFiyat(paket.usd)} TL)`);
+  const odemeBaslat = async () => {
+    if (!secilenPaket) return;
+    if (!kartForm.kart_sahibi || !kartForm.kart_no || !kartForm.kart_ay || !kartForm.kart_yil || !kartForm.kart_cvv) {
+      alert('Tüm kart bilgilerini doldurun'); return;
+    }
+    setOdemeYuk(true);
+    try {
+      const r = await api.post('/api/odeme/kuveytturk/init', {
+        paket_id: secilenPaket.id, ...kartForm,
+      });
+      // 3D Secure HTML'i yeni pencerede aç
+      const w = window.open('', '_blank', 'width=500,height=600');
+      if (w) {
+        w.document.write(r.data.html);
+        w.document.close();
+      } else {
+        alert('Pop-up engellendi. Lütfen pop-up engelleyiciyi kapatın.');
+      }
+    } catch (e) {
+      alert(e.response?.data?.message || 'Ödeme başlatılamadı');
+    } finally { setOdemeYuk(false); }
   };
 
   return (
@@ -95,9 +113,9 @@ export default function KrediPanel({ acik, onKapat, kredi }) {
                 💳 Tüm ödemeler güvenli ödeme sistemi üzerinden gerçekleşir
               </div>
               {PAKETLER.map(p => (
-                <div key={p.id} style={{
-                  background: 'var(--bg-card)', borderRadius: 12, padding: 16, marginBottom: 10,
-                  border: `2px solid ${p.populer ? '#16a34a' : 'var(--border, #e2e8f0)'}`,
+                <div key={p.id} onClick={() => setSecilenPaket(p)} style={{
+                  background: 'var(--bg-card)', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer',
+                  border: `2px solid ${secilenPaket?.id === p.id ? '#16a34a' : p.populer ? '#bbf7d0' : 'var(--border, #e2e8f0)'}`,
                   position: 'relative',
                 }}>
                   {p.populer && <div style={{ position: 'absolute', top: -10, right: 16, background: '#16a34a', color: '#fff', borderRadius: 12, padding: '2px 12px', fontSize: 11, fontWeight: 700 }}>En Popüler</div>}
@@ -105,18 +123,41 @@ export default function KrediPanel({ acik, onKapat, kredi }) {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 15 }}>{p.ad}</div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: '#16a34a' }}>{f(p.kredi)} <span style={{ fontSize: 12, fontWeight: 400 }}>kredi</span></div>
-                      <div style={{ fontSize: 11, color: '#64748b' }}>⏰ 365 gün geçerli</div>
-                      <div style={{ fontSize: 13, marginTop: 4 }}>
-                        <strong>{f(parseFloat(tryFiyat(p.usd)))} TL</strong>
-                        <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 4 }}>(KDV Dahil {f(parseFloat(kdvliFiyat(p.usd)))})</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: '#94a3b8' }}>({`$${p.usd} USD`})</div>
-                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{p.aciklama}</div>
+                      <div style={{ fontSize: 13, marginTop: 4 }}><strong>{f(p.fiyat)} TL</strong></div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{p.aciklama} · ⏰ 365 gün geçerli</div>
                     </div>
-                    <button onClick={() => satirAl(p)} className="btn-yesil" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>Satın Al</button>
+                    <div style={{ width: 24, height: 24, borderRadius: 12, border: `2px solid ${secilenPaket?.id === p.id ? '#16a34a' : '#cbd5e1'}`, background: secilenPaket?.id === p.id ? '#16a34a' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {secilenPaket?.id === p.id && <span style={{ color: '#fff', fontSize: 14 }}>✓</span>}
+                    </div>
                   </div>
                 </div>
               ))}
+
+              {/* Kart Formu */}
+              {secilenPaket && (
+                <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginTop: 12, border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>💳 Kart Bilgileri — {secilenPaket.ad} ({f(secilenPaket.fiyat)} TL)</div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label className="etiket">Kart Üzerindeki İsim</label>
+                    <input className="input" value={kartForm.kart_sahibi} onChange={e => setKartForm(p => ({ ...p, kart_sahibi: e.target.value }))} placeholder="AD SOYAD" />
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label className="etiket">Kart Numarası</label>
+                    <input className="input" value={kartForm.kart_no} onChange={e => setKartForm(p => ({ ...p, kart_no: e.target.value.replace(/\D/g, '').slice(0, 16) }))} placeholder="1234 5678 9012 3456" maxLength={16} />
+                  </div>
+                  <div className="grid-2" style={{ marginBottom: 10, gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ flex: 1 }}><label className="etiket">Ay</label><input className="input" value={kartForm.kart_ay} onChange={e => setKartForm(p => ({ ...p, kart_ay: e.target.value.replace(/\D/g, '').slice(0, 2) }))} placeholder="MM" maxLength={2} /></div>
+                      <div style={{ flex: 1 }}><label className="etiket">Yıl</label><input className="input" value={kartForm.kart_yil} onChange={e => setKartForm(p => ({ ...p, kart_yil: e.target.value.replace(/\D/g, '').slice(0, 2) }))} placeholder="YY" maxLength={2} /></div>
+                    </div>
+                    <div><label className="etiket">CVV</label><input className="input" type="password" value={kartForm.kart_cvv} onChange={e => setKartForm(p => ({ ...p, kart_cvv: e.target.value.replace(/\D/g, '').slice(0, 3) }))} placeholder="***" maxLength={3} /></div>
+                  </div>
+                  <button className="btn-yesil" onClick={odemeBaslat} disabled={odemeYuk} style={{ width: '100%', fontSize: 14, padding: 12 }}>
+                    {odemeYuk ? '⏳ İşleniyor...' : `💳 ${f(secilenPaket.fiyat)} TL Öde — ${f(secilenPaket.kredi)} Kredi`}
+                  </button>
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 8, textAlign: 'center' }}>🔒 256-bit SSL ile güvenli ödeme · Kuveyt Türk 3D Secure</div>
+                </div>
+              )}
             </>
           )}
 

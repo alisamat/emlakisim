@@ -99,7 +99,11 @@ export default function SohbetArayuz() {
   }, []);
 
   const openTab = useCallback((tab) => {
-    setActiveTab(tab);
+    if (tab === 'kredi') {
+      setKrediPanelAcik(true);
+    } else {
+      setActiveTab(tab);
+    }
     setSagAcik(false);
   }, []);
 
