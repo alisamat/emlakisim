@@ -121,10 +121,11 @@ def musteri_sil(mid):
     ]
     for sorgu in iliskili_sorgular:
         try:
-            db.session.begin_nested()
+            savepoint = db.session.begin_nested()
             db.session.execute(text(sorgu), {'mid': mid})
+            savepoint.commit()
         except Exception:
-            pass  # tablo yoksa atla
+            savepoint.rollback()  # tablo yoksa atla, transaction temiz kalsın
     db.session.delete(m)
     db.session.commit()
     return jsonify({'ok': True})
