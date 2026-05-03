@@ -163,7 +163,7 @@ def mulkler():
 @jwt_required()
 def mulk_ekle():
     d = request.get_json() or {}
-    _temel = ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar']
+    _temel = ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar', 'musteri_id']
     m = Mulk(emlakci_id=_eid(), **{k: d.get(k) for k in _temel if d.get(k) is not None})
     if d.get('detaylar'):
         m.detaylar = d['detaylar']
@@ -176,7 +176,7 @@ def mulk_ekle():
 def mulk_guncelle(mid):
     m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
-    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar', 'grup']:
+    for f in ['baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi', 'ada', 'parsel', 'notlar', 'grup', 'musteri_id']:
         if f in d:
             setattr(m, f, d[f])
     if 'detaylar' in d:

@@ -105,10 +105,17 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
   const [form, setForm] = useState({
     baslik: '', adres: '', sehir: '', ilce: '', tip: 'daire', islem_turu: 'kira',
     fiyat: '', metrekare: '', oda_sayisi: '', ada: '', parsel: '', notlar: '',
+    musteri_id: '',
     ...(duzenle || {}),
   });
   const [detay, setDetay] = useState(duzenle?.detaylar || {});
   const [detayAcik, setDetayAcik] = useState(false);
+  const [musteriler, setMusteriler] = useState([]);
+
+  // Müşteri listesini yükle (sahip seçimi için)
+  React.useEffect(() => {
+    api.get('/api/panel/musteriler').then(r => setMusteriler(r.data.musteriler || [])).catch(() => {});
+  }, []);
   const [yukleniyor, setYuk] = useState(false);
   const d = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const dd = (key, val) => setDetay(p => ({ ...p, [key]: val }));
@@ -116,7 +123,7 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
   const kaydet = async e => {
     e.preventDefault(); setYuk(true);
     try {
-      const payload = { ...form, detaylar: detay };
+      const payload = { ...form, detaylar: detay, musteri_id: form.musteri_id ? parseInt(form.musteri_id) : null };
       let r;
       if (duzenle?.id) r = await api.put(`/api/panel/mulkler/${duzenle.id}`, payload);
       else r = await api.post('/api/panel/mulkler', payload);
@@ -162,9 +169,21 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
           <div><label className="etiket">Fiyat (TL)</label><input className="input" name="fiyat" type="number" value={form.fiyat || ''} onChange={d} /></div>
           <div><label className="etiket">Oda Sayısı</label><input className="input" name="oda_sayisi" value={form.oda_sayisi || ''} onChange={d} placeholder="3+1" /></div>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label className="etiket">Grup</label>
-          <input className="input" name="grup" value={form.grup || ''} onChange={d} placeholder="Premium, Acil Satılık, Yatırımlık..." />
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div>
+            <label className="etiket">Mülk Sahibi 🔒</label>
+            <select className="input" name="musteri_id" value={form.musteri_id || ''} onChange={d}>
+              <option value="">— Seçilmedi —</option>
+              {musteriler.map(m => (
+                <option key={m.id} value={m.id}>{m.ad_soyad}{m.kunye ? ` (${m.kunye})` : ''} — {m.telefon || 'tel yok'}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 10, color: '#f59e0b', marginTop: 2 }}>🔒 Sahip bilgisi asla paylaşılmaz</div>
+          </div>
+          <div>
+            <label className="etiket">Grup</label>
+            <input className="input" name="grup" value={form.grup || ''} onChange={d} placeholder="Premium, Acil Satılık, Yatırımlık..." />
+          </div>
         </div>
 
         {/* Dinamik detay alanları */}
@@ -253,6 +272,16 @@ function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
           {m.notlar && (
             <div style={{ marginTop: 16, padding: 14, background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a', fontSize: 13 }}>
               📝 <strong>Notlar:</strong> {m.notlar}
+            </div>
+          )}
+
+          {/* Mülk Sahibi (gizli — sadece emlakçı görür) */}
+          {m.sahip_ad && (
+            <div style={{ marginTop: 12, padding: 12, background: '#fef3c7', borderRadius: 8, border: '1px solid #fde68a' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🔒 Mülk Sahibi (gizli)</div>
+              <div style={{ fontSize: 13 }}>👤 {m.sahip_ad}</div>
+              {m.sahip_tel && <div style={{ fontSize: 13 }}>📞 {m.sahip_tel}</div>}
+              <div style={{ fontSize: 10, color: '#b45309', marginTop: 4 }}>Bu bilgi sadece size görünür — paylaşımlarda gizlenir</div>
             </div>
           )}
 
