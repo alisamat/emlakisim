@@ -35,7 +35,7 @@ INTENT_TANIMLARI = {
     # Görev
     'gorev_liste': 'görevleri listele görevlerim ne var yapılacaklar aktif görevler görev listesi',
     # Not
-    'not_liste': 'notlar notları göster listele notlarım not listesi kayıtlı notlar',
+    'not_liste': 'notları göster notları listele notlarım kayıtlı notlarımı göster mevcut notları getir',
     'hatirlatma_liste': 'hatırlatmalar ne var neyi unutmamam lazım hatırlatma listesi',
     # Muhasebe
     'muhasebe_rapor': 'gelir gider kar zarar muhasebe ne kadar kazandım harcadım muhasebe raporu mali durum',
@@ -143,13 +143,23 @@ def _cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-def intent_bul(metin, threshold=0.45):
+def intent_bul(metin, threshold=0.55):
     """
     Kullanıcı mesajından intent bul.
+    Yazma komutları (ekle/sil/güncelle) → None döndür, AI çözsün.
 
     Returns:
         (komut_adi, benzerlik_skoru) veya None
     """
+    # Yazma komutu mu? → AI function calling çözsün
+    metin_lower = metin.lower()
+    yazma_fiilleri = ['ekle', 'kaydet', 'oluştur', 'olustur', 'sil', 'kaldır', 'kaldir',
+                      'güncelle', 'guncelle', 'değiştir', 'degistir', 'düzenle', 'duzenle']
+    if any(f in metin_lower for f in yazma_fiilleri):
+        # QR ve excel hariç (bunlar yazma değil)
+        if not any(k in metin_lower for k in ['qr', 'excel', 'zip', 'indir']):
+            return None
+
     # Embedding cache yükle
     _komut_embeddingler_yukle()
 
