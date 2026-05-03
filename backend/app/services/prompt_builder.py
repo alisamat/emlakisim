@@ -63,6 +63,8 @@ Bilgi yeterliyse hemen yap, gereksiz soru sorma."""
 KATEGORI_PROMPTLARI = {
     'musteri': """
 MÜŞTERİ İŞLEMLERİ:
+DİKKAT: "müşterimize ekle", "müşteri kaydet", "arıyor", "arayışı var", "talep ediyor" → MÜŞTERİ ekle (mulk_ekle DEĞİL!).
+"kiralık daire arıyor" = müşteri talebi. "kiralık daire ilan ekle" = mülk ekle. Farkı anla.
 Müşteri eklerken şu alanları doğal dilden çıkar:
 - ad_soyad (zorunlu), telefon, islem_turu (kira/satis)
 - butce_min, butce_max (TL — "30K"=30000, "1.5M"=1500000)

@@ -3606,6 +3606,7 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None)
     messages = [{'role': 'system', 'content': sistem}] + gecmis
     tum_sonuclar = []
     nav = None
+    cagrilan_fonksiyonlar = set()  # Tekrar engelleme
 
     # Max 3 tur — koşullu zincirleme için
     for tur in range(3):
@@ -3620,18 +3621,22 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None)
         msg = r.choices[0].message
 
         if not msg.tool_calls:
-            # AI fonksiyon çağırmadı — metin cevabı döndür
             if tum_sonuclar:
-                # Fonksiyon sonuçları yeterli — AI'ın tekrar yazmasına gerek yok
                 birlesik = '\n\n'.join(tum_sonuclar)
                 return (birlesik, nav) if nav else birlesik
             return msg.content
 
-        # Fonksiyon çağrılarını işle
-        messages.append(msg)  # AI'ın tool_calls mesajını ekle
+        messages.append(msg)
 
         for tc in msg.tool_calls:
             args = json.loads(tc.function.arguments)
+
+            # Yazma fonksiyonları tekrar çağrılmasın
+            fonk_key = f'{tc.function.name}:{json.dumps(args, sort_keys=True)}'
+            if fonk_key in cagrilan_fonksiyonlar:
+                messages.append({'role': 'tool', 'tool_call_id': tc.id, 'content': 'Bu işlem zaten yapıldı.'})
+                continue
+            cagrilan_fonksiyonlar.add(fonk_key)
             sonuc = _ai_function_call(tc.function.name, args, emlakci)
 
             if isinstance(sonuc, tuple):

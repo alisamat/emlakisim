@@ -20,19 +20,22 @@ logger = logging.getLogger(__name__)
 KATEGORILER = {
     'musteri': {
         'ornekler': [
-            'müşteri ekle kaydet yeni müşteri oluştur',
+            'müşteri ekle kaydet yeni müşteri oluştur müşterimize ekle',
             'müşteri listele göster müşterilerim kimler',
             'müşterilerde ara bul isim telefon ile',
             'müşteri analiz ciddi mi doğum günü',
             'müşteriye uygun mülk eşleşme bul',
+            'kiralık daire arıyor satılık ev arıyor müşteri talebi',
+            'bütçesi şu kadar oda sayısı istiyor istemiyor tercih',
+            'müşteri kaydı arayışı var talep ediyor arayan kişi',
         ],
     },
     'mulk': {
         'ornekler': [
-            'mülk ekle ilan portföye kaydet yeni daire villa',
-            'portföy listele mülkler göster ilanlarım',
-            'portföyde ara mülk bul kiralık satılık daire',
-            'elimizde ne var portföydeki mülkler',
+            'mülk ekle ilan portföye kaydet yeni ilan ekle',
+            'portföy listele mülkler göster ilanlarım portföyüm',
+            'portföyde ara mülk bul kiralık satılık daire villa',
+            'elimizde ne var portföydeki mülkler elimizdeki ilanlar',
         ],
     },
     'eslestirme': {
