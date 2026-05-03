@@ -66,6 +66,7 @@ class Musteri(db.Model):
     tercih_notlar = db.Column(db.Text)                  # AI tarafından işlenen tercihler
     sicaklik      = db.Column(db.String(10), default='orta')  # soguk/orta/sicak
     grup          = db.Column(db.String(50))              # kullanıcı tanımlı grup
+    kunye         = db.Column(db.String(100))             # ayırt edici: "Eyyüpteki", "Samilerin", "mimar"
     dogum_tarihi  = db.Column(db.Date)                   # doğum günü takibi için
     detaylar      = db.Column(db.JSON, default=dict)     # tip bazlı dinamik alanlar
     olusturma     = db.Column(db.DateTime, default=datetime.utcnow)

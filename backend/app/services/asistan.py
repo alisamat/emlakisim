@@ -2263,7 +2263,7 @@ def _satis_kapandi(emlakci, args):
 _FUNCTIONS = [
     {
         'name': 'musteri_ekle',
-        'description': 'Yeni müşteri ekler',
+        'description': 'Yeni müşteri ekler. Aynı isimde müşteri varsa uyarır.',
         'parameters': {
             'type': 'object',
             'properties': {
@@ -2272,7 +2272,8 @@ _FUNCTIONS = [
                 'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
                 'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL'},
                 'butce_max': {'type': 'number', 'description': 'Maksimum bütçe TL'},
-                'tercih_notlar': {'type': 'string', 'description': 'Müşteri tercihleri'},
+                'tercih_notlar': {'type': 'string', 'description': 'Müşteri tercihleri (oda sayısı, konum, özel istekler)'},
+                'kunye': {'type': 'string', 'description': 'Ayırt edici künye/lakap (Eyyüpteki, Samilerin, mimar Ahmet gibi)'},
             },
             'required': ['ad_soyad'],
         },
@@ -2808,13 +2809,49 @@ _FUNCTIONS = [
 def _ai_function_call(fonksiyon_adi, args, emlakci):
     """AI'nın çağırdığı fonksiyonu yürüt."""
     if fonksiyon_adi == 'musteri_ekle':
-        m = Musteri(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar')})
+        ad = args.get('ad_soyad', '')
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+
+        # Aynı isimde müşteri kontrolü
+        mevcut = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+            Musteri.ad_soyad.ilike(f'%{ad}%')
+        ).all()
+
+        if mevcut:
+            # Birebir aynı talep kontrolü
+            for m in mevcut:
+                ayni_talep = (
+                    m.islem_turu == args.get('islem_turu') and
+                    m.butce_max == args.get('butce_max') and
+                    (m.tercih_notlar or '') == (args.get('tercih_notlar') or '')
+                )
+                if ayni_talep:
+                    return (f'⚠️ *{ad}* adında aynı talepte müşteri zaten var!\n\n'
+                            f'👤 {m.ad_soyad} (ID: {m.id})\n'
+                            f'🏷 {m.islem_turu or "—"} · 💰 {f_tl(m.butce_max)} TL\n'
+                            f'📝 {m.tercih_notlar or "—"}\n\n'
+                            '_Yine de eklemek istiyorsanız "evet ekle" yazın._')
+
+            # Aynı isim farklı talep — uyar ama ekle
+            uyari = (f'⚠️ *Dikkat:* "{ad}" adında {len(mevcut)} müşteri zaten var:\n')
+            for m in mevcut[:3]:
+                uyari += f'  • {m.ad_soyad} — {m.islem_turu or "?"} · {f_tl(m.butce_max)} TL'
+                if m.tercih_notlar:
+                    uyari += f' · {m.tercih_notlar[:40]}'
+                uyari += '\n'
+            uyari += '\n_Farklı kişiyse ayırt etmek için künye ekleyin (örn: "Eyyüpteki Ahmet")_\n\n'
+        else:
+            uyari = ''
+
+        # Müşteri ekle
+        m = Musteri(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'kunye')})
         db.session.add(m)
         db.session.commit()
-        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+
         islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
-        return (f'✅ *Müşteri eklendi: {m.ad_soyad}*\n\n'
-                f'📞 {m.telefon or "—"}\n'
+        return (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
+                + (f' _({m.kunye})_' if m.kunye else '') +
+                f'\n\n📞 {m.telefon or "—"}\n'
                 f'🏷 {islem}\n'
                 f'💰 Bütçe: {f_tl(m.butce_min)} — {f_tl(m.butce_max)} TL\n'
                 + (f'📝 {m.tercih_notlar}' if m.tercih_notlar else ''))
