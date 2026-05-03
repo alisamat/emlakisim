@@ -128,52 +128,70 @@ def mesaj_gonder():
                     kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
                     kullanilan_model = 'pattern'
                 else:
-                    # 5. AI — önce kredi kontrolü
-                    if not kredi_kontrol(emlakci, 1):
-                        cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
-                        db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
-                        db.session.commit()
-                        return jsonify({
-                            'cevap': cevap,
-                            'kredi_kalan': emlakci.kredi,
-                            'sohbet_id': sohbet.id,
-                            'kredi_yetersiz': True,
-                        }), 200
-
-                    sistem = _sistem_prompt(emlakci, metin)
-                    try:
-                        openai_key = os.environ.get('OPENAI_API_KEY', '')
-                        gemini_key = os.environ.get('GEMINI_API_KEY', '')
-                        if openai_key:
-                            from app.services.asistan import _openai_with_functions as owf
-                            ai_sonuc = owf(openai_key, sistem, gecmis, emlakci)
-                            if isinstance(ai_sonuc, tuple):
-                                cevap, nav_tab = ai_sonuc
+                    # 4.5 Embedding intent eşleştirme
+                    from app.services.intent import intent_bul
+                    intent_sonuc = intent_bul(metin)
+                    if intent_sonuc:
+                        intent_komut, intent_skor = intent_sonuc
+                        # Navigasyon komutları
+                        if intent_komut == 'kredi_panel':
+                            nav_tab = 'kredi'
+                            cevap = '💎 Kredi paneli açılıyor...'
+                        else:
+                            sonuc = _komut_calistir(intent_komut, emlakci, metin, session)
+                            if isinstance(sonuc, tuple):
+                                cevap, nav_tab = sonuc
                             else:
-                                cevap = ai_sonuc
-                            kullanilan_model = 'openai'
-                        elif gemini_key:
-                            from app.services.asistan import _gemini_with_functions as gwf
-                            try:
-                                ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci)
+                                cevap = sonuc
+                        kredi_dus(emlakci, intent_komut, aciklama=f'intent({intent_skor:.2f}): {metin[:80]}', model='intent')
+                        kullanilan_model = 'intent'
+                    else:
+                        # 5. AI — önce kredi kontrolü
+                        if not kredi_kontrol(emlakci, 1):
+                            cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
+                            db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+                            db.session.commit()
+                            return jsonify({
+                                'cevap': cevap,
+                                'kredi_kalan': emlakci.kredi,
+                                'sohbet_id': sohbet.id,
+                                'kredi_yetersiz': True,
+                            }), 200
+
+                        sistem = _sistem_prompt(emlakci, metin)
+                        try:
+                            openai_key = os.environ.get('OPENAI_API_KEY', '')
+                            gemini_key = os.environ.get('GEMINI_API_KEY', '')
+                            if openai_key:
+                                from app.services.asistan import _openai_with_functions as owf
+                                ai_sonuc = owf(openai_key, sistem, gecmis, emlakci)
                                 if isinstance(ai_sonuc, tuple):
                                     cevap, nav_tab = ai_sonuc
                                 else:
                                     cevap = ai_sonuc
-                                kullanilan_model = 'gemini'
-                            except Exception:
+                                kullanilan_model = 'openai'
+                            elif gemini_key:
+                                from app.services.asistan import _gemini_with_functions as gwf
+                                try:
+                                    ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci)
+                                    if isinstance(ai_sonuc, tuple):
+                                        cevap, nav_tab = ai_sonuc
+                                    else:
+                                        cevap = ai_sonuc
+                                    kullanilan_model = 'gemini'
+                                except Exception:
+                                    cevap = _ai_cevap(metin, gecmis, sistem)
+                                    kullanilan_model = 'gemini'
+                            else:
                                 cevap = _ai_cevap(metin, gecmis, sistem)
-                                kullanilan_model = 'gemini'
-                        else:
-                            cevap = _ai_cevap(metin, gecmis, sistem)
-                            kullanilan_model = 'claude'
-                    except Exception as e:
-                        logger.error(f'[Sohbet] AI hatası: {e}')
-                        cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
-                        kullanilan_model = 'hata'
+                                kullanilan_model = 'claude'
+                        except Exception as e:
+                            logger.error(f'[Sohbet] AI hatası: {e}')
+                            cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+                            kullanilan_model = 'hata'
 
-                    # AI kredi düş
-                    kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model=kullanilan_model)
+                        # AI kredi düş
+                        kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model=kullanilan_model)
 
     # Zeka motoru — cevabı zenginleştir
     try:
