@@ -2328,16 +2328,28 @@ _FUNCTIONS = [
     },
     {
         'name': 'mulk_guncelle',
-        'description': 'Mevcut mülkü günceller — fiyat değiştir, detay ekle, pasife al, aktif yap.',
+        'description': 'Mevcut mülkü günceller. Fiyat, detaylar (ısıtma, mutfak, kat, asansör...), başlık, not — her şeyi değiştirebilir. Bağlamda portföy listelenmişse son listelenen mülkü günceller.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul'},
-                'mulk_id': {'type': 'integer', 'description': 'Mülk ID (biliniyorsa)'},
+                'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul (veya bağlamdan son mülk)'},
+                'mulk_id': {'type': 'integer', 'description': 'Mülk ID'},
                 'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
                 'notlar': {'type': 'string', 'description': 'Not ekle/güncelle'},
+                'metrekare': {'type': 'number'},
+                'oda_sayisi': {'type': 'string', 'description': '2+1, 3+1 vb.'},
+                'isitma': {'type': 'string', 'description': 'Kombi (Doğalgaz), Merkezi, Soba, Klima, Yerden Isıtma'},
+                'mutfak': {'type': 'string', 'description': 'Açık (Amerikan) veya Kapalı'},
+                'kat': {'type': 'string', 'description': 'Bulunduğu kat'},
+                'bina_yasi': {'type': 'integer'},
+                'esyali': {'type': 'string', 'description': 'Evet veya Hayır'},
+                'asansor': {'type': 'string', 'description': 'Var veya Yok'},
+                'otopark': {'type': 'string', 'description': 'Açık, Kapalı veya Yok'},
+                'balkon': {'type': 'string', 'description': 'Var veya Yok'},
+                'site_icerisinde': {'type': 'string', 'description': 'Evet veya Hayır'},
+                'aidat': {'type': 'number', 'description': 'Aylık aidat TL'},
             },
         },
     },
@@ -3007,10 +3019,17 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         if args.get('mulk_id'):
             mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
         elif args.get('mulk_baslik'):
-            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+        # Bağlamdan: portföyde 1 mülk varsa veya son listelenen mülk
         if not mulk:
-            return '⚠️ Mülk bulunamadı.'
+            tek_mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
+            if len(tek_mulk) == 1:
+                mulk = tek_mulk[0]
+        if not mulk:
+            return '⚠️ Mülk bulunamadı. Hangi mülkü güncellemek istiyorsunuz?'
+
         degisiklikler = []
+        # Temel alanlar
         if args.get('fiyat') is not None:
             eski = mulk.fiyat
             mulk.fiyat = args['fiyat']
@@ -3024,6 +3043,30 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         if args.get('notlar'):
             mulk.notlar = (mulk.notlar or '') + '\n' + args['notlar']
             degisiklikler.append('Not eklendi')
+        if args.get('metrekare'):
+            mulk.metrekare = args['metrekare']
+            degisiklikler.append(f'm²: {args["metrekare"]}')
+        if args.get('oda_sayisi'):
+            mulk.oda_sayisi = args['oda_sayisi']
+            degisiklikler.append(f'Oda: {args["oda_sayisi"]}')
+
+        # Detay alanları → mulk.detaylar JSON
+        detay_alanlar = ['isitma', 'mutfak', 'kat', 'bina_yasi', 'esyali', 'asansor', 'otopark', 'balkon', 'site_icerisinde', 'aidat']
+        det = mulk.detaylar or {}
+        for alan in detay_alanlar:
+            if args.get(alan) is not None:
+                # İsitma alanı için özel mapping
+                if alan == 'isitma' and 'doğalgaz' in str(args[alan]).lower():
+                    det['isinma'] = 'Kombi (Doğalgaz)'
+                elif alan == 'isitma':
+                    det['isinma'] = args[alan]
+                elif alan == 'kat':
+                    det['bulundugu_kat'] = str(args[alan])
+                else:
+                    det[alan] = args[alan]
+                degisiklikler.append(f'{alan}: {args[alan]}')
+        mulk.detaylar = det
+
         db.session.commit()
         if not degisiklikler:
             return '⚠️ Güncellenecek bilgi belirtilmedi.'

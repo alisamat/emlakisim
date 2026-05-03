@@ -84,6 +84,8 @@ Mülk eklerken şu alanları çıkar:
 - kat, bina_yasi, isitma, mutfak (açık/kapalı)
 - esyali, asansor, otopark, balkon, site_ici
 "Elimizde kiralık ne var" = portföydeki kiralık mülkler.
+Mülk güncelleme: kullanıcı portföy listeledikten sonra "şuna ısıtma ekle", "fiyatı güncelle" derse → bağlamdan hangi mülk olduğunu anla, mulk_guncelle çağır.
+Portföyde tek mülk varsa otomatik onu güncelle, sormaya gerek yok.
 """,
 
     'eslestirme': """
