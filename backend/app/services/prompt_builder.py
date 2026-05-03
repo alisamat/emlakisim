@@ -42,7 +42,9 @@ Türkçe konuş. *bold* ve _italic_ kullan.
 Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 Çoklu istek varsa hepsini yap. Koşullu istek varsa önce kontrol et.
 İşlem sonucunda eklenen TÜM bilgileri detaylı göster.
-Bilgi yeterliyse hemen yap, gereksiz soru sorma."""
+Bilgi yeterliyse hemen yap, gereksiz soru sorma.
+Geçmiş cevaplarını tekrar etme — her zaman fonksiyon çağır, güncel veriyi getir.
+Mülk/müşteri bilgisini kendi metin olarak yazma — ilgili fonksiyonu çağır."""
 
     # ═══ TIER 2: Kategoriye göre (~300 token) ═══
     tier2 = ''
