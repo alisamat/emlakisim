@@ -3004,7 +3004,38 @@ _FUNCTIONS = [
 ]
 
 def _ai_function_call(fonksiyon_adi, args, emlakci):
-    """AI'nın çağırdığı fonksiyonu yürüt."""
+    """AI'nın çağırdığı fonksiyonu yürüt + otomatik işlem loglama."""
+    # Yazma fonksiyonlarını logla
+    yazma_fonksiyonlari = {
+        'musteri_ekle': 'musteri', 'musteri_guncelle': 'musteri', 'musteri_sil': 'musteri',
+        'mulk_ekle': 'mulk', 'mulk_guncelle': 'mulk', 'mulk_sil': 'mulk',
+        'gorev_ekle': 'gorev', 'gorev_guncelle': 'gorev', 'gorev_sil': 'gorev',
+        'not_ekle': 'not', 'not_guncelle': 'not', 'not_sil': 'not',
+        'fatura_olustur': 'fatura', 'fatura_guncelle': 'fatura', 'fatura_sil': 'fatura',
+        'teklif_kaydet': 'teklif', 'teklif_guncelle': 'teklif', 'teklif_sil': 'teklif',
+        'satis_kapandi': 'mulk', 'dogum_gunu_kaydet': 'musteri',
+    }
+    tablo = yazma_fonksiyonlari.get(fonksiyon_adi)
+
+    # Sonucu al
+    sonuc = _ai_function_call_isle(fonksiyon_adi, args, emlakci)
+
+    # Yazma işlemini logla
+    if tablo and sonuc and not (isinstance(sonuc, str) and sonuc.startswith('⚠️')):
+        try:
+            from app.services.islem_takip import islem_kaydet
+            ozet_metin = sonuc[0] if isinstance(sonuc, tuple) else sonuc
+            # İlk satırı özet olarak al
+            ozet = ozet_metin.split('\n')[0].replace('*', '').replace('✅', '').strip()[:200]
+            islem_kaydet(emlakci.id, fonksiyon_adi, tablo, None, ozet, yeni_veri=args)
+        except Exception:
+            pass
+
+    return sonuc
+
+
+def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
+    """Fonksiyon işleme — asıl iş burada."""
     if fonksiyon_adi == 'musteri_ekle':
         ad = args.get('ad_soyad', '')
         # Uydurma isim kontrolü
@@ -3048,11 +3079,6 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         m = Musteri(emlakci_id=emlakci.id, **temel)
         db.session.add(m)
         db.session.commit()
-
-        # İşlem takip
-        from app.services.islem_takip import islem_kaydet
-        islem_kaydet(emlakci.id, 'musteri_ekle', 'musteri', m.id,
-                     f'{m.ad_soyad} müşteriye eklendi', yeni_veri=temel)
 
         islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
         return (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
