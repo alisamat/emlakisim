@@ -44,7 +44,10 @@ _PATTERNS = [
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
-    """Minimal pattern matching — sadece selamlama, döviz, kredi."""
+    """Minimal pattern matching — sadece kısa, net komutlar."""
+    # 5+ kelimelik cümleler → pattern'a düşmemeli, AI çözsün
+    if len(metin_norm.split()) > 5:
+        return None
     for pattern, komut in _PATTERNS:
         if re.search(pattern, metin_norm):
             return komut
