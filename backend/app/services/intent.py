@@ -151,8 +151,14 @@ def intent_bul(metin, threshold=0.55):
     Returns:
         (komut_adi, benzerlik_skoru) veya None
     """
-    # Yazma komutu mu? → AI function calling çözsün
     metin_lower = metin.lower()
+
+    # Çok kısa mesajlar (1-2 kelime, belirsiz) → AI çözsün (bağlam gerekir)
+    kelime = len(metin.split())
+    if kelime <= 2 and not any(k in metin_lower for k in ['merhaba', 'rapor', 'döviz', 'dolar', 'altın', 'hava']):
+        return None
+
+    # Yazma komutu mu? → AI function calling çözsün
     yazma_fiilleri = ['ekle', 'kaydet', 'oluştur', 'olustur', 'sil', 'kaldır', 'kaldir',
                       'güncelle', 'guncelle', 'değiştir', 'degistir', 'düzenle', 'duzenle']
     if any(f in metin_lower for f in yazma_fiilleri):

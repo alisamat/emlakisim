@@ -115,7 +115,13 @@ def mesaj_gonder():
     # 3. Embedding intent (neredeyse bedava, doğru eşleşme)
     else:
         from app.services.intent import intent_bul
-        intent_sonuc = intent_bul(metin)
+        # Kısa mesajlarda bağlam ekle — "sayfayı aç" → önceki mesajdan ne sayfası?
+        intent_metin = metin
+        if len(metin.split()) <= 4 and len(gecmis) >= 2:
+            onceki = gecmis[-2].get('content', '') if gecmis[-2].get('role') == 'user' else ''
+            if onceki:
+                intent_metin = f'{onceki} {metin}'
+        intent_sonuc = intent_bul(intent_metin)
         if intent_sonuc:
             intent_komut, intent_skor = intent_sonuc
             if intent_komut == 'kredi_panel':
