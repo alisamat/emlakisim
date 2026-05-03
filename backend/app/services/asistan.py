@@ -2486,6 +2486,28 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'not_ara',
+        'description': 'Notlarda arama yapar. "notlarda Kadıköy ara", "gösterim notlarını göster" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'arama': {'type': 'string', 'description': 'Aranacak kelime'},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not'], 'description': 'Not tipi filtresi'},
+            },
+        },
+    },
+    {
+        'name': 'not_goreve_donustur',
+        'description': 'Bir notu göreve dönüştürür. "Bu notu göreve çevir", "1. notu göreve dönüştür" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'not_id': {'type': 'integer', 'description': 'Not ID'},
+                'not_icerik': {'type': 'string', 'description': 'Not içeriğinden arama (ID bilinmiyorsa)'},
+            },
+        },
+    },
+    {
         'name': 'gorev_ekle',
         'description': 'Görev, hatırlatma, toplantı veya yer gösterme oluşturur. Tarih ve saat belirtilmelidir.',
         'parameters': {
@@ -2977,6 +2999,37 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         db.session.add(n)
         db.session.commit()
         return '✅ Not kaydedildi.'
+
+    if fonksiyon_adi == 'not_ara':
+        sorgu = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False)
+        if args.get('etiket'):
+            sorgu = sorgu.filter(Not.etiket == args['etiket'])
+        if args.get('arama'):
+            sorgu = sorgu.filter(Not.icerik.ilike(f'%{args["arama"]}%'))
+        notlar = sorgu.order_by(Not.olusturma.desc()).limit(10).all()
+        if not notlar:
+            return '📝 Not bulunamadı.'
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
+        satirlar = [f'*{i+1}.* {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar)]
+        return f'📝 *Notlar ({len(notlar)}):*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'not_goreve_donustur':
+        not_obj = None
+        if args.get('not_id'):
+            not_obj = Not.query.filter_by(id=args['not_id'], emlakci_id=emlakci.id).first()
+        elif args.get('not_icerik'):
+            not_obj = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).filter(
+                Not.icerik.ilike(f'%{args["not_icerik"]}%')
+            ).first()
+        if not not_obj:
+            return '⚠️ Not bulunamadı.'
+        from app.models.planlama import Gorev
+        g = Gorev(emlakci_id=emlakci.id, baslik=not_obj.icerik[:200], tip='gorev',
+                  musteri_id=not_obj.musteri_id, mulk_id=not_obj.mulk_id)
+        db.session.add(g)
+        not_obj.tamamlandi = True
+        db.session.commit()
+        return f'✅ Not göreve dönüştürüldü!\n📌 {g.baslik[:80]}'
 
     if fonksiyon_adi == 'gorev_ekle':
         from app.models.planlama import Gorev
@@ -3847,9 +3900,13 @@ QR KOD:
 • qr_kod_olustur(tip, mulk_baslik) — portföy QR, kartvizit QR, mülk QR
 • Broşüre, kartvizite, ilana QR kod ekle → müşteri telefonla tarar
 
-SESLİ NOT:
-• Ses kaydı gönder → Whisper ile yazıya çevir → otomatik not kaydet
-• Gösterimden dönerken sesli not alma
+NOT YÖNETİMİ:
+• not_ekle(icerik) — not kaydet (etiket: not/hatirlatici/gosterim/sesli_not)
+• not_ara(arama, etiket) — notlarda içerik arama + tip filtresi
+• not_goreve_donustur(not_id veya not_icerik) — notu göreve çevir
+• Notlar müşteri ve mülkle ilişkilendirilebilir
+• Sesli not: ses kaydı gönder → Whisper ile yazıya çevir → otomatik not kaydet
+• Notlar sayfası: ekleme, düzenleme, silme, arama, filtreleme, göreve dönüştürme
 
 HAVA DURUMU:
 • hava_durumu(sehir, gun) — "yarın hava nasıl?", gösterim için uygunluk bilgisi

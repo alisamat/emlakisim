@@ -510,17 +510,86 @@ def sms_durum_endpoint():
 @bp.route('/notlar', methods=['GET'])
 @jwt_required()
 def notlar():
-    kayitlar = Not.query.filter_by(emlakci_id=_eid(), tamamlandi=False).order_by(Not.olusturma.desc()).all()
-    return jsonify({'notlar': [_not(n) for n in kayitlar]})
+    """Notları listele — etiket, müşteri, mülk, arama filtreli."""
+    etiket = request.args.get('etiket')       # not, hatirlatici, gosterim, sesli_not
+    tamamlandi = request.args.get('tamamlandi', 'false') == 'true'
+    arama = request.args.get('arama', '')
+    musteri_id = request.args.get('musteri_id', type=int)
+    mulk_id = request.args.get('mulk_id', type=int)
+
+    sorgu = Not.query.filter_by(emlakci_id=_eid())
+    if not tamamlandi:
+        sorgu = sorgu.filter(Not.tamamlandi == False)
+    if etiket:
+        sorgu = sorgu.filter(Not.etiket == etiket)
+    if musteri_id:
+        sorgu = sorgu.filter(Not.musteri_id == musteri_id)
+    if mulk_id:
+        sorgu = sorgu.filter(Not.mulk_id == mulk_id)
+    if arama:
+        sorgu = sorgu.filter(Not.icerik.ilike(f'%{arama}%'))
+
+    kayitlar = sorgu.order_by(Not.olusturma.desc()).limit(50).all()
+    return jsonify({'notlar': [_not(n) for n in kayitlar], 'toplam': sorgu.count()})
 
 
 @bp.route('/notlar', methods=['POST'])
 @jwt_required()
 def not_ekle():
     d = request.get_json() or {}
-    n = Not(emlakci_id=_eid(), icerik=d.get('icerik', ''), etiket=d.get('etiket', 'not'))
+    n = Not(
+        emlakci_id=_eid(), icerik=d.get('icerik', ''), etiket=d.get('etiket', 'not'),
+        musteri_id=d.get('musteri_id'), mulk_id=d.get('mulk_id'),
+    )
+    if d.get('hatirlatma'):
+        try:
+            from datetime import datetime as dt
+            n.hatirlatma = dt.fromisoformat(d['hatirlatma'])
+        except Exception:
+            pass
     db.session.add(n); db.session.commit()
     return jsonify({'not': _not(n)}), 201
+
+
+@bp.route('/notlar/<int:nid>', methods=['PUT'])
+@jwt_required()
+def not_guncelle(nid):
+    """Notu güncelle — içerik, etiket, tamamlandı, müşteri/mülk bağlantısı."""
+    n = Not.query.filter_by(id=nid, emlakci_id=_eid()).first_or_404()
+    d = request.get_json() or {}
+    if 'icerik' in d: n.icerik = d['icerik']
+    if 'etiket' in d: n.etiket = d['etiket']
+    if 'tamamlandi' in d: n.tamamlandi = bool(d['tamamlandi'])
+    if 'musteri_id' in d: n.musteri_id = d['musteri_id']
+    if 'mulk_id' in d: n.mulk_id = d['mulk_id']
+    db.session.commit()
+    return jsonify({'not': _not(n)})
+
+
+@bp.route('/notlar/<int:nid>', methods=['DELETE'])
+@jwt_required()
+def not_sil(nid):
+    n = Not.query.filter_by(id=nid, emlakci_id=_eid()).first_or_404()
+    db.session.delete(n); db.session.commit()
+    return jsonify({'ok': True})
+
+
+@bp.route('/notlar/<int:nid>/goreve-donustur', methods=['POST'])
+@jwt_required()
+def not_goreve_donustur(nid):
+    """Notu göreve dönüştür."""
+    n = Not.query.filter_by(id=nid, emlakci_id=_eid()).first_or_404()
+    from app.models.planlama import Gorev
+    g = Gorev(
+        emlakci_id=_eid(), baslik=n.icerik[:200], aciklama=f'Nottan dönüştürüldü (Not #{n.id})',
+        tip='gorev', musteri_id=n.musteri_id, mulk_id=n.mulk_id,
+    )
+    if n.hatirlatma:
+        g.baslangic = n.hatirlatma
+    db.session.add(g)
+    n.tamamlandi = True  # Notu tamamlandı işaretle
+    db.session.commit()
+    return jsonify({'gorev_id': g.id, 'mesaj': f'Not göreve dönüştürüldü: {g.baslik[:50]}'})
 
 
 # ── Serializer'lar ─────────────────────────────────────────────────────────────
@@ -556,9 +625,20 @@ def _yg(y):
 
 
 def _not(n):
+    musteri_ad = ''
+    mulk_ad = ''
+    if n.musteri_id:
+        m = Musteri.query.get(n.musteri_id)
+        if m: musteri_ad = m.ad_soyad
+    if n.mulk_id:
+        m = Mulk.query.get(n.mulk_id)
+        if m: mulk_ad = m.baslik or m.adres or ''
     return {
         'id': n.id, 'icerik': n.icerik, 'etiket': n.etiket,
         'tamamlandi': n.tamamlandi,
+        'musteri_id': n.musteri_id, 'musteri_ad': musteri_ad,
+        'mulk_id': n.mulk_id, 'mulk_ad': mulk_ad,
+        'hatirlatma': n.hatirlatma.isoformat() if n.hatirlatma else None,
         'olusturma': n.olusturma.isoformat() if n.olusturma else None,
     }
 
