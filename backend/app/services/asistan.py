@@ -3800,6 +3800,8 @@ DAVRANIŞ KURALLARI:
   - "yarın öğleden sonra" → tarih="yarin", saat="ogleden_sonra"
   - "gelecek cuma sabah" → tarih="onumuzdeki cuma", saat="sabah"
   - Tarih veya saat belirtilmemişse tahmin et, belirsizse "bugun" + "09:00" kullan.
+• "ELİMİZDE NE VAR" = PORTFÖY: "elimizde kiralık neler var", "nelerimiz var", "portföyde ne var" → portföy/mülk listele, müşteri DEĞİL.
+  "kiralık arayan kim" → müşteri. "kiralık ne var" → mülk. Farkı anla.
 • AKILLI OL: "ara" kelimesi bağlama göre farklı anlam taşır:
   - Müşteri ile konuşuluyorsa → telefon ile ara
   - Mülk aranıyorsa → portföyde ara
