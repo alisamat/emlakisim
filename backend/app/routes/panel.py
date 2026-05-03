@@ -123,7 +123,11 @@ def musteri_ara():
 @bp.route('/mulkler', methods=['GET'])
 @jwt_required()
 def mulkler():
-    kayitlar = Mulk.query.filter_by(emlakci_id=_eid(), aktif=True).order_by(Mulk.olusturma.desc()).all()
+    goster = request.args.get('pasif', 'false')
+    if goster == 'true':
+        kayitlar = Mulk.query.filter_by(emlakci_id=_eid()).order_by(Mulk.olusturma.desc()).all()
+    else:
+        kayitlar = Mulk.query.filter_by(emlakci_id=_eid(), aktif=True).order_by(Mulk.olusturma.desc()).all()
     return jsonify({'mulkler': [_mulk(m) for m in kayitlar]})
 
 
@@ -160,6 +164,16 @@ def mulk_sil(mid):
     m.aktif = False
     db.session.commit()
     return jsonify({'ok': True})
+
+
+@bp.route('/mulkler/<int:mid>/toggle', methods=['PUT'])
+@jwt_required()
+def mulk_toggle(mid):
+    """Mülkü pasife al veya aktif yap."""
+    m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    m.aktif = not m.aktif
+    db.session.commit()
+    return jsonify({'ok': True, 'aktif': m.aktif, 'mulk': _mulk(m)})
 
 
 # ── Yer Göstermeler ────────────────────────────────────────────────────────────
@@ -528,6 +542,7 @@ def _mulk(m):
         'ada': m.ada, 'parsel': m.parsel, 'notlar': m.notlar, 'grup': m.grup,
         'detaylar': m.detaylar or {},
         'resimler': m.resimler or [],
+        'aktif': m.aktif,
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }
 

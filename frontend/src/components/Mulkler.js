@@ -333,8 +333,8 @@ function FotoGaleriEkle({ mulkId, resimSayisi, onGuncelle }) {
   );
 }
 
-function MulkKarti({ m, onTikla, onDuzenle, onSil, onResimGuncelle }) {
-  const renk = m.islem_turu === 'kira' ? '#3b82f6' : '#f59e0b';
+function MulkKarti({ m, onTikla, onDuzenle, onSil, onToggle, onResimGuncelle }) {
+  const renk = m.aktif === false ? '#94a3b8' : m.islem_turu === 'kira' ? '#3b82f6' : '#f59e0b';
   const [menuAcik, setMenuAcik] = useState(false);
   const [detayAcik, setDetayAcik] = useState(false);
   const det = m.detaylar || {};
@@ -345,7 +345,8 @@ function MulkKarti({ m, onTikla, onDuzenle, onSil, onResimGuncelle }) {
   }).filter(Boolean);
 
   return (
-    <div onClick={onTikla} style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #e2e8f0', borderLeft: `3px solid ${renk}`, cursor: 'pointer' }}>
+    <div onClick={onTikla} style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: 10, border: '1px solid #e2e8f0', borderLeft: `3px solid ${renk}`, cursor: 'pointer', opacity: m.aktif === false ? 0.5 : 1 }}>
+      {m.aktif === false && <div style={{ background: '#fef2f2', color: '#dc2626', borderRadius: 6, padding: '2px 10px', fontSize: 11, fontWeight: 700, marginBottom: 6, display: 'inline-block' }}>PASİF</div>}
       {/* Kapak fotoğraf (varsa) */}
       {m.resimler?.[0] && (
         <img src={(m.resimler.find(r => r.ana) || m.resimler[0]).url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
@@ -396,7 +397,10 @@ function MulkKarti({ m, onTikla, onDuzenle, onSil, onResimGuncelle }) {
               <button onClick={async () => { setMenuAcik(false); try { const r = await api.get(`/api/panel/gelismis/piyasa-degeri/${m.id}`); alert(`Piyasa Analizi:\n\nFiyat: ${Number(m.fiyat).toLocaleString('tr-TR')} TL\nPortföy Ort: ${Number(r.data.portfoy_ortalama).toLocaleString('tr-TR')} TL\nFark: %${r.data.fark_yuzde}\n\n${r.data.degerlendirme}`); } catch{} }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#f59e0b' }}>📊 Piyasa Değeri</button>
               <button onClick={async () => { setMenuAcik(false); try { const r = await api.get(`/api/panel/gelismis/yasal/${m.id}`); alert(`Yasal Durum:\n\nRisk: ${r.data.risk_seviye}\nKontrol: ${r.data.tamamlanan}/${r.data.toplam_kontrol}\nEksik: ${r.data.eksik_sayisi}`); } catch{} }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626' }}>⚖️ Yasal Durum</button>
               {m.fiyat && <button onClick={async () => { setMenuAcik(false); try { const r = await api.post('/api/panel/hesaplama/fiyat-donustur', {tutar: m.fiyat}); alert(`💱 ${Number(m.fiyat).toLocaleString('tr-TR')} TL =\n\n$ ${r.data.USD?.toLocaleString('tr-TR')}\n€ ${r.data.EUR?.toLocaleString('tr-TR')}\n£ ${r.data.GBP?.toLocaleString('tr-TR')}\n🥇 ${r.data.ALTIN_GRAM?.toLocaleString('tr-TR')} gram altın`); } catch{} }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#06b6d4' }}>💱 Döviz Karşılığı</button>}
-              <button onClick={() => { setMenuAcik(false); onSil(m.id); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626' }}>🗑 Sil</button>
+              <button onClick={(e) => { e.stopPropagation(); setMenuAcik(false); onToggle(m.id); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: m.aktif === false ? '#16a34a' : '#f59e0b' }}>
+                {m.aktif === false ? '✅ Aktif Yap' : '⏸ Pasife Al'}
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setMenuAcik(false); onSil(m.id); }} style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', color: '#dc2626' }}>🗑 Sil</button>
             </div>
           )}
         </div>
@@ -415,10 +419,11 @@ export default function Mulkler() {
   const [filtreTip, setFiltreTip]     = useState('');
   const [filtreIslem, setFiltreIslem] = useState('');
   const [filtreGrup, setFiltreGrup]   = useState('');
+  const [pasifGoster, setPasifGoster] = useState(false);
 
   const yukle = useCallback(async () => {
     setYuk(true);
-    try { const r = await api.get('/api/panel/mulkler'); setMulkler(r.data.mulkler || []); }
+    try { const r = await api.get('/api/panel/mulkler?pasif=true'); setMulkler(r.data.mulkler || []); }
     catch {} finally { setYuk(false); }
   }, []);
 
@@ -432,12 +437,20 @@ export default function Mulkler() {
 
   const onSil = async (id) => {
     if (!window.confirm('Bu mülkü silmek istediğinize emin misiniz?')) return;
-    try { await api.delete(`/api/panel/mulkler/${id}`); setMulkler(p => p.filter(x => x.id !== id)); } catch {}
+    try { await api.delete(`/api/panel/mulkler/${id}`); yukle(); } catch {}
+  };
+
+  const onToggle = async (id) => {
+    try {
+      const r = await api.put(`/api/panel/mulkler/${id}/toggle`);
+      setMulkler(p => p.map(x => x.id === id ? { ...x, aktif: r.data.aktif } : x));
+    } catch {}
   };
 
   const gruplar = [...new Set(mulkler.map(m => m.grup).filter(Boolean))];
 
   let liste = mulkler;
+  if (!pasifGoster) liste = liste.filter(m => m.aktif !== false);
   if (filtreIslem) liste = liste.filter(m => m.islem_turu === filtreIslem);
   if (filtreTip) liste = liste.filter(m => m.tip === filtreTip);
   if (filtreGrup) liste = liste.filter(m => m.grup === filtreGrup);
@@ -474,7 +487,13 @@ export default function Mulkler() {
         <input className="input" placeholder="🔍 Mülk ara..." value={arama} onChange={e => setArama(e.target.value)} style={{ width: '100%' }} />
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button onClick={() => setPasifGoster(p => !p)} style={{
+          padding: '6px 14px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+          background: pasifGoster ? '#fef2f2' : '#fff', color: pasifGoster ? '#dc2626' : '#94a3b8',
+          border: `1px solid ${pasifGoster ? '#fecaca' : '#e2e8f0'}`,
+        }}>{pasifGoster ? '👁 Pasifler gösteriliyor' : '👁‍🗨 Pasifler gizli'}</button>
+        <span style={{ color: '#e2e8f0' }}>|</span>
         {[['', 'Tümü'], ['kira', '🔵 Kiralık'], ['satis', '🟡 Satılık']].map(([v, l]) => (
           <button key={v} onClick={() => setFiltreIslem(v)} style={{
             padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer',
@@ -517,7 +536,7 @@ export default function Mulkler() {
           {arama || filtreIslem || filtreTip ? 'Filtreye uygun mülk yok' : 'Henüz mülk eklenmedi'}
         </div>
       ) : (
-        liste.map(m => <MulkKarti key={m.id} m={m} onTikla={() => setSecili(m)} onDuzenle={m => { setDuzenle(m); setFormAcik(true); }} onSil={onSil} onResimGuncelle={onResimGuncelle} />)
+        liste.map(m => <MulkKarti key={m.id} m={m} onTikla={() => setSecili(m)} onDuzenle={m => { setDuzenle(m); setFormAcik(true); }} onSil={onSil} onToggle={onToggle} onResimGuncelle={onResimGuncelle} />)
       )}
     </>
   );
