@@ -22,227 +22,29 @@ def _normalize(metin):
 
 # ─── Pattern Matching (sıfır maliyet) ──────────────────────
 _PATTERNS = [
-    # ── Hava Durumu (rapor'dan ÖNCE olmalı — "durum" kelimesi çakışır) ──
-    (r'hava\s*durumu',                                                'hava_durumu_cmd'),
-    (r'(?:hava)\s*(?:nasil|nasıl|ne|soyle|söyle|goster|göster)',     'hava_durumu_cmd'),
-    (r'(?:yarin|yarın|bugun|bugün).*(?:hava|yagmur|yağmur)',         'hava_durumu_cmd'),
-    (r'(?:gosterim|gösterim).*(?:hava|uygun)',                        'hava_durumu_cmd'),
-    (r'(?:yagmur|yağmur)\s*(?:yagacak|yağacak|var\s*mi|var\s*mı)',  'hava_durumu_cmd'),
-    # ── Müşteri (10+ varyasyon) ──
-    (r'(?:musteri|müşteri|müsteri)\s*(?:ekle|kayit|kaydet|olustur|gir|yaz)', 'musteri_ekle'),
-    (r'(?:musteri|müşteri|müsteri)\s*(?:listele|göster|listesi|kimler|kac)', 'musteri_liste'),
-    (r'(?:musteri|müşteri|müsteri)\s*(?:sil|kaldir|cikar)',   'musteri_sil'),
-    (r'(?:yeni\s*musteri|yeni\s*müşteri)',                    'musteri_ekle'),
-    (r'(?:kac|kaç)\s*(?:musteri|müşteri)',                    'musteri_liste'),
-    (r'(?:sicak|sıcak)\s*(?:musteri|müşteri)',                'musteri_liste'),
-    # ── Portföy (10+ varyasyon) ──
-    (r'(?:portfoy|portföy|mulk|mülk|emlak|daire|villa|arsa)\s*(?:ekle|kayit|kaydet|olustur|gir)', 'mulk_ekle'),
-    (r'(?:portfoy|portföy|mulk|mülk|emlak)\s*(?:listele|göster|listesi|kac)',    'mulk_liste'),
-    (r'(?:yeni\s*(?:mulk|mülk|ilan|emlak|daire))',            'mulk_ekle'),
-    (r'(?:kac|kaç)\s*(?:mulk|mülk|ilan|emlak)',               'mulk_liste'),
-    (r'(?:kiralik|kiralık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
-    (r'(?:satilik|satılık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
-    # ── Not & Hatırlatma ──
-    (r'^notlar$',                                              'not_liste'),
-    (r'(?:not|notlar)\s*(?:listele|göster|goster|liste)',     'not_liste'),
-    (r'(?:not)\s*(?:ekle|al|kaydet|yaz)',                     'not_ekle'),
-    (r'(?:unutma|hatirla|hatırla|aklinda\s*tut|aklında\s*tut|sakla|kaydet\s*bunu)', 'unutma'),
-    (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam|neyi\s*hatirl)', 'hatirlatma_liste'),
-    (r'(?:bunu\s*hatirla|bunu\s*unutma)',                     'unutma'),
-    # ── Rapor & Özet ──
-    (r'(?:rapor|özet|genel\s*durum|nasil\s*gidiyor|ne\s*durumda)',    'rapor'),
-    (r'(?:istatistik|dagilim|dağılım|segment)',                      'istatistik'),
-    (r'(?:genel\s*durum|genel\s*ozet|genel\s*bakis)',         'rapor'),
-    # ── Muhasebe (15+ varyasyon) ──
-    (r'(?:kar\s*zarar|kâr\s*zarar|kar.zarar|gelir\s*gider)',  'muhasebe_rapor'),
-    (r'(?:gelir|kazanc|kazanç)\s*(?:ne\s*kadar|toplam)',      'muhasebe_rapor'),
-    (r'(?:gider|masraf|harcama)\s*(?:ne\s*kadar|toplam)',     'muhasebe_rapor'),
-    (r'(?:cari|alacak|borc|borç)\s*(?:durum|listele|göster|ne\s*kadar)', 'cari_rapor'),
-    (r'(?:ne\s*kadar\s*(?:borcum|alacagim|alacağım))',        'cari_rapor'),
-    (r'(?:gelir\s*ekle|kazanc\s*ekle)',                       'muhasebe_rapor'),
-    (r'(?:gider\s*ekle|masraf\s*ekle|harcama\s*ekle)',        'muhasebe_rapor'),
-    # ── Planlama (10+ varyasyon) ──
-    (r'(?:gorev|görev)\s*(?:ekle|olustur|kaydet|yaz)',        'gorev_ekle'),
-    (r'(?:gorev|görev)\s*(?:listele|göster|ne\s*var)',        'gorev_liste'),
-    (r'(?:bugun|bugün|gunluk|günlük)\s*(?:plan|görev|ozet|ne\s*var)', 'bugun_ozet'),
-    (r'(?:yarin|yarın)\s*(?:ne\s*var|plan)',                  'bugun_ozet'),
-    (r'(?:randevu|toplanti|toplantı)\s*(?:ekle|planla)',      'gorev_ekle'),
-    (r'(?:hatırlat|hatırlat.*bana)',                          'gorev_ekle'),
-    # ── Eşleştirme ──
-    (r'(?:esles|eşleş|eslestir|eşleştir|uygun\s*mulk|uygun\s*mülk)', 'eslestirme'),
-    (r'(?:kimler?\s*(?:uygun|ilgili|bakiyor))',               'eslestirme'),
-    (r'(?:bu\s*(?:mulk|mülk).*(?:kime|kim))',                 'eslestirme'),
-    # ── Fatura ──
-    (r'(?:fatura)\s*(?:olustur|ekle|kaydet|kes|hazirla)',     'fatura_ekle'),
-    (r'(?:fatura)\s*(?:listele|göster|son)',                  'fatura_liste'),
-    # ── İlan & Reklam ──
-    (r'(?:ilan)\s*(?:metni|yaz|olustur|hazirla)',             'ilan_olustur'),
-    (r'(?:reklam|tanitim|tanıtım)\s*(?:yaz|hazirla|olustur)', 'ilan_olustur'),
-    (r'(?:sosyal\s*medya|instagram|facebook)\s*(?:icerik|paylas)', 'ilan_olustur'),
-    # ── Belge ──
-    (r'(?:yer\s*goster|yer\s*göster)\s*(?:belgesi|tutanak|olustur)', 'rapor'),
-    (r'(?:kontrat|sozlesme|sözleşme)\s*(?:olustur|hazirla)',  'rapor'),
-    (r'(?:brosur|broşür)\s*(?:olustur|hazirla|indir)',        'rapor'),
-    # ── Hesaplama ──
-    (r'(?:kira\s*vergisi|vergi\s*hesapla)',                   'rapor'),
-    (r'(?:kira\s*getiri|roi|yatirim\s*getiri|yatırım)',       'rapor'),
-    (r'(?:deger\s*artis|değer\s*artış|kazanc\s*vergisi)',     'rapor'),
-    # ── Sektörel ──
-    (r'(?:sektor|sektör|haber|piyasa|trend|gelisme|gelişme|ekonomi)', 'sektor_bilgi'),
-    (r'(?:fiyat|m2|metrekare)\s*(?:ne\s*kadar|ortalama)',     'sektor_bilgi'),
-    # ── Performans ──
-    (r'(?:performans|kpi|verimlilik|ozet\s*rapor|nasil\s*gidiyorum)', 'performans'),
-    (r'(?:strateji|oneri|öner|ne\s*yapmaliyim|tavsiye|yol\s*harita)', 'strateji'),
-    # ── Yardım ──
-    # ── Müşteri detay ──
-    (r'(?:musteri|müşteri).*(?:bilgi|detay|profil)',          'musteri_liste'),
-    (r'(?:musteri|müşteri)(?:ler)?(?:de|da|den|dan|i|ı|m|mda)?\s+(?:ara|bul)\s+\S', 'musteri_ara'),
-    (r'(\S+)\s+(?:isminde|adında|adlı|isimli|diye)\s*(?:musteri|müşteri)', 'musteri_ara'),
-    (r'(?:musteri|müşteri).*(?:var\s*m[ıi]|olmal)',           'musteri_ara'),
-    (r'(\w)\s*(?:ile|harfi|harfiyle)\s*(?:basla|başla)',      'harf_filtre'),
-    (r'(?:bas|baş)\s*(?:harf|harfi)\s*(\w)',                  'harf_filtre'),
-    (r'(\w)\s*ile\s*baslayan|(\w)\s*ile\s*başlayan',          'harf_filtre'),
-    (r'(?:mulk|mülk|portfoy|portföy)(?:te|da|de)?\s+(?:ara|bul)\s+\S',    'mulk_ara'),
-    (r'(?:musteri|müşteri).*(?:ara|bul|sec|seç)',             'musteri_liste'),
-    (r'(?:musteri|müşteri).*(?:grup|etiket|filtre)',          'musteri_liste'),
-    (r'(?:musteri|müşteri).*(?:mail|email|gonder)',           'musteri_liste'),
-    (r'(?:telefon\s*rehber|rehber.*ekle)',                    'musteri_ekle'),
-    (r'(?:excel.*musteri|excel.*müşteri)',                    'musteri_ekle'),
-    # ── Portföy detay ──
-    (r'(?:mulk|mülk|emlak).*(?:detay|bilgi|özellik)',        'mulk_liste'),
-    (r'(?:mulk|mülk).*(?:brosur|broşür|pdf)',                'mulk_liste'),
-    (r'(?:mulk|mülk).*(?:mail|email|gonder|paylas)',         'mulk_liste'),
-    (r'(?:excel.*(?:mulk|mülk|portfoy|portföy))',            'mulk_ekle'),
-    (r'(?:sahibinden|hepsiemlak).*(?:ekle|import|aktar)',     'mulk_ekle'),
-    # ── Belge detay ──
-    (r'(?:pdf|belge|evrak)\s*(?:olustur|hazirla|indir)',     'rapor'),
-    (r'(?:yer\s*gosterme|yer\s*gösterme)',                   'rapor'),
-    (r'(?:kira\s*kontrat|kira\s*sozlesme|kira\s*sözleşme)',  'rapor'),
-    (r'(?:yonlendirme|yönlendirme)\s*(?:belgesi|formu)',     'rapor'),
-    # ── Muhasebe detay ──
-    (r'(?:fis|fiş)\s*(?:oku|tara|okut)',                     'muhasebe_rapor'),
-    (r'(?:banka.*excel|hesap\s*ozeti|hesap\s*özeti)',         'muhasebe_rapor'),
-    (r'(?:butce|bütçe)\s*(?:planla|hazirla|göster)',          'muhasebe_rapor'),
-    (r'(?:ne\s*kadar\s*(?:kazandim|kazandım|harcadim|harcadım))', 'muhasebe_rapor'),
-    # ── Planlama detay ──
-    (r'(?:plan|planlama)\s*(?:yap|göster|listele)',           'gorev_liste'),
-    (r'(?:takvim|ajanda)\s*(?:göster|aç)',                    'gorev_liste'),
-    (r'(?:ne\s*zaman|saat\s*kac|saat\s*kaç)',                'bugun_ozet'),
-    (r'(?:bu\s*hafta|gelecek\s*hafta)\s*(?:ne\s*var|plan)',   'bugun_ozet'),
-    # ── Lead detay ──
-    (r'(?:lead|potansiyel)\s*(?:ekle|listele|göster|kac)',    'eslestirme'),
-    (r'(?:yeni\s*lead|yeni\s*potansiyel)',                    'eslestirme'),
-    (r'(?:kacirilmis|kaçırılmış)\s*(?:cagri|çağrı|arama)',   'eslestirme'),
-    # ── Hesaplama detay ──
-    (r'(?:ne\s*kadar\s*vergi|vergi\s*ne\s*kadar)',           'rapor'),
-    (r'(?:kira\s*ne\s*kadar|kira\s*fiyat)',                  'sektor_bilgi'),
-    (r'(?:m2|metrekare)\s*(?:fiyat|ne\s*kadar)',             'sektor_bilgi'),
-    # ── Envanter ──
-    (r'(?:malzeme|envanter|stok)\s*(?:ekle|listele|kontrol)', 'rapor'),
-    # ── Ekip ──
-    (r'(?:danisman|danışman)\s*(?:ekle|listele|göster)',      'rapor'),
-    (r'(?:ekip|takim|takım)\s*(?:göster|listele)',            'rapor'),
-    # ── Yedek ──
-    (r'(?:yedek|backup)\s*(?:al|indir|gonder)',               'rapor'),
-    (r'(?:yedek|yedekleme)\s*(?:durum|ne\s*zaman|son|yapti|yaptı)', 'yedek_durum'),
-    (r'(?:ne\s*zaman|en\s*son).*(?:yedek|yedekleme)',              'yedek_durum'),
-    (r'(?:veri.*(?:export|indir|gonder))',                    'rapor'),
-    # ── Ayarlar ──
-    (r'(?:ayar|setting|profil)\s*(?:degistir|değiştir|güncelle)', 'rapor'),
-    (r'(?:sifre|şifre)\s*(?:degistir|değiştir)',              'rapor'),
-    (r'(?:logo)\s*(?:degistir|değiştir|yukle|yükle)',         'rapor'),
-    (r'(?:karanlik|karanlık|gece)\s*(?:mod|tema)',            'rapor'),
-    # ── Genel arama ──
-    (r'(?:ara|bul)\s+(.+)',                                   'genel_ara'),
-    (r'(.+)\s+(?:ara|bul)$',                                  'genel_ara'),
-    (r'(?:onu|ona)\s*(?:ara|ula)',                             'genel_ara'),
-    # ── Tapu & Komisyon hesapla ──
-    (r'(?:tapu)\s*(?:masraf|harç|harc|maliyet|ne\s*kadar)',   'rapor'),
-    (r'(?:komisyon)\s*(?:hesapla|ne\s*kadar)',                 'rapor'),
-    # ── Ayar/şifre ──
-    (r'(?:sifre|şifre|sifremi|şifremi)',                       'rapor'),
-    (r'(?:ayar|tema|logo)\s*(?:degistir|değiştir|ac|aç)',     'rapor'),
-    # ── Döviz & Altın ──
-    (r'(?:doviz|döviz|kur|dolar|euro|sterlin)',                  'doviz_kuru'),
-    (r'(?:altin|altın|gram\s*fiyat)',                            'altin_fiyat'),
-    (r'(\d[\d.,]*)\s*(?:tl|lira).*(?:dolar|euro|doviz|döviz)',   'fiyat_cevir'),
-    # ── Yasal & Piyasa & Süreç ──
-    (r'(?:yasal|hukuki|ipotek|haciz|iskan)\s*(?:durum|kontrol|risk)', 'yasal_bilgi'),
-    (r'(?:piyasa|deger|değer)\s*(?:analiz|rapor|karsilastir)',        'piyasa_bilgi'),
-    (r'(?:surec|süreç)\s*(?:durum|ozet|ne\s*durumda)',               'surec_ozet_cmd'),
-    # ── Yardım & Yetenek ──
+    # ═══ MİNİMAL PATTERN SETİ ═══
+    # Sadece bedava + anında olması gereken komutlar.
+    # Geri kalan her şey embedding intent veya AI function calling ile çözülür.
+
+    # ── Selamlama (bedava, anında) ──
     (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
-    (r'(?:bunu\s*yapabilir\s*mi|yapabilir\s*misin|mumkun\s*mu|mümkün\s*mü)', 'yetenek_sor'),
     (r'(?:ne\s*yapabilirsin|yeteneklerin|ozelliklerin|özellikler)', 'yardim'),
-    (r'(?:nasil\s*kullan|nasıl\s*kullan|nasil\s*yap|nasıl\s*yap)', 'yardim'),
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
-    # ── QR Kod ──
-    (r'(?:qr|kare\s*kod)\s*(?:olustur|oluştur|ver|yap)',             'qr_cmd'),
-    (r'(?:kartvizit)\s*(?:qr|kare\s*kod)',                           'qr_kartvizit_cmd'),
-    # ── Haberler ──
-    (r'(?:emlak|sektor|sektör)\s*(?:haber|gelisme|gelişme)',          'haber_cmd'),
-    (r'(?:piyasa|market)\s*(?:haber|durum|ne\s*oldu)',               'haber_cmd'),
-    # ── Web Sayfası ──
-    (r'(?:web\s*sayfa|sayfa)\s*(?:link|adres|url)',                   'web_sayfa_link'),
-    (r'(?:web\s*sayfa|portfoy\s*sayfa|ilan\s*sayfa)\s*(?:aç|ac|göster|goster)', 'web_sayfa_link'),
-    (r'(?:sayfam|web\s*sayfam|portfoy\s*link|ilan\s*link)',          'web_sayfa_link'),
-    (r'(?:musteri|müşteri).*(?:paylas|paylaş).*(?:link|adres)',      'web_sayfa_link'),
-    # ── Excel Export ──
-    (r'(?:portfoy|portföy|mulk|mülk)\s*(?:.*excel|.*indir|.*liste.*ver)', 'portfoy_excel'),
-    (r'(?:excel)\s*(?:.*portfoy|.*portföy|.*mulk|.*mülk)',               'portfoy_excel'),
-    (r'(?:musteri|müşteri)\s*(?:.*excel|.*indir|.*liste.*ver)',           'musteri_excel'),
-    (r'(?:excel)\s*(?:.*musteri|.*müşteri)',                              'musteri_excel'),
-    (r'(?:tum|tüm|hep).*(?:zip)',                                        'tum_zip'),
-    (r'(?:zip).*(?:indir|ver|export)',                                    'tum_zip'),
-    (r'(?:tum|tüm|hep).*(?:excel|indir|export)',                         'tum_excel'),
-    # ── Tahmin & Analiz ──
-    (r'(?:satici|satıcı)\s*(?:tahmin|olasil|olasıl|ihtimal)', 'satici_tahmin'),
-    (r'(?:kim)\s*(?:sat|alacak|ilgili)',                     'satici_tahmin'),
-    (r'(?:isi|ısı)\s*(?:harita|haritas)',                    'isi_haritasi'),
-    (r'(?:ilce|ilçe)\s*(?:analiz|istatistik|karsilastir)',   'isi_haritasi'),
-    (r'(?:piyasa|market)\s*(?:isi|ısı|sicak|sıcak|hareket)', 'isi_haritasi'),
-    # ── Emlakçı Dizini ──
-    (r'(?:emlakci|emlakçı)\s*(?:ekle|kaydet|kayıt)',          'emlakci_ekle'),
-    (r'(?:emlakci|emlakçı)\s*(?:liste|listele|rehber|dizin|göster|goster)', 'emlakci_liste'),
-    (r'(?:emlakci|emlakçı)\s*(?:ara|bul)',                    'emlakci_ara'),
-    (r'(?:emlakci|emlakçı)\s*(?:sil|kaldir|kaldır)',          'emlakci_sil'),
-    (r'kac\s*(?:emlakci|emlakçı)|(?:emlakci|emlakçı)\s*(?:kac|kaç|sayı|sayi)', 'emlakci_sayisi'),
-    (r'(?:emlakci|emlakçı)\s*(?:dizin|rehber)',               'emlakci_liste'),
-    # ── Grup Yönetimi ──
-    (r'grup\s*(?:kur|olustur|oluştur|ac|aç|yeni)',           'grup_kur'),
-    (r'grup(?:lar)?\s*(?:liste|listele|göster|goster|neler)', 'grup_liste'),
-    (r'(?:kac|kaç)\s*grup|grup\s*(?:kac|kaç|sayı|sayi)',    'grup_sayisi'),
-    (r'grup\s*(?:esles|eşleş|eslestir|eşleştir)',            'grup_esles'),
-    (r'grup\s*(?:uye|üye)(?:ler|leri)?',                     'grup_uyeleri'),
-    (r'grup\s*(?:davet|teklif)',                              'grup_davet'),
-    (r'grup.*(?:cik|çık|ayril|ayrıl)',                        'grup_cik'),
-    (r'grup\s*(?:ayar|setting)',                              'grup_ayar'),
-    (r'(?:portfoy|portföy)\s*(?:ac|aç|paylas|paylaş).*grup', 'grup_portfoy_ac'),
-    (r'grup.*(?:portfoy|portföy)\s*(?:ac|aç|paylas|paylaş)', 'grup_portfoy_ac'),
-    (r'(?:portfoy|portföy)\s*(?:kapat|kapa).*grup',          'grup_portfoy_kapat'),
-    (r'grup.*(?:portfoy|portföy)\s*(?:kapat|kapa)',           'grup_portfoy_kapat'),
-    (r'(?:talep)\s*(?:ac|aç|paylas|paylaş).*grup',           'grup_talep_ac'),
-    (r'grup.*(?:talep)\s*(?:ac|aç|paylas|paylaş)',            'grup_talep_ac'),
-    (r'(?:talep)\s*(?:kapat|kapa).*grup',                    'grup_talep_kapat'),
-    (r'grup.*(?:talep)\s*(?:kapat|kapa)',                     'grup_talep_kapat'),
-    (r'grup\s*(?:bildirim|aktivite|hareket)',                 'grup_bildirim'),
-    (r'(?:grub|grup).*(?:davet\s*et|ekle).*(?:uye|üye)',     'grup_uye_davet'),
-    (r'(?:grub|grup).*(?:yonetici|yönetici)\s*(?:ata|yap)',  'grup_yonetici_ata'),
+
+    # ── Döviz (bedava, harici API) ──
+    (r'(?:doviz|döviz|kur|dolar|euro|sterlin)',               'doviz_kuru'),
+    (r'(?:altin|altın|gram\s*fiyat)',                         'altin_fiyat'),
+
+    # ── Kredi (navigasyon) ──
+    (r'(?:kredi)\s*(?:satin|satın|yukle|yükle|al|paketle)',   'kredi_panel'),
+    (r'^kredi$',                                               'kredi_panel'),
+    (r'(?:kredim|kontör|kontor)\s*(?:bitti|yok|kalmadı)',     'kredi_panel'),
 ]
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
-    """Pattern matching ile komut bul. Bulursa (komut, args) döndür, bulamazsa None."""
-    # Karmaşık cümleleri AI'a bırak — pattern'la çözülmemeli
-    kelime_sayisi = len(metin_norm.split())
-    kosullu = bool(re.search(r'(?:varsa|yoksa|eger|eğer|ise|iken|olursa|olmazsa|kontrol\s*et|önce.*sonra)', metin_norm))
-    coklu_istek = len(re.findall(r'(?:ayrica|ayrıca|hemde|hem\s*de|birde|bir\s*de|sonra|ve\s+\w+\s+(?:ekle|yap|koy|olustur))', metin_norm))
-
-    if kosullu or coklu_istek > 0:
-        # Koşullu veya uzun çoklu cümle — AI'a bırak
-        return None
-
+    """Minimal pattern matching — sadece selamlama, döviz, kredi."""
     for pattern, komut in _PATTERNS:
         if re.search(pattern, metin_norm):
             return komut
