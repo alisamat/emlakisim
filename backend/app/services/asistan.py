@@ -2453,11 +2453,13 @@ _FUNCTIONS = [
     },
     {
         'name': 'not_ekle',
-        'description': 'Not kaydeder',
+        'description': 'Not kaydeder. Müşteri adı geçiyorsa bağlar.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'icerik': {'type': 'string', 'description': 'Not içeriği'},
+                'musteri_adi': {'type': 'string', 'description': 'İlişkili müşteri adı (opsiyonel)'},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim'], 'description': 'Not tipi'},
             },
             'required': ['icerik'],
         },
@@ -2573,15 +2575,16 @@ _FUNCTIONS = [
     },
     {
         'name': 'gorev_ekle',
-        'description': 'Görev, hatırlatma, toplantı veya yer gösterme oluşturur. Tarih ve saat belirtilmelidir.',
+        'description': 'Görev, hatırlatma, toplantı veya yer gösterme oluşturur. Müşteri adı geçiyorsa bağlar.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'baslik': {'type': 'string', 'description': 'Görev başlığı'},
                 'aciklama': {'type': 'string'},
                 'tip': {'type': 'string', 'enum': ['gorev', 'hatirlatma', 'yer_gosterme', 'toplanti']},
-                'tarih': {'type': 'string', 'description': 'Tarih: "bugun", "yarin", "2026-05-05", "haftaya", "onumuzdeki pazartesi" gibi. Belirsizse bugün.'},
-                'saat': {'type': 'string', 'description': 'Saat: "14:00", "sabah" (09:00), "ogleden_once" (10:00), "ogle" (12:00), "ogleden_sonra" (14:00), "aksam" (18:00). Belirsizse 09:00.'},
+                'tarih': {'type': 'string', 'description': 'Tarih: "bugun", "yarin", "2026-05-05"'},
+                'saat': {'type': 'string', 'description': 'Saat: "14:00", "sabah", "ogleden_sonra", "aksam"'},
+                'musteri_adi': {'type': 'string', 'description': 'İlişkili müşteri adı (opsiyonel)'},
             },
             'required': ['baslik'],
         },
@@ -3415,10 +3418,20 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         return _rapor(emlakci)
 
     if fonksiyon_adi == 'not_ekle':
-        n = Not(emlakci_id=emlakci.id, icerik=args.get('icerik', ''), etiket='not')
+        musteri_id = None
+        musteri_str = ''
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+            if mus:
+                musteri_id = mus.id
+                musteri_str = f'\n👤 {mus.ad_soyad}'
+        n = Not(emlakci_id=emlakci.id, icerik=args.get('icerik', ''),
+                etiket=args.get('etiket', 'not'), musteri_id=musteri_id)
         db.session.add(n)
         db.session.commit()
-        return '✅ Not kaydedildi.'
+        return f'✅ Not kaydedildi.{musteri_str}'
 
     if fonksiyon_adi == 'not_ara':
         sorgu = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False)
@@ -3454,11 +3467,21 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
     if fonksiyon_adi == 'gorev_ekle':
         from app.models.planlama import Gorev
         baslangic = _tarih_saat_parse(args.get('tarih'), args.get('saat'))
+        # Müşteri bağlama (opsiyonel)
+        musteri_id = None
+        musteri_str = ''
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+            if mus:
+                musteri_id = mus.id
+                musteri_str = f'\n👤 {mus.ad_soyad}'
         g = Gorev(emlakci_id=emlakci.id, baslik=args.get('baslik', ''), aciklama=args.get('aciklama'),
-                  tip=args.get('tip', 'gorev'), baslangic=baslangic)
+                  tip=args.get('tip', 'gorev'), baslangic=baslangic, musteri_id=musteri_id)
         db.session.add(g); db.session.commit()
         tarih_str = baslangic.strftime('%d.%m.%Y %H:%M') if baslangic else ''
-        return f'✅ Görev eklendi: {args.get("baslik")}' + (f'\n📅 {tarih_str}' if tarih_str else '')
+        return f'✅ Görev eklendi: {args.get("baslik")}' + (f'\n📅 {tarih_str}' if tarih_str else '') + musteri_str
 
     if fonksiyon_adi == 'fatura_olustur':
         from app.models.fatura import Fatura

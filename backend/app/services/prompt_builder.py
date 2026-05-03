@@ -163,10 +163,13 @@ Dönem: bu_ay, gecen_ay, bu_yil, son_3_ay filtreleri var.
 PLANLAMA: Görev/toplantı/hatırlatma oluştur.
 tarih: "bugun", "yarin", "haftaya", "onumuzdeki cuma"
 saat: "sabah"(09), "ogleden_sonra"(14), "aksam"(18), "14:00"
+Görevde müşteri adı geçiyorsa (Ahmet beyle toplantı) → müşterilerde ara, varsa musteri_id bağla.
+Zorunlu değil — müşteri bağlamadan da görev oluşturulabilir.
 """,
 
     'not': """
 NOT: Not ekle/ara/listele/göreve dönüştür. Tipler: not, hatirlatici, gosterim, sesli_not.
+Notta müşteri adı geçiyorsa → musteri_id bağla. Zorunlu değil.
 """,
 
     'iletisim': """

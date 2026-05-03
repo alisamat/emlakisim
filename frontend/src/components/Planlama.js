@@ -30,14 +30,19 @@ const ONCELIK = {
 const TIP_LABEL = { gorev: '📌 Görev', hatirlatma: '🔔 Hatırlatma', yer_gosterme: '🏠 Yer Gösterme', toplanti: '🤝 Toplantı' };
 
 function GorevFormu({ onKaydet, onIptal }) {
-  const [form, setForm] = useState({ baslik: '', aciklama: '', tip: 'gorev', oncelik: 'orta', baslangic: '', bitis: '' });
+  const [form, setForm] = useState({ baslik: '', aciklama: '', tip: 'gorev', oncelik: 'orta', baslangic: '', bitis: '', musteri_id: '' });
   const [yukleniyor, setYuk] = useState(false);
+  const [musteriler, setMusteriler] = useState([]);
   const d = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  React.useEffect(() => {
+    api.get('/api/panel/musteriler').then(r => setMusteriler(r.data.musteriler || [])).catch(() => {});
+  }, []);
 
   const kaydet = async e => {
     e.preventDefault(); setYuk(true);
     try {
-      const r = await api.post('/api/panel/planlama/gorevler', form);
+      const r = await api.post('/api/panel/planlama/gorevler', { ...form, musteri_id: form.musteri_id ? parseInt(form.musteri_id) : null });
       onKaydet(r.data.gorev);
     } catch {} finally { setYuk(false); }
   };
@@ -71,6 +76,13 @@ function GorevFormu({ onKaydet, onIptal }) {
         <div style={{ marginBottom: 16 }}>
           <label className="etiket">Açıklama</label>
           <textarea className="input" name="aciklama" value={form.aciklama} onChange={d} rows={2} style={{ resize: 'vertical' }} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label className="etiket">İlişkili Müşteri (opsiyonel)</label>
+          <select className="input" name="musteri_id" value={form.musteri_id} onChange={d}>
+            <option value="">— Müşteri yok —</option>
+            {musteriler.map(m => <option key={m.id} value={m.id}>{m.ad_soyad}{m.kunye ? ` (${m.kunye})` : ''}</option>)}
+          </select>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-yesil" type="submit" disabled={yukleniyor}>{yukleniyor ? 'Kaydediliyor...' : 'Kaydet'}</button>
