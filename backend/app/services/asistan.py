@@ -232,6 +232,15 @@ _PATTERNS = [
 
 def _pattern_isle(metin_norm, emlakci, metin_raw):
     """Pattern matching ile komut bul. Bulursa (komut, args) döndür, bulamazsa None."""
+    # Karmaşık cümleleri AI'a bırak — pattern'la çözülmemeli
+    kelime_sayisi = len(metin_norm.split())
+    kosullu = bool(re.search(r'(?:varsa|yoksa|eger|eğer|ise|iken|olursa|olmazsa|kontrol\s*et|önce.*sonra)', metin_norm))
+    coklu_istek = len(re.findall(r'(?:ayrica|ayrıca|hemde|hem\s*de|birde|bir\s*de|sonra|ve\s+\w+\s+(?:ekle|yap|koy|olustur))', metin_norm))
+
+    if kosullu or coklu_istek > 0:
+        # Koşullu veya uzun çoklu cümle — AI'a bırak
+        return None
+
     for pattern, komut in _PATTERNS:
         if re.search(pattern, metin_norm):
             return komut
