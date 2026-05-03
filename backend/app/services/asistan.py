@@ -1798,6 +1798,82 @@ def _grup_uye_davet_isle(emlakci, metin, session):
     return f'✅ *{hedef.ad_soyad}* adlı emlakçıya *{grup.ad}* grubu için davet gönderildi!'
 
 
+# ─── Tarih/Saat Parsing ────────────────────────────────────
+def _tarih_saat_parse(tarih_str=None, saat_str=None):
+    """Doğal dil tarih/saat ifadesini datetime'a çevir."""
+    from datetime import timedelta
+    bugun = datetime.now().replace(second=0, microsecond=0)
+
+    # Saat
+    saat_map = {
+        'sabah': 9, 'sabahleyin': 9,
+        'ogleden_once': 10, 'öğleden_önce': 10, 'ogleden once': 10,
+        'ogle': 12, 'öğle': 12, 'öğlen': 12,
+        'ogleden_sonra': 14, 'öğleden_sonra': 14, 'ogleden sonra': 14,
+        'aksam': 18, 'akşam': 18, 'aksamustu': 17, 'akşamüstü': 17,
+        'gece': 21,
+    }
+
+    saat = 9  # varsayılan
+    if saat_str:
+        s_lower = saat_str.lower().strip()
+        if s_lower in saat_map:
+            saat = saat_map[s_lower]
+        else:
+            # "14:00", "14", "14.00" gibi
+            import re as _re
+            m = _re.search(r'(\d{1,2})(?:[:.:](\d{2}))?', s_lower)
+            if m:
+                saat = int(m.group(1))
+                dakika = int(m.group(2)) if m.group(2) else 0
+                return _tarih_parse(tarih_str, bugun).replace(hour=saat, minute=dakika)
+
+    return _tarih_parse(tarih_str, bugun).replace(hour=saat, minute=0)
+
+
+def _tarih_parse(tarih_str, bugun):
+    """Doğal dil tarih ifadesini date'e çevir."""
+    from datetime import timedelta
+    if not tarih_str:
+        return bugun
+
+    t = tarih_str.lower().strip().replace('ı', 'i').replace('ö', 'o').replace('ü', 'u').replace('ş', 's').replace('ç', 'c').replace('ğ', 'g')
+
+    if t in ('bugun', 'simdi', 'su an'):
+        return bugun
+    if t in ('yarin', 'ertesi gun'):
+        return bugun + timedelta(days=1)
+    if t in ('obur gun', 'obur gun', 'iki gun sonra'):
+        return bugun + timedelta(days=2)
+    if t in ('haftaya', 'gelecek hafta', 'onumuzdeki hafta'):
+        return bugun + timedelta(days=7)
+    if t in ('onumuzdeki ay', 'gelecek ay'):
+        return bugun + timedelta(days=30)
+
+    # Gün isimleri
+    gun_map = {'pazartesi': 0, 'sali': 1, 'carsamba': 2, 'persembe': 3, 'cuma': 4, 'cumartesi': 5, 'pazar': 6}
+    for gun_adi, gun_no in gun_map.items():
+        if gun_adi in t:
+            fark = (gun_no - bugun.weekday()) % 7
+            if fark == 0:
+                fark = 7  # bu gün değil, gelecek hafta
+            return bugun + timedelta(days=fark)
+
+    # ISO format: 2026-05-05
+    try:
+        return datetime.strptime(tarih_str.strip(), '%Y-%m-%d')
+    except (ValueError, TypeError):
+        pass
+
+    # TR format: 05.05.2026
+    try:
+        return datetime.strptime(tarih_str.strip(), '%d.%m.%Y')
+    except (ValueError, TypeError):
+        pass
+
+    return bugun
+
+
 # ─── Gösterim Geri Bildirim ────────────────────────────────
 def _gosterim_geri_bildirim(emlakci, args):
     """Gösterim sonrası not kaydet ve/veya müşteriye anket gönder."""
@@ -2370,13 +2446,15 @@ _FUNCTIONS = [
     },
     {
         'name': 'gorev_ekle',
-        'description': 'Görev veya hatırlatma oluşturur',
+        'description': 'Görev, hatırlatma, toplantı veya yer gösterme oluşturur. Tarih ve saat belirtilmelidir.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'baslik': {'type': 'string', 'description': 'Görev başlığı'},
                 'aciklama': {'type': 'string'},
                 'tip': {'type': 'string', 'enum': ['gorev', 'hatirlatma', 'yer_gosterme', 'toplanti']},
+                'tarih': {'type': 'string', 'description': 'Tarih: "bugun", "yarin", "2026-05-05", "haftaya", "onumuzdeki pazartesi" gibi. Belirsizse bugün.'},
+                'saat': {'type': 'string', 'description': 'Saat: "14:00", "sabah" (09:00), "ogleden_once" (10:00), "ogle" (12:00), "ogleden_sonra" (14:00), "aksam" (18:00). Belirsizse 09:00.'},
             },
             'required': ['baslik'],
         },
@@ -2861,9 +2939,12 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
 
     if fonksiyon_adi == 'gorev_ekle':
         from app.models.planlama import Gorev
-        g = Gorev(emlakci_id=emlakci.id, baslik=args.get('baslik', ''), aciklama=args.get('aciklama'), tip=args.get('tip', 'gorev'))
+        baslangic = _tarih_saat_parse(args.get('tarih'), args.get('saat'))
+        g = Gorev(emlakci_id=emlakci.id, baslik=args.get('baslik', ''), aciklama=args.get('aciklama'),
+                  tip=args.get('tip', 'gorev'), baslangic=baslangic)
         db.session.add(g); db.session.commit()
-        return f'✅ Görev eklendi: {args.get("baslik")}'
+        tarih_str = baslangic.strftime('%d.%m.%Y %H:%M') if baslangic else ''
+        return f'✅ Görev eklendi: {args.get("baslik")}' + (f'\n📅 {tarih_str}' if tarih_str else '')
 
     if fonksiyon_adi == 'fatura_olustur':
         from app.models.fatura import Fatura
@@ -3799,6 +3880,12 @@ DAVRANIŞ KURALLARI:
 • DOĞAL DİLDEN BİLGİ ÇIKAR: Kullanıcı bilgiyi doğal cümle içinde verirse, bilgiyi çıkar ve direkt işlemi yap.
   Örnek: "saat 14'te Adnan bey ile toplantımız var" → gorev_ekle(baslik="Adnan Bey ile toplantı - 14:00", tip="toplanti")
   Geri soru SORMA, bilgi yeterliyse hemen yap.
+• ZAMAN KAVRAMLARI: Görev/hatırlatma oluştururken tarih ve saat parametrelerini kullan:
+  - tarih: "bugun", "yarin", "haftaya", "onumuzdeki pazartesi", "2026-05-05"
+  - saat: "sabah" (09:00), "ogleden_once" (10:00), "ogle" (12:00), "ogleden_sonra" (14:00), "aksam" (18:00), "14:00", "15:30"
+  - "yarın öğleden sonra" → tarih="yarin", saat="ogleden_sonra"
+  - "gelecek cuma sabah" → tarih="onumuzdeki cuma", saat="sabah"
+  - Tarih veya saat belirtilmemişse tahmin et, belirsizse "bugun" + "09:00" kullan.
 • AKILLI OL: "ara" kelimesi bağlama göre farklı anlam taşır:
   - Müşteri ile konuşuluyorsa → telefon ile ara
   - Mülk aranıyorsa → portföyde ara

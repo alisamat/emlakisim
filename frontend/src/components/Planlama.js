@@ -1,6 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
+function tarihGoster(tarihStr) {
+  if (!tarihStr) return '';
+  const tarih = new Date(tarihStr);
+  const bugun = new Date();
+  bugun.setHours(0,0,0,0);
+  const yarin = new Date(bugun); yarin.setDate(yarin.getDate() + 1);
+  const haftaya = new Date(bugun); haftaya.setDate(haftaya.getDate() + 7);
+
+  const t = new Date(tarih); t.setHours(0,0,0,0);
+  const saat = tarih.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  const gunler = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+  const gun = gunler[tarih.getDay()];
+
+  if (t.getTime() === bugun.getTime()) return `Bugün ${saat}`;
+  if (t.getTime() === yarin.getTime()) return `Yarın ${saat}`;
+  if (t < haftaya) return `${gun} ${saat}`;
+  return `${tarih.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ${gun} ${saat}`;
+}
+
 const ONCELIK = {
   acil:   { label: '🔴 Acil', renk: '#dc2626' },
   yuksek: { label: '🟠 Yüksek', renk: '#f59e0b' },
@@ -87,7 +106,7 @@ function GorevKarti({ g, onDurumDegistir, onSil }) {
           {g.aciklama && <div style={{ fontSize: 12, color: '#94a3b8', marginLeft: 28 }}>{g.aciklama}</div>}
           {g.baslangic && (
             <div style={{ fontSize: 11, color: '#64748b', marginLeft: 28, marginTop: 2 }}>
-              📅 {new Date(g.baslangic).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              📅 {tarihGoster(g.baslangic)}
             </div>
           )}
         </div>
@@ -152,7 +171,7 @@ export default function Planlama() {
           <div style={{ fontWeight: 700, fontSize: 13, color: '#92400e', marginBottom: 6 }}>📌 Bugün ({bugun.bugun.length})</div>
           {bugun.bugun.map(g => (
             <div key={g.id} style={{ fontSize: 13, color: '#78350f', padding: '2px 0' }}>
-              • {g.baslik} {g.baslangic ? `— ${new Date(g.baslangic).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` : ''}
+              • {g.baslik} {g.baslangic ? `— ${tarihGoster(g.baslangic)}` : ''}
             </div>
           ))}
         </div>
@@ -163,7 +182,7 @@ export default function Planlama() {
           <div style={{ fontWeight: 700, fontSize: 13, color: '#1d4ed8', marginBottom: 6 }}>🔜 Yaklaşan ({bugun.yaklasan.length})</div>
           {bugun.yaklasan.slice(0, 3).map(g => (
             <div key={g.id} style={{ fontSize: 13, color: '#1e40af', padding: '2px 0' }}>
-              • {g.baslik} — {g.baslangic ? new Date(g.baslangic).toLocaleDateString('tr-TR') : ''}
+              • {g.baslik} — {g.baslangic ? tarihGoster(g.baslangic) : ''}
             </div>
           ))}
         </div>
