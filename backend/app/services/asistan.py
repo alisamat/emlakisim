@@ -2469,6 +2469,39 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'gorev_sil',
+        'description': 'Görevi siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'gorev_id': {'type': 'integer'},
+                'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara'},
+            },
+        },
+    },
+    {
+        'name': 'fatura_sil',
+        'description': 'Faturayı siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'fatura_id': {'type': 'integer'},
+                'fatura_no': {'type': 'string'},
+            },
+        },
+    },
+    {
+        'name': 'teklif_sil',
+        'description': 'Teklifi siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'teklif_id': {'type': 'integer'},
+            },
+            'required': ['teklif_id'],
+        },
+    },
+    {
         'name': 'gorev_ekle',
         'description': 'Görev, hatırlatma, toplantı veya yer gösterme oluşturur. Tarih ve saat belirtilmelidir.',
         'parameters': {
@@ -2599,15 +2632,19 @@ _FUNCTIONS = [
     },
     {
         'name': 'gorev_guncelle',
-        'description': 'Mevcut görevi günceller — durumunu değiştirir (tamamla, iptal et), başlık düzenler.',
+        'description': 'Mevcut görevi günceller — durum, tarih, saat, başlık, açıklama, öncelik. "görevi yarına ertele", "3. görevi tamamla", "toplantıyı iptal et".',
         'parameters': {
             'type': 'object',
             'properties': {
                 'gorev_id': {'type': 'integer', 'description': 'Görev ID'},
+                'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara (ID bilinmiyorsa)'},
                 'durum': {'type': 'string', 'enum': ['bekliyor', 'devam', 'tamamlandi', 'iptal']},
-                'baslik': {'type': 'string', 'description': 'Yeni başlık (opsiyonel)'},
+                'baslik': {'type': 'string', 'description': 'Yeni başlık'},
+                'aciklama': {'type': 'string', 'description': 'Yeni açıklama'},
+                'tarih': {'type': 'string', 'description': 'Yeni tarih: bugun, yarin, haftaya, 2026-05-10'},
+                'saat': {'type': 'string', 'description': 'Yeni saat: sabah, ogleden_sonra, 14:00'},
+                'oncelik': {'type': 'string', 'enum': ['dusuk', 'orta', 'yuksek', 'acil']},
             },
-            'required': ['gorev_id'],
         },
     },
     # ── Fatura ──
@@ -3295,15 +3332,69 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
 
     if fonksiyon_adi == 'gorev_guncelle':
         from app.models.planlama import Gorev
-        g = Gorev.query.filter_by(id=args.get('gorev_id'), emlakci_id=emlakci.id).first()
+        g = None
+        if args.get('gorev_id'):
+            g = Gorev.query.filter_by(id=args['gorev_id'], emlakci_id=emlakci.id).first()
+        elif args.get('gorev_baslik'):
+            g = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.baslik.ilike(f'%{args["gorev_baslik"]}%')).first()
         if not g:
             return '⚠️ Görev bulunamadı.'
+        degisiklikler = []
         if args.get('durum'):
             g.durum = args['durum']
+            degisiklikler.append(f'Durum: {args["durum"]}')
         if args.get('baslik'):
             g.baslik = args['baslik']
+            degisiklikler.append(f'Başlık: {args["baslik"]}')
+        if args.get('aciklama'):
+            g.aciklama = args['aciklama']
+            degisiklikler.append('Açıklama güncellendi')
+        if args.get('oncelik'):
+            g.oncelik = args['oncelik']
+            degisiklikler.append(f'Öncelik: {args["oncelik"]}')
+        if args.get('tarih') or args.get('saat'):
+            g.baslangic = _tarih_saat_parse(args.get('tarih'), args.get('saat'))
+            tarih_str = g.baslangic.strftime('%d.%m.%Y %H:%M') if g.baslangic else ''
+            degisiklikler.append(f'Tarih: {tarih_str}')
         db.session.commit()
-        return f'✅ Görev güncellendi: {g.baslik} → {g.durum}'
+        return f'✅ *{g.baslik}* güncellendi:\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
+
+    if fonksiyon_adi == 'gorev_sil':
+        from app.models.planlama import Gorev
+        g = None
+        if args.get('gorev_id'):
+            g = Gorev.query.filter_by(id=args['gorev_id'], emlakci_id=emlakci.id).first()
+        elif args.get('gorev_baslik'):
+            g = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.baslik.ilike(f'%{args["gorev_baslik"]}%')).first()
+        if not g:
+            return '⚠️ Görev bulunamadı.'
+        baslik = g.baslik
+        db.session.delete(g)
+        db.session.commit()
+        return f'✅ *{baslik}* silindi.'
+
+    if fonksiyon_adi == 'fatura_sil':
+        from app.models.fatura import Fatura
+        f = None
+        if args.get('fatura_id'):
+            f = Fatura.query.filter_by(id=args['fatura_id'], emlakci_id=emlakci.id).first()
+        elif args.get('fatura_no'):
+            f = Fatura.query.filter_by(fatura_no=args['fatura_no'], emlakci_id=emlakci.id).first()
+        if not f:
+            return '⚠️ Fatura bulunamadı.'
+        no = f.fatura_no
+        db.session.delete(f)
+        db.session.commit()
+        return f'✅ Fatura *{no}* silindi.'
+
+    if fonksiyon_adi == 'teklif_sil':
+        from app.models import Teklif
+        t = Teklif.query.filter_by(id=args.get('teklif_id'), emlakci_id=emlakci.id).first()
+        if not t:
+            return '⚠️ Teklif bulunamadı.'
+        db.session.delete(t)
+        db.session.commit()
+        return '✅ Teklif silindi.'
 
     if fonksiyon_adi == 'fatura_listele':
         from app.models.fatura import Fatura

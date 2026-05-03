@@ -18,12 +18,12 @@ KATEGORI_TOOLS = {
         'eslestir', 'musteri_eslesme_bul', 'gelismis_mulk_ara', 'gelismis_musteri_ara',
     ],
     'finans': [
-        'fatura_olustur', 'fatura_guncelle', 'fatura_listele', 'gelir_gider_ozet',
+        'fatura_olustur', 'fatura_guncelle', 'fatura_sil', 'fatura_listele', 'gelir_gider_ozet',
         'cari_ozet', 'muhasebe_donem', 'komisyon_hesapla', 'tapu_masrafi_hesapla',
         'kira_vergisi_hesapla', 'kira_getirisi_hesapla',
     ],
     'planlama': [
-        'gorev_ekle', 'gorev_listele', 'gorev_guncelle', 'rapor',
+        'gorev_ekle', 'gorev_listele', 'gorev_guncelle', 'gorev_sil', 'rapor',
     ],
     'not': [
         'not_ekle', 'not_guncelle', 'not_sil', 'not_ara', 'not_goreve_donustur',
@@ -32,7 +32,7 @@ KATEGORI_TOOLS = {
         'whatsapp_mesaj_gonder', 'toplu_mesaj_gonder', 'gosterim_geri_bildirim',
     ],
     'teklif': [
-        'teklif_kaydet', 'teklif_guncelle', 'teklif_listele', 'satis_kapandi',
+        'teklif_kaydet', 'teklif_guncelle', 'teklif_sil', 'teklif_listele', 'satis_kapandi',
     ],
     'analiz': [
         'mahalle_analiz', 'hava_durumu', 'emlak_haberleri',
