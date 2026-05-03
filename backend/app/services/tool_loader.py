@@ -40,6 +40,7 @@ KATEGORI_TOOLS = {
     'arac': [
         'qr_kod_olustur', 'cevir', 'web_sayfa_bilgi', 'veri_indir',
         'yedek_durumu_sorgula', 'asistan_ismi_degistir',
+        'son_islemler_getir', 'islem_geri_al',
     ],
     'navigasyon': [
         'sayfa_ac',

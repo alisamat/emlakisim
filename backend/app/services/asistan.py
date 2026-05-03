@@ -2484,6 +2484,27 @@ _FUNCTIONS = [
             },
         },
     },
+    # ── İşlem Takip + Geri Alma ──
+    {
+        'name': 'son_islemler_getir',
+        'description': 'Son yapılan işlemleri listeler. "Ne yaptık bugün", "son işlemler", "işlem geçmişi" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'limit': {'type': 'integer', 'description': 'Kaç işlem gösterilsin (varsayılan 10)'},
+            },
+        },
+    },
+    {
+        'name': 'islem_geri_al',
+        'description': 'Son işlemi veya belirli bir işlemi geri alır. "Geri al", "son işlemi iptal et", "az önceki eklemeyi geri al" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'islem_id': {'type': 'integer', 'description': 'Geri alınacak işlem ID (belirtilmezse en son işlem)'},
+            },
+        },
+    },
     {
         'name': 'gorev_sil',
         'description': 'Görevi siler.',
@@ -3028,6 +3049,11 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         db.session.add(m)
         db.session.commit()
 
+        # İşlem takip
+        from app.services.islem_takip import islem_kaydet
+        islem_kaydet(emlakci.id, 'musteri_ekle', 'musteri', m.id,
+                     f'{m.ad_soyad} müşteriye eklendi', yeni_veri=temel)
+
         islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
         return (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
                 + (f' _({m.kunye})_' if m.kunye else '') +
@@ -3070,6 +3096,17 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
             return f'⚠️ Güncellenecek bilgi belirtilmedi.'
         return (f'✅ *{mus.ad_soyad}* güncellendi:\n\n'
                 + '\n'.join([f'• {d}' for d in degisiklikler]))
+
+    if fonksiyon_adi == 'son_islemler_getir':
+        from app.services.islem_takip import son_islemler, islem_formatla
+        limit = args.get('limit', 10)
+        islemler = son_islemler(emlakci.id, limit)
+        return islem_formatla(islemler)
+
+    if fonksiyon_adi == 'islem_geri_al':
+        from app.services.islem_takip import islem_geri_al
+        log, mesaj = islem_geri_al(emlakci.id, args.get('islem_id'))
+        return mesaj
 
     if fonksiyon_adi == 'mulk_guncelle':
         mulk = None
