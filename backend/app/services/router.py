@@ -102,6 +102,9 @@ KATEGORILER = {
     'planlama': {
         'ornekler': [
             'yarın öğleden sonra Ahmet Beyle toplantı koy',
+            'yeni görev ekle',
+            'görev ekle',
+            'görev oluştur',
             'görev ekle pazartesi sabah gösterim var',
             'görevlerimi göster',
             'bugün ne var programım ne',
@@ -113,6 +116,8 @@ KATEGORILER = {
     },
     'not': {
         'ornekler': [
+            'not ekle',
+            'yeni not ekle',
             'not ekle Ahmet bey balkonu beğendi mutfağı küçük buldu',
             'not al bugün Kadıköy gösteriminde müşteri fiyatı yüksek buldu',
             'notlarımı göster',

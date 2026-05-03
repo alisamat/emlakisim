@@ -15,7 +15,7 @@ const MENU = [
       { ikon: '👥', ad: 'Müşteri Ekle', tab: 'musteriler', aciklama: 'Yeni müşteri kaydı oluştur' },
       { ikon: '🏢', ad: 'Mülk Ekle', tab: 'mulkler', aciklama: 'Portföye yeni mülk ekle' },
       { ikon: '📋', ad: 'Yer Gösterme', tab: 'kayitlar', aciklama: 'Yer gösterme kayıtları' },
-      { ikon: '📌', ad: 'Görev Ekle', mesaj: 'Yeni görev ekle', aciklama: 'Sohbetten hızlı görev oluştur' },
+      { ikon: '📌', ad: 'Görev Ekle', tab: 'planlama', aciklama: 'Görev oluştur, randevu planla' },
     ],
   },
   {
