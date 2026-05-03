@@ -423,9 +423,12 @@ export default function Mulkler() {
 
   const yukle = useCallback(async () => {
     setYuk(true);
-    try { const r = await api.get('/api/panel/mulkler?pasif=true'); setMulkler(r.data.mulkler || []); }
-    catch {} finally { setYuk(false); }
-  }, []);
+    try {
+      const url = pasifGoster ? '/api/panel/mulkler?pasif=true' : '/api/panel/mulkler';
+      const r = await api.get(url);
+      setMulkler(r.data.mulkler || []);
+    } catch {} finally { setYuk(false); }
+  }, [pasifGoster]);
 
   useEffect(() => { yukle(); }, [yukle]);
 
