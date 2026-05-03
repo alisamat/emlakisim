@@ -104,11 +104,9 @@ function GorevKarti({ g, onDurumDegistir, onSil }) {
             <span style={{ fontSize: 11, color: '#94a3b8' }}>{TIP_LABEL[g.tip] || g.tip}</span>
           </div>
           {g.aciklama && <div style={{ fontSize: 12, color: '#94a3b8', marginLeft: 28 }}>{g.aciklama}</div>}
-          {g.baslangic && (
-            <div style={{ fontSize: 11, color: '#64748b', marginLeft: 28, marginTop: 2 }}>
-              📅 {tarihGoster(g.baslangic)}
-            </div>
-          )}
+          <div style={{ fontSize: 11, color: '#64748b', marginLeft: 28, marginTop: 2 }}>
+            📅 {g.baslangic ? tarihGoster(g.baslangic) : 'Tarih belirtilmedi'}
+          </div>
         </div>
         <button onClick={() => onSil(g.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 14 }}>🗑</button>
       </div>

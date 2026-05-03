@@ -1283,10 +1283,42 @@ def _eslestirme_ozet(emlakci):
 
 def _gorev_kaydet(emlakci, metin):
     from app.models.planlama import Gorev
-    g = Gorev(emlakci_id=emlakci.id, baslik=metin[:200], tip='gorev')
+    # Metinden saat/tarih çıkarmaya çalış
+    import re as _re
+    saat_match = _re.search(r'saat\s*(\d{1,2})[:.:]?(\d{2})?|(\d{1,2})[:.:](\d{2})', metin)
+    tarih = None
+    saat = None
+    metin_lower = metin.lower()
+    if 'yarin' in metin_lower or 'yarın' in metin_lower:
+        tarih = 'yarin'
+    elif 'haftaya' in metin_lower:
+        tarih = 'haftaya'
+    if saat_match:
+        h = saat_match.group(1) or saat_match.group(3)
+        m = saat_match.group(2) or saat_match.group(4) or '00'
+        saat = f'{h}:{m}'
+    elif 'sabah' in metin_lower:
+        saat = 'sabah'
+    elif 'ogleden sonra' in metin_lower or 'öğleden sonra' in metin_lower:
+        saat = 'ogleden_sonra'
+    elif 'aksam' in metin_lower or 'akşam' in metin_lower:
+        saat = 'aksam'
+
+    # Tip belirle
+    tip = 'gorev'
+    if 'toplanti' in metin_lower or 'toplantı' in metin_lower:
+        tip = 'toplanti'
+    elif 'gosterim' in metin_lower or 'gösterim' in metin_lower:
+        tip = 'yer_gosterme'
+    elif 'hatırlat' in metin_lower or 'hatırlat' in metin_lower:
+        tip = 'hatirlatma'
+
+    baslangic = _tarih_saat_parse(tarih, saat)
+    g = Gorev(emlakci_id=emlakci.id, baslik=metin[:200], tip=tip, baslangic=baslangic)
     db.session.add(g)
     db.session.commit()
-    return f'✅ *Görev eklendi!*\n\n📌 {metin[:100]}'
+    tarih_str = baslangic.strftime('%d.%m.%Y %H:%M') if baslangic else ''
+    return f'✅ *Görev eklendi!*\n\n📌 {metin[:100]}' + (f'\n📅 {tarih_str}' if tarih_str else '')
 
 
 def _fatura_kaydet(emlakci, metin):
