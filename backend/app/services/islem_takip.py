@@ -66,7 +66,7 @@ def islem_geri_al(emlakci_id, islem_id=None):
         return None, 'Geri alınacak işlem bulunamadı.'
 
     tablo_model = {
-        'musteri': Musteri, 'mulk': Mulk, 'not': Not,
+        'musteri': Musteri, 'mulk': Mulk, 'not': Not, 'gorev': Gorev, 'fatura': Fatura,
         'gorev': Gorev, 'fatura': Fatura,
     }
 

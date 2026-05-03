@@ -141,6 +141,15 @@ KATEGORILER = {
             'bu müşteri ciddi mi satıcı tahmin',
         ],
     },
+    'islem_takip': {
+        'ornekler': [
+            'son işlemler ne yaptık bugün',
+            'işlem geçmişi göster',
+            'geri al son işlemi iptal et',
+            'az önceki eklemeyi geri al',
+            'ne değişiklik yaptım',
+        ],
+    },
     'arac': {
         'ornekler': [
             'QR kod oluştur',

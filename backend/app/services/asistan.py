@@ -3014,6 +3014,9 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         'fatura_olustur': 'fatura', 'fatura_guncelle': 'fatura', 'fatura_sil': 'fatura',
         'teklif_kaydet': 'teklif', 'teklif_guncelle': 'teklif', 'teklif_sil': 'teklif',
         'satis_kapandi': 'mulk', 'dogum_gunu_kaydet': 'musteri',
+        'not_goreve_donustur': 'not', 'gosterim_geri_bildirim': 'not',
+        'whatsapp_mesaj_gonder': 'iletisim', 'toplu_mesaj_gonder': 'iletisim',
+        'asistan_ismi_degistir': 'ayar',
     }
     tablo = yazma_fonksiyonlari.get(fonksiyon_adi)
 
