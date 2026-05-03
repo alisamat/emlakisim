@@ -720,7 +720,12 @@ def _mulk_listele(emlakci, session=None):
         fiyat = f'{int(m.fiyat):,}'.replace(',', '.') + ' TL' if m.fiyat else '?'
         satirlar.append(f'*{i+1}.* {m.baslik or m.adres or "—"} — {fiyat} ({m.islem_turu or "?"})')
     toplam = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
-    ek = f'\n\n_Toplam {toplam} mülk. "devam" yazarak daha fazla görebilirsiniz._' if toplam > 10 else ''
+    ek = f'\n\n_Toplam {toplam} mülk._' if toplam > 10 else ''
+    # Public link
+    import os
+    frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+    sayfa_link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+    ek += f'\n\n🌐 _İlanlarınızı görüntüleyin:_ {sayfa_link}'
     return f'🏢 *Portföyünüz* ({toplam})\n\n' + '\n'.join(satirlar) + ek, mulkler
 
 
@@ -3107,7 +3112,12 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         db.session.commit()
         if not degisiklikler:
             return '⚠️ Güncellenecek bilgi belirtilmedi.'
-        return f'✅ *{mulk.baslik or "Mülk"}* güncellendi:\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+        sayfa_link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+        return (f'✅ *{mulk.baslik or "Mülk"}* güncellendi:\n\n'
+                + '\n'.join([f'• {d}' for d in degisiklikler])
+                + f'\n\n🌐 _İlan olarak görüntüle:_ {sayfa_link}')
 
     if fonksiyon_adi == 'mulk_sil':
         mulk = None
@@ -3207,11 +3217,15 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         db.session.commit()
         f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
         islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+        sayfa_link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
         return (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
                 f'📍 {m.adres or "—"}{", " + m.ilce if m.ilce else ""}{", " + m.sehir if m.sehir else ""}\n'
                 f'🏷 {islem} · {m.tip or "—"}\n'
                 f'💰 {f_tl(m.fiyat)} TL\n'
-                f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²')
+                f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²\n\n'
+                f'🌐 _İlan sayfanızda görüntüleyin:_ {sayfa_link}')
 
     if fonksiyon_adi == 'mulk_listele':
         sonuc, _ = _mulk_listele(emlakci)
