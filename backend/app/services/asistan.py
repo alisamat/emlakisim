@@ -3432,12 +3432,10 @@ def _gemini(api_key, sistem, gecmis):
 
 
 def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
-    """Gemini ile function calling — AI doğrudan DB işlemi yapar."""
+    """Gemini ile multi-turn function calling — koşullu zincirleme destekli."""
     import google.generativeai as genai
-    import json as _json
     genai.configure(api_key=api_key)
 
-    # Gemini function declarations
     tools = [{
         'function_declarations': [{
             'name': f['name'],
@@ -3449,26 +3447,51 @@ def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
     model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=sistem, tools=tools)
     history = [{'role': 'user' if m['role'] == 'user' else 'model', 'parts': [m['content']]} for m in gecmis[:-1]]
     chat = model.start_chat(history=history)
+
+    tum_sonuclar = []
+    nav = None
     response = chat.send_message(gecmis[-1]['content'])
 
-    # Function call kontrolü — çoklu komut desteği
-    sonuclar = []
-    nav = None
-    for part in response.parts:
-        if hasattr(part, 'function_call') and part.function_call:
-            fc = part.function_call
-            args = dict(fc.args) if fc.args else {}
-            sonuc = _ai_function_call(fc.name, args, emlakci)
-            if isinstance(sonuc, tuple):
-                sonuclar.append(sonuc[0])
-                nav = sonuc[1]
-            elif sonuc:
-                sonuclar.append(sonuc)
-    if sonuclar:
-        birlesik = '\n\n'.join(sonuclar)
-        return (birlesik, nav) if nav else birlesik
+    # Max 3 tur — koşullu zincirleme için
+    for tur in range(3):
+        fonksiyon_vardi = False
+        for part in response.parts:
+            if hasattr(part, 'function_call') and part.function_call:
+                fonksiyon_vardi = True
+                fc = part.function_call
+                args = dict(fc.args) if fc.args else {}
+                sonuc = _ai_function_call(fc.name, args, emlakci)
 
-    return response.text
+                if isinstance(sonuc, tuple):
+                    sonuc_metin = sonuc[0]
+                    nav = sonuc[1]
+                else:
+                    sonuc_metin = sonuc or 'İşlem tamamlandı.'
+
+                tum_sonuclar.append(sonuc_metin)
+
+                # Fonksiyon sonucunu Gemini'ye geri gönder
+                try:
+                    from google.generativeai.types import content_types
+                    response = chat.send_message(
+                        content_types.to_content({'function_response': {'name': fc.name, 'response': {'result': sonuc_metin}}})
+                    )
+                except Exception:
+                    # Fallback — düz metin olarak gönder
+                    response = chat.send_message(f'Fonksiyon sonucu ({fc.name}): {sonuc_metin}')
+
+        if not fonksiyon_vardi:
+            # AI fonksiyon çağırmadı — metin cevabı
+            if tum_sonuclar:
+                son_yorum = response.text if response.text else ''
+                birlesik = '\n\n'.join(tum_sonuclar)
+                if son_yorum:
+                    birlesik += f'\n\n{son_yorum}'
+                return (birlesik, nav) if nav else birlesik
+            return response.text
+
+    birlesik = '\n\n'.join(tum_sonuclar) if tum_sonuclar else 'İşlem tamamlandı.'
+    return (birlesik, nav) if nav else birlesik
 
 
 def _openai(api_key, sistem, gecmis):
@@ -3496,36 +3519,63 @@ def _claude(api_key, sistem, gecmis):
 
 # ─── OpenAI Function Calling (akıllı mod) ──────────────────
 def _openai_with_functions(api_key, sistem, gecmis, emlakci):
-    """OpenAI ile function calling — AI doğrudan DB işlemi yapar."""
+    """OpenAI ile multi-turn function calling — koşullu zincirleme destekli."""
     from openai import OpenAI
     client = OpenAI(api_key=api_key)
 
     tools = [{'type': 'function', 'function': f} for f in _FUNCTIONS]
-    r = client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=[{'role': 'system', 'content': sistem}] + gecmis,
-        tools=tools,
-        tool_choice='auto',
-        max_tokens=1024,
-    )
+    messages = [{'role': 'system', 'content': sistem}] + gecmis
+    tum_sonuclar = []
+    nav = None
 
-    msg = r.choices[0].message
-    if msg.tool_calls:
-        sonuclar = []
-        nav = None
+    # Max 3 tur — koşullu zincirleme için
+    for tur in range(3):
+        r = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=messages,
+            tools=tools,
+            tool_choice='auto',
+            max_tokens=1024,
+        )
+
+        msg = r.choices[0].message
+
+        if not msg.tool_calls:
+            # AI fonksiyon çağırmadı — metin cevabı döndür
+            if tum_sonuclar:
+                # Önceki turlardan sonuçlar var, AI son yorumunu ekledi
+                son_yorum = msg.content or ''
+                birlesik = '\n\n'.join(tum_sonuclar)
+                if son_yorum:
+                    birlesik += f'\n\n{son_yorum}'
+                return (birlesik, nav) if nav else birlesik
+            return msg.content
+
+        # Fonksiyon çağrılarını işle
+        messages.append(msg)  # AI'ın tool_calls mesajını ekle
+
         for tc in msg.tool_calls:
             args = json.loads(tc.function.arguments)
             sonuc = _ai_function_call(tc.function.name, args, emlakci)
-            if isinstance(sonuc, tuple):
-                sonuclar.append(sonuc[0])
-                nav = sonuc[1]
-            elif sonuc:
-                sonuclar.append(sonuc)
-        if nav:
-            return ('\n\n'.join(sonuclar), nav) if sonuclar else ('İşlem tamamlandı.', nav)
-        return '\n\n'.join(sonuclar) if sonuclar else msg.content or 'İşlem tamamlandı.'
 
-    return msg.content
+            if isinstance(sonuc, tuple):
+                sonuc_metin = sonuc[0]
+                nav = sonuc[1]
+            else:
+                sonuc_metin = sonuc or 'İşlem tamamlandı.'
+
+            tum_sonuclar.append(sonuc_metin)
+
+            # Fonksiyon sonucunu AI'a geri gönder — AI buna göre karar verir
+            messages.append({
+                'role': 'tool',
+                'tool_call_id': tc.id,
+                'content': sonuc_metin,
+            })
+
+    # Max tur aşıldı
+    birlesik = '\n\n'.join(tum_sonuclar) if tum_sonuclar else 'İşlem tamamlandı.'
+    return (birlesik, nav) if nav else birlesik
 
 
 # ─── Sistem Prompt ─────────────────────────────────────────
@@ -3731,6 +3781,16 @@ DAVRANIŞ KURALLARI:
 • PROAKTİF OL: sadece sorulan cevapla yetinme. "Bu müşteriye uygun 3 mülk var" gibi önerilerde bulun.
 • HATIRLA: önceki konuşmalardan bilgi kullan. "Geçen sefer bahsettiğimiz daire" gibi ifadeleri anla.
 • ZAMİR ÇÖZ: "onu ara" → yukarıda SON MÜŞTERİ kimse onun telefonunu ver. "bunu ekle" → son mülkü portföye ekle.
+• KOŞULLU ZİNCİRLEME: Kullanıcı "varsa", "eğer", "kontrol et sonra yap" derse:
+  1. Önce kontrol fonksiyonunu çağır (örn: müşteri ara)
+  2. Sonucu değerlendir
+  3. Koşul sağlanıyorsa ikinci fonksiyonu çağır (örn: görev ekle)
+  4. Sağlanmıyorsa kullanıcıya bilgi ver
+  Örnek: "Yılmaz Akın müşterimse yarına toplantı koy"
+  → 1. gelismis_musteri_ara(sorgu="Yılmaz Akın")
+  → Sonuç: "1 müşteri bulundu"
+  → 2. gorev_ekle(baslik="Yılmaz Akın ile toplantı - yarın", tip="toplanti")
+  Eğer müşteri bulunamazsa: "Yılmaz Akın adında müşteri bulunamadı."
 • ÇOKLU KOMUT: Tek mesajda birden fazla istek varsa HEPSİNİ yap.
   Örnek: "Adnan beyi müşterilere ekle numarası 02123221722, ayrıca saat 14'te toplantı görevi oluştur"
   → 1. musteri_ekle(ad_soyad="Adnan Bey", telefon="02123221722")
