@@ -3034,12 +3034,13 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         if args.get('mulk_id'):
             mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
         elif args.get('mulk_baslik'):
-            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
         if not mulk:
             return '⚠️ Mülk bulunamadı.'
-        mulk.aktif = False
+        baslik = mulk.baslik
+        db.session.delete(mulk)
         db.session.commit()
-        return f'✅ *{mulk.baslik}* portföyden kaldırıldı (pasife alındı).'
+        return f'✅ *{baslik}* kalıcı olarak silindi.'
 
     if fonksiyon_adi == 'musteri_sil':
         mus = None

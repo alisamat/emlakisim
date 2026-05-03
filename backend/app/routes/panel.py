@@ -161,7 +161,7 @@ def mulk_guncelle(mid):
 @jwt_required()
 def mulk_sil(mid):
     m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
-    m.aktif = False
+    db.session.delete(m)
     db.session.commit()
     return jsonify({'ok': True})
 
