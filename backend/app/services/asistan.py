@@ -2811,7 +2811,13 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         m = Musteri(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar')})
         db.session.add(m)
         db.session.commit()
-        return f'✅ Müşteri eklendi: {args.get("ad_soyad")}'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
+        return (f'✅ *Müşteri eklendi: {m.ad_soyad}*\n\n'
+                f'📞 {m.telefon or "—"}\n'
+                f'🏷 {islem}\n'
+                f'💰 Bütçe: {f_tl(m.butce_min)} — {f_tl(m.butce_max)} TL\n'
+                + (f'📝 {m.tercih_notlar}' if m.tercih_notlar else ''))
 
     if fonksiyon_adi == 'musteri_listele':
         sonuc, _ = _musteri_listele(emlakci)
@@ -2821,7 +2827,13 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         m = Mulk(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi')})
         db.session.add(m)
         db.session.commit()
-        return f'✅ Mülk eklendi: {args.get("baslik")}'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
+        return (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
+                f'📍 {m.adres or "—"}{", " + m.ilce if m.ilce else ""}{", " + m.sehir if m.sehir else ""}\n'
+                f'🏷 {islem} · {m.tip or "—"}\n'
+                f'💰 {f_tl(m.fiyat)} TL\n'
+                f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²')
 
     if fonksiyon_adi == 'mulk_listele':
         sonuc, _ = _mulk_listele(emlakci)
@@ -3805,6 +3817,10 @@ DAVRANIŞ KURALLARI:
   → Sonuç: "1 müşteri bulundu"
   → 2. gorev_ekle(baslik="Yılmaz Akın ile toplantı - yarın", tip="toplanti")
   Eğer müşteri bulunamazsa: "Yılmaz Akın adında müşteri bulunamadı."
+• SELAMLAMA + KOMUT: Kullanıcı selamlamayla birlikte komut verirse, önce kısaca selamla sonra komutu yap.
+  Örnek: "merhaba, müşteri ekle Ali Veli" → "Merhaba! ✅ Müşteri eklendi: Ali Veli — tel: ..., işlem: ..."
+• İŞLEM SONUCU DETAYLI: Müşteri/mülk/görev eklendiğinde eklenen TÜM bilgileri göster — sadece isim değil.
+  Örnek: "✅ Müşteri eklendi: Ahmet Eker\n📱 Telefon: —\n🏷 Kiralık\n💰 Bütçe: 30.000 TL\n🛏 2+1\n📝 Açık mutfak istemiyor"
 • ÇOKLU KOMUT: Tek mesajda birden fazla istek varsa HEPSİNİ yap.
   Örnek: "Adnan beyi müşterilere ekle numarası 02123221722, ayrıca saat 14'te toplantı görevi oluştur"
   → 1. musteri_ekle(ad_soyad="Adnan Bey", telefon="02123221722")
