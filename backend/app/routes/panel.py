@@ -101,16 +101,30 @@ def musteri_guncelle(mid):
 def musteri_sil(mid):
     m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     # İlişkili kayıtları temizle (foreign key constraints)
-    silinecek = [
-        'iletisim_kayit', 'musteri_atama', 'musteri_hafiza',
-        'yer_gosterme', 'teklif', '"not"', 'gorev', 'surec_takip', 'evrak',
-        'cari', 'fatura', 'geri_bildirim', 'cagri_kayit', 'lead'
+    iliskili_sorgular = [
+        'DELETE FROM iletisim_kayit WHERE musteri_id = :mid',
+        'DELETE FROM musteri_atama WHERE musteri_id = :mid',
+        'DELETE FROM musteri_hafiza WHERE musteri_id = :mid',
+        'DELETE FROM yer_gosterme WHERE musteri_id = :mid',
+        'DELETE FROM teklif WHERE musteri_id = :mid',
+        'DELETE FROM "not" WHERE musteri_id = :mid',
+        'DELETE FROM gorev WHERE musteri_id = :mid',
+        'DELETE FROM surec_takip WHERE musteri_id = :mid',
+        'DELETE FROM evrak WHERE musteri_id = :mid',
+        'DELETE FROM cari WHERE musteri_id = :mid',
+        'DELETE FROM fatura WHERE musteri_id = :mid',
+        'DELETE FROM geri_bildirim WHERE musteri_id = :mid',
+        'DELETE FROM cagri_kayit WHERE musteri_id = :mid',
+        'DELETE FROM lead WHERE musteri_id = :mid',
+        'UPDATE mulk SET musteri_id = NULL WHERE musteri_id = :mid',
+        'UPDATE gelir_gider SET musteri_id = NULL WHERE musteri_id = :mid',
     ]
-    for tablo in silinecek:
-        db.session.execute(text(f'DELETE FROM {tablo} WHERE musteri_id = :mid'), {'mid': mid})
-    # Mülk ve gelir_gider'de musteri_id'yi null yap (kayıtlar silinmesin)
-    db.session.execute(text('UPDATE mulk SET musteri_id = NULL WHERE musteri_id = :mid'), {'mid': mid})
-    db.session.execute(text('UPDATE gelir_gider SET musteri_id = NULL WHERE musteri_id = :mid'), {'mid': mid})
+    for sorgu in iliskili_sorgular:
+        try:
+            db.session.begin_nested()
+            db.session.execute(text(sorgu), {'mid': mid})
+        except Exception:
+            pass  # tablo yoksa atla
     db.session.delete(m)
     db.session.commit()
     return jsonify({'ok': True})
