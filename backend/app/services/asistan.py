@@ -2263,17 +2263,22 @@ def _satis_kapandi(emlakci, args):
 _FUNCTIONS = [
     {
         'name': 'musteri_ekle',
-        'description': 'Yeni müşteri ekler. Aynı isimde müşteri varsa uyarır.',
+        'description': 'Yeni müşteri ekler. Tüm bilgileri doğal dilden çıkar. Aynı isimde müşteri varsa uyarır.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'ad_soyad': {'type': 'string', 'description': 'Müşterinin adı soyadı'},
                 'telefon': {'type': 'string', 'description': 'Telefon numarası'},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
-                'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL'},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
+                'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL (30K=30000, 1.5M=1500000)'},
                 'butce_max': {'type': 'number', 'description': 'Maksimum bütçe TL'},
-                'tercih_notlar': {'type': 'string', 'description': 'Müşteri tercihleri (oda sayısı, konum, özel istekler)'},
-                'kunye': {'type': 'string', 'description': 'Ayırt edici künye/lakap (Eyyüpteki, Samilerin, mimar Ahmet gibi)'},
+                'tercih_oda': {'type': 'string', 'description': 'İstenen oda sayısı: 1+1, 2+1, 3+1, 4+1'},
+                'tercih_sehir': {'type': 'string', 'description': 'Tercih edilen şehir'},
+                'tercih_ilce': {'type': 'string', 'description': 'Tercih edilen ilçe'},
+                'istenen_ozellikler': {'type': 'array', 'items': {'type': 'string'}, 'description': 'İstenen özellikler: asansör, balkon, otopark, site içi, eşyalı...'},
+                'istenmeyen_ozellikler': {'type': 'array', 'items': {'type': 'string'}, 'description': 'İstenmeyen özellikler: açık mutfak, zemin kat, bodrum...'},
+                'kunye': {'type': 'string', 'description': 'Ayırt edici künye: Eyyüpteki, Samilerin, mimar'},
+                'tercih_notlar': {'type': 'string', 'description': 'Diğer serbest metin notlar'},
             },
             'required': ['ad_soyad'],
         },
@@ -2844,7 +2849,16 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
             uyari = ''
 
         # Müşteri ekle
-        m = Musteri(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'kunye')})
+        # Temel alanlar
+        temel = {k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'kunye')}
+        # Yapısal tercihler → detaylar JSON
+        detaylar = {}
+        for alan in ('tercih_oda', 'tercih_sehir', 'tercih_ilce', 'istenen_ozellikler', 'istenmeyen_ozellikler'):
+            if args.get(alan):
+                detaylar[alan] = args[alan]
+        temel['detaylar'] = detaylar
+
+        m = Musteri(emlakci_id=emlakci.id, **temel)
         db.session.add(m)
         db.session.commit()
 
@@ -3495,17 +3509,18 @@ def _gemini(api_key, sistem, gecmis):
     return chat.send_message(gecmis[-1]['content']).text
 
 
-def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
-    """Gemini ile multi-turn function calling — koşullu zincirleme destekli."""
+def _gemini_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None):
+    """Gemini ile multi-turn function calling — dinamik tool + koşullu zincirleme."""
     import google.generativeai as genai
     genai.configure(api_key=api_key)
 
+    fonksiyon_listesi = secilen_tools if secilen_tools else _FUNCTIONS
     tools = [{
         'function_declarations': [{
             'name': f['name'],
             'description': f['description'],
             'parameters': f['parameters'],
-        } for f in _FUNCTIONS]
+        } for f in fonksiyon_listesi]
     }]
 
     model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=sistem, tools=tools)
@@ -3580,12 +3595,23 @@ def _claude(api_key, sistem, gecmis):
 
 
 # ─── OpenAI Function Calling (akıllı mod) ──────────────────
-def _openai_with_functions(api_key, sistem, gecmis, emlakci):
-    """OpenAI ile multi-turn function calling — koşullu zincirleme destekli."""
+def _openai_with_functions_v2(api_key, sistem, gecmis, emlakci, secilen_tools=None):
+    """OpenAI v2 — dinamik tool listesi ile."""
+    return _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools)
+
+
+def _gemini_with_functions_v2(api_key, sistem, gecmis, emlakci, secilen_tools=None):
+    """Gemini v2 — dinamik tool listesi ile."""
+    return _gemini_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools)
+
+
+def _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None):
+    """OpenAI ile multi-turn function calling — dinamik tool + koşullu zincirleme."""
     from openai import OpenAI
     client = OpenAI(api_key=api_key)
 
-    tools = [{'type': 'function', 'function': f} for f in _FUNCTIONS]
+    fonksiyon_listesi = secilen_tools if secilen_tools else _FUNCTIONS
+    tools = [{'type': 'function', 'function': f} for f in fonksiyon_listesi]
     messages = [{'role': 'system', 'content': sistem}] + gecmis
     tum_sonuclar = []
     nav = None

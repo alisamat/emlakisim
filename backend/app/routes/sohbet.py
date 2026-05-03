@@ -78,30 +78,13 @@ def mesaj_gonder():
         db.session.commit()
         return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id})
 
-    # 1. BAĞLAMSAL KARAR MOTORU
-    from app.services.karar import baglam_karar
-    try:
-        karar = baglam_karar(emlakci.id, metin, metin_norm)
-    except Exception:
-        karar = None
+    # ═══════════════════════════════════════════════════
+    # YENİ MİMARİ v2: Router → Tool Loader → Prompt → LLM
+    # ═══════════════════════════════════════════════════
 
-    if karar:
-        komut_adi, args = karar
-        cevap = args.get('mesaj', 'İşlem tamamlandı.')
-        if komut_adi == 'eslestirme_musteri':
-            from app.services.eslestirme import eslesdir
-            sonuclar = eslesdir(emlakci.id, musteri_id=args.get('musteri_id'), limit=5)
-            if sonuclar:
-                satirlar = [f'• {s["baslik"]} — {s["fiyat_str"]} (%{s["puan"]})' for s in sonuclar]
-                cevap = f'🔗 *Uygun mülkler:*\n\n' + '\n'.join(satirlar)
-            else:
-                cevap = '📭 Uygun mülk bulunamadı.'
-        kullanilan_model = 'baglam'
-        kredi_dus(emlakci, komut_adi, aciklama=metin[:100], model='baglam')
-
-    # 2. Minimal pattern (selamlama, döviz, kredi — bedava)
-    elif _pattern_isle(metin_norm, emlakci, metin):
-        komut = _pattern_isle(metin_norm, emlakci, metin)
+    # 1. Minimal pattern (selamlama, döviz, kredi — bedava, 5 kelimeden kısa)
+    komut = _pattern_isle(metin_norm, emlakci, metin)
+    if komut:
         sonuc = _komut_calistir(komut, emlakci, metin, session)
         if isinstance(sonuc, tuple):
             cevap, nav_tab = sonuc
@@ -112,77 +95,71 @@ def mesaj_gonder():
         kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
         kullanilan_model = 'pattern'
 
-    # 3. Embedding intent (neredeyse bedava, doğru eşleşme)
+    # 2. Bağlam filtre (bunlardan sıcak olanları, 1. numarayı göster)
+    elif _baglam_filtre(metin_norm, emlakci, session):
+        cevap = _baglam_filtre(metin_norm, emlakci, session)
+        kullanilan_model = 'baglam_filtre'
+
+    # 3. AI — Semantic Router → Dinamik Tool → Katmanlı Prompt → LLM
     else:
-        from app.services.intent import intent_bul
-        # Kısa mesajlarda bağlam ekle — "sayfayı aç" → önceki mesajdan ne sayfası?
-        intent_metin = metin
-        if len(metin.split()) <= 4 and len(gecmis) >= 2:
-            onceki = gecmis[-2].get('content', '') if gecmis[-2].get('role') == 'user' else ''
-            if onceki:
-                intent_metin = f'{onceki} {metin}'
-        intent_sonuc = intent_bul(intent_metin)
-        if intent_sonuc:
-            intent_komut, intent_skor = intent_sonuc
-            if intent_komut == 'kredi_panel':
-                nav_tab = 'kredi'
-                cevap = '💎 Kredi paneli açılıyor...'
-            else:
-                sonuc = _komut_calistir(intent_komut, emlakci, metin, session)
-                if isinstance(sonuc, tuple):
-                    cevap, nav_tab = sonuc
+        if not kredi_kontrol(emlakci, 1):
+            cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
+            db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
+            db.session.commit()
+            return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id, 'kredi_yetersiz': True}), 200
+
+        # 3a. Semantic Router — kategori belirle (~100ms, ~$0)
+        from app.services.router import multi_route
+        from app.services.tool_loader import tools_yukle
+        from app.services.prompt_builder import prompt_olustur
+        from app.services.asistan import _FUNCTIONS
+
+        try:
+            kategoriler = multi_route(metin)
+        except Exception:
+            kategoriler = []
+        kat_isimleri = [k for k, _ in kategoriler] if kategoriler and isinstance(kategoriler[0], tuple) else kategoriler
+
+        # 3b. Dinamik Tool Yükleme — sadece ilgili 4-5 tool
+        secilen_tools = tools_yukle(kat_isimleri, _FUNCTIONS)
+
+        # 3c. Katmanlı Prompt — 500-700 token (3000+ yerine)
+        sistem = prompt_olustur(emlakci, kat_isimleri, metin)
+
+        # 3d. LLM çağır — az tool + kısa prompt = hızlı + ucuz
+        try:
+            openai_key = os.environ.get('OPENAI_API_KEY', '')
+            gemini_key = os.environ.get('GEMINI_API_KEY', '')
+            if openai_key:
+                from app.services.asistan import _openai_with_functions_v2 as owf
+                ai_sonuc = owf(openai_key, sistem, gecmis, emlakci, secilen_tools)
+                if isinstance(ai_sonuc, tuple):
+                    cevap, nav_tab = ai_sonuc
                 else:
-                    cevap = sonuc
-            kredi_dus(emlakci, intent_komut, aciklama=f'intent({intent_skor:.2f}): {metin[:80]}', model='intent')
-            kullanilan_model = 'intent'
-
-        # 4. AI function calling (son çare — her şeyi anlar)
-        else:
-            if not kredi_kontrol(emlakci, 1):
-                cevap = '⚠️ *Krediniz yetersiz.*\n\nAI asistan kullanmak için kredi gereklidir.\nMevcut kredi: *0*'
-                db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
-                db.session.commit()
-                return jsonify({
-                    'cevap': cevap,
-                    'kredi_kalan': emlakci.kredi,
-                    'sohbet_id': sohbet.id,
-                    'kredi_yetersiz': True,
-                }), 200
-
-            sistem = _sistem_prompt(emlakci, metin)
-            try:
-                openai_key = os.environ.get('OPENAI_API_KEY', '')
-                gemini_key = os.environ.get('GEMINI_API_KEY', '')
-                if openai_key:
-                    from app.services.asistan import _openai_with_functions as owf
-                    ai_sonuc = owf(openai_key, sistem, gecmis, emlakci)
+                    cevap = ai_sonuc
+                kullanilan_model = 'openai'
+            elif gemini_key:
+                from app.services.asistan import _gemini_with_functions_v2 as gwf
+                try:
+                    ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci, secilen_tools)
                     if isinstance(ai_sonuc, tuple):
                         cevap, nav_tab = ai_sonuc
                     else:
                         cevap = ai_sonuc
-                    kullanilan_model = 'openai'
-                elif gemini_key:
-                    from app.services.asistan import _gemini_with_functions as gwf
-                    try:
-                        ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci)
-                        if isinstance(ai_sonuc, tuple):
-                            cevap, nav_tab = ai_sonuc
-                        else:
-                            cevap = ai_sonuc
-                        kullanilan_model = 'gemini'
-                    except Exception:
-                        cevap = _ai_cevap(metin, gecmis, sistem)
-                        kullanilan_model = 'gemini'
-                else:
+                    kullanilan_model = 'gemini'
+                except Exception:
                     cevap = _ai_cevap(metin, gecmis, sistem)
-                    kullanilan_model = 'claude'
-            except Exception as e:
-                logger.error(f'[Sohbet] AI hatası: {e}')
-                cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
-                kullanilan_model = 'hata'
+                    kullanilan_model = 'gemini'
+            else:
+                cevap = _ai_cevap(metin, gecmis, sistem)
+                kullanilan_model = 'claude'
+        except Exception as e:
+            logger.error(f'[Sohbet] AI hatası: {e}')
+            cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
+            kullanilan_model = 'hata'
 
-            # AI kredi düş
-            kredi_dus(emlakci, 'ai_sohbet', aciklama=metin[:100], model=kullanilan_model)
+        # AI kredi düş
+        kredi_dus(emlakci, 'ai_sohbet', aciklama=f'router:{",".join(kat_isimleri[:2])} {metin[:60]}', model=kullanilan_model)
 
     # Zeka motoru — cevabı zenginleştir
     try:
