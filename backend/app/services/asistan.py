@@ -125,7 +125,10 @@ _NAVIGASYON_PATTERNS = [
 
 
 def _navigasyon_kontrol(metin_norm):
-    """Navigasyon komutu mu kontrol et. (tab, mesaj) veya None döndür."""
+    """Navigasyon komutu mu kontrol et. Sadece kısa, net cümleler."""
+    # 6+ kelimelik cümleler navigasyon değil — AI çözsün
+    if len(metin_norm.split()) > 6:
+        return None
     for pattern, tab, mesaj in _NAVIGASYON_PATTERNS:
         if re.search(pattern, metin_norm):
             return tab, mesaj
