@@ -7,32 +7,32 @@ Token tasarrufu: ~%80
 # Kategori → fonksiyon isimleri
 KATEGORI_TOOLS = {
     'musteri': [
-        'musteri_ekle', 'musteri_guncelle', 'musteri_listele', 'gelismis_musteri_ara',
-        'musteri_analiz', 'musteri_eslesme_bul', 'dogum_gunu_kaydet',
-        'yaklasan_dogum_gunleri',
+        'musteri_ekle', 'musteri_guncelle', 'musteri_sil', 'musteri_listele',
+        'gelismis_musteri_ara', 'musteri_analiz', 'musteri_eslesme_bul',
+        'dogum_gunu_kaydet', 'yaklasan_dogum_gunleri',
     ],
     'mulk': [
-        'mulk_ekle', 'mulk_listele', 'gelismis_mulk_ara',
+        'mulk_ekle', 'mulk_guncelle', 'mulk_sil', 'mulk_listele', 'gelismis_mulk_ara',
     ],
     'eslestirme': [
         'eslestir', 'musteri_eslesme_bul', 'gelismis_mulk_ara', 'gelismis_musteri_ara',
     ],
     'finans': [
-        'fatura_olustur', 'fatura_listele', 'gelir_gider_ozet', 'cari_ozet',
-        'muhasebe_donem', 'komisyon_hesapla', 'tapu_masrafi_hesapla',
+        'fatura_olustur', 'fatura_guncelle', 'fatura_listele', 'gelir_gider_ozet',
+        'cari_ozet', 'muhasebe_donem', 'komisyon_hesapla', 'tapu_masrafi_hesapla',
         'kira_vergisi_hesapla', 'kira_getirisi_hesapla',
     ],
     'planlama': [
         'gorev_ekle', 'gorev_listele', 'gorev_guncelle', 'rapor',
     ],
     'not': [
-        'not_ekle', 'not_ara', 'not_goreve_donustur',
+        'not_ekle', 'not_guncelle', 'not_sil', 'not_ara', 'not_goreve_donustur',
     ],
     'iletisim': [
         'whatsapp_mesaj_gonder', 'toplu_mesaj_gonder', 'gosterim_geri_bildirim',
     ],
     'teklif': [
-        'teklif_kaydet', 'teklif_listele', 'satis_kapandi',
+        'teklif_kaydet', 'teklif_guncelle', 'teklif_listele', 'satis_kapandi',
     ],
     'analiz': [
         'mahalle_analiz', 'hava_durumu', 'emlak_haberleri',

@@ -2327,6 +2327,93 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'mulk_guncelle',
+        'description': 'Mevcut mülkü günceller — fiyat değiştir, detay ekle, pasife al, aktif yap.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul'},
+                'mulk_id': {'type': 'integer', 'description': 'Mülk ID (biliniyorsa)'},
+                'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
+                'baslik': {'type': 'string', 'description': 'Yeni başlık'},
+                'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
+                'notlar': {'type': 'string', 'description': 'Not ekle/güncelle'},
+            },
+        },
+    },
+    {
+        'name': 'mulk_sil',
+        'description': 'Mülkü portföyden siler (pasife alır).',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı'},
+                'mulk_id': {'type': 'integer'},
+            },
+        },
+    },
+    {
+        'name': 'musteri_sil',
+        'description': 'Müşteriyi siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string'},
+                'musteri_id': {'type': 'integer'},
+            },
+        },
+    },
+    {
+        'name': 'not_guncelle',
+        'description': 'Mevcut notu günceller — içerik değiştir, tamamla, etiket değiştir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'not_id': {'type': 'integer'},
+                'not_icerik_ara': {'type': 'string', 'description': 'Not içeriğinden ara (ID bilinmiyorsa)'},
+                'yeni_icerik': {'type': 'string'},
+                'tamamlandi': {'type': 'boolean'},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not']},
+            },
+        },
+    },
+    {
+        'name': 'not_sil',
+        'description': 'Notu siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'not_id': {'type': 'integer'},
+                'not_icerik_ara': {'type': 'string'},
+            },
+        },
+    },
+    {
+        'name': 'fatura_guncelle',
+        'description': 'Faturayı günceller — durum değiştir (ödendi, iptal).',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'fatura_no': {'type': 'string', 'description': 'Fatura numarası'},
+                'fatura_id': {'type': 'integer'},
+                'durum': {'type': 'string', 'enum': ['taslak', 'gonderildi', 'odendi', 'iptal']},
+            },
+        },
+    },
+    {
+        'name': 'teklif_guncelle',
+        'description': 'Teklifi günceller — kabul et, reddet, karşı teklif.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'teklif_id': {'type': 'integer'},
+                'durum': {'type': 'string', 'enum': ['bekliyor', 'kabul', 'red', 'karsi_teklif']},
+                'yeni_tutar': {'type': 'number', 'description': 'Karşı teklif tutarı'},
+                'notlar': {'type': 'string'},
+            },
+        },
+    },
+    {
         'name': 'mulk_listele',
         'description': 'Portföy listesini getirir',
         'parameters': {'type': 'object', 'properties': {}},
@@ -2914,6 +3001,120 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
             return f'⚠️ Güncellenecek bilgi belirtilmedi.'
         return (f'✅ *{mus.ad_soyad}* güncellendi:\n\n'
                 + '\n'.join([f'• {d}' for d in degisiklikler]))
+
+    if fonksiyon_adi == 'mulk_guncelle':
+        mulk = None
+        if args.get('mulk_id'):
+            mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
+        elif args.get('mulk_baslik'):
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+        if not mulk:
+            return '⚠️ Mülk bulunamadı.'
+        degisiklikler = []
+        if args.get('fiyat') is not None:
+            eski = mulk.fiyat
+            mulk.fiyat = args['fiyat']
+            degisiklikler.append(f'Fiyat: {int(eski or 0):,} → {int(args["fiyat"]):,} TL'.replace(',', '.'))
+        if args.get('baslik'):
+            mulk.baslik = args['baslik']
+            degisiklikler.append(f'Başlık: {args["baslik"]}')
+        if args.get('aktif') is not None:
+            mulk.aktif = args['aktif']
+            degisiklikler.append('Aktif yapıldı' if args['aktif'] else 'Pasife alındı')
+        if args.get('notlar'):
+            mulk.notlar = (mulk.notlar or '') + '\n' + args['notlar']
+            degisiklikler.append('Not eklendi')
+        db.session.commit()
+        if not degisiklikler:
+            return '⚠️ Güncellenecek bilgi belirtilmedi.'
+        return f'✅ *{mulk.baslik or "Mülk"}* güncellendi:\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
+
+    if fonksiyon_adi == 'mulk_sil':
+        mulk = None
+        if args.get('mulk_id'):
+            mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
+        elif args.get('mulk_baslik'):
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+        if not mulk:
+            return '⚠️ Mülk bulunamadı.'
+        mulk.aktif = False
+        db.session.commit()
+        return f'✅ *{mulk.baslik}* portföyden kaldırıldı (pasife alındı).'
+
+    if fonksiyon_adi == 'musteri_sil':
+        mus = None
+        if args.get('musteri_id'):
+            mus = Musteri.query.filter_by(id=args['musteri_id'], emlakci_id=emlakci.id).first()
+        elif args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')).first()
+        if not mus:
+            return '⚠️ Müşteri bulunamadı.'
+        ad = mus.ad_soyad
+        db.session.delete(mus)
+        db.session.commit()
+        return f'✅ *{ad}* müşteri listesinden silindi.'
+
+    if fonksiyon_adi == 'not_guncelle':
+        not_obj = None
+        if args.get('not_id'):
+            not_obj = Not.query.filter_by(id=args['not_id'], emlakci_id=emlakci.id).first()
+        elif args.get('not_icerik_ara'):
+            not_obj = Not.query.filter_by(emlakci_id=emlakci.id).filter(Not.icerik.ilike(f'%{args["not_icerik_ara"]}%')).first()
+        if not not_obj:
+            return '⚠️ Not bulunamadı.'
+        if args.get('yeni_icerik'):
+            not_obj.icerik = args['yeni_icerik']
+        if args.get('tamamlandi') is not None:
+            not_obj.tamamlandi = args['tamamlandi']
+        if args.get('etiket'):
+            not_obj.etiket = args['etiket']
+        db.session.commit()
+        return f'✅ Not güncellendi: {not_obj.icerik[:60]}'
+
+    if fonksiyon_adi == 'not_sil':
+        not_obj = None
+        if args.get('not_id'):
+            not_obj = Not.query.filter_by(id=args['not_id'], emlakci_id=emlakci.id).first()
+        elif args.get('not_icerik_ara'):
+            not_obj = Not.query.filter_by(emlakci_id=emlakci.id).filter(Not.icerik.ilike(f'%{args["not_icerik_ara"]}%')).first()
+        if not not_obj:
+            return '⚠️ Not bulunamadı.'
+        db.session.delete(not_obj)
+        db.session.commit()
+        return '✅ Not silindi.'
+
+    if fonksiyon_adi == 'fatura_guncelle':
+        from app.models.fatura import Fatura
+        fat = None
+        if args.get('fatura_id'):
+            fat = Fatura.query.filter_by(id=args['fatura_id'], emlakci_id=emlakci.id).first()
+        elif args.get('fatura_no'):
+            fat = Fatura.query.filter_by(fatura_no=args['fatura_no'], emlakci_id=emlakci.id).first()
+        if not fat:
+            return '⚠️ Fatura bulunamadı.'
+        if args.get('durum'):
+            fat.durum = args['durum']
+        db.session.commit()
+        durum_ikon = {'taslak': '📝', 'gonderildi': '📤', 'odendi': '✅', 'iptal': '❌'}
+        return f'{durum_ikon.get(fat.durum, "🧾")} Fatura *{fat.fatura_no}* → {fat.durum}'
+
+    if fonksiyon_adi == 'teklif_guncelle':
+        from app.models import Teklif
+        t = None
+        if args.get('teklif_id'):
+            t = Teklif.query.filter_by(id=args['teklif_id'], emlakci_id=emlakci.id).first()
+        if not t:
+            return '⚠️ Teklif bulunamadı.'
+        if args.get('durum'):
+            t.durum = args['durum']
+        if args.get('yeni_tutar'):
+            t.teklif_tutar = args['yeni_tutar']
+        if args.get('notlar'):
+            t.notlar = (t.notlar or '') + '\n' + args['notlar']
+        db.session.commit()
+        durum_ikon = {'bekliyor': '⏳', 'kabul': '✅', 'red': '❌', 'karsi_teklif': '🔄'}
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+        return f'{durum_ikon.get(t.durum, "💰")} Teklif güncellendi: {f_tl(t.teklif_tutar)} TL → {t.durum}'
 
     if fonksiyon_adi == 'musteri_listele':
         sonuc, _ = _musteri_listele(emlakci)
