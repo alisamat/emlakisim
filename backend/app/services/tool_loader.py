@@ -12,7 +12,7 @@ KATEGORI_TOOLS = {
         'dogum_gunu_kaydet', 'yaklasan_dogum_gunleri',
     ],
     'mulk': [
-        'mulk_ekle', 'mulk_guncelle', 'mulk_sil', 'mulk_listele', 'gelismis_mulk_ara',
+        'mulk_ekle', 'mulk_guncelle', 'mulk_sil', 'mulk_goruntule', 'mulk_listele', 'gelismis_mulk_ara',
     ],
     'eslestirme': [
         'eslestir', 'musteri_eslesme_bul', 'gelismis_mulk_ara', 'gelismis_musteri_ara',

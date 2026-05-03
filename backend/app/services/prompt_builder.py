@@ -86,7 +86,7 @@ Mülk eklerken şu alanları çıkar:
 "Elimizde kiralık ne var" = portföydeki kiralık mülkler.
 Mülk güncelleme: kullanıcı portföy listeledikten sonra "şuna ısıtma ekle", "fiyatı güncelle" derse → bağlamdan hangi mülk olduğunu anla, mulk_guncelle çağır.
 Portföyde tek mülk varsa otomatik onu güncelle, sormaya gerek yok.
-"İlanı göster", "ilanı görüntüle", "ilan sayfası" → web_sayfa_bilgi fonksiyonunu çağır, kendi metin çıktısı oluşturma. Asla mülk bilgilerini metin olarak tekrar yazma — sayfa linki ver.
+"İlanı göster", "ilanı görüntüle" → sayfa_ac(sayfa="mulkler") çağır + public link ver. Kendi metin çıktısı oluşturma, sayfayı aç.
 """,
 
     'eslestirme': """

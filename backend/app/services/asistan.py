@@ -2359,6 +2359,17 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'mulk_goruntule',
+        'description': 'Mülkün ilan sayfasını açar. "ilanı göster", "ilanı görüntüle", "sahibinden gibi göster" gibi. Portföy sayfasını açar + public link verir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülk başlığı'},
+                'mulk_id': {'type': 'integer'},
+            },
+        },
+    },
+    {
         'name': 'mulk_sil',
         'description': 'Mülkü portföyden siler (pasife alır).',
         'parameters': {
@@ -3118,6 +3129,14 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         return (f'✅ *{mulk.baslik or "Mülk"}* güncellendi:\n\n'
                 + '\n'.join([f'• {d}' for d in degisiklikler])
                 + f'\n\n🌐 _İlan olarak görüntüle:_ {sayfa_link}')
+
+    if fonksiyon_adi == 'mulk_goruntule':
+        import os
+        frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
+        sayfa_link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+        return (f'🏢 *İlan sayfanız açılıyor...*\n\n'
+                f'🌐 Public link: {sayfa_link}\n\n'
+                f'_Portföy sayfasında mülke tıklayarak detaylı görüntüleyebilirsiniz._', 'mulkler')
 
     if fonksiyon_adi == 'mulk_sil':
         mulk = None
