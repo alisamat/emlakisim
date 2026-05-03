@@ -7,7 +7,7 @@ Token tasarrufu: ~%80
 # Kategori → fonksiyon isimleri
 KATEGORI_TOOLS = {
     'musteri': [
-        'musteri_ekle', 'musteri_listele', 'gelismis_musteri_ara',
+        'musteri_ekle', 'musteri_guncelle', 'musteri_listele', 'gelismis_musteri_ara',
         'musteri_analiz', 'musteri_eslesme_bul', 'dogum_gunu_kaydet',
         'yaklasan_dogum_gunleri',
     ],

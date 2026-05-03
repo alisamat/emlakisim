@@ -2287,6 +2287,22 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'musteri_guncelle',
+        'description': 'Mevcut müşteriyi günceller — künye ekle, telefon değiştir, bütçe güncelle, tercih ekle. "2. sıradakine rumuz ekle", "Ahmet in telefonunu güncelle" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'musteri_adi': {'type': 'string', 'description': 'Güncellenecek müşterinin adı'},
+                'musteri_id': {'type': 'integer', 'description': 'Müşteri ID (biliniyorsa)'},
+                'kunye': {'type': 'string', 'description': 'Yeni künye/rumuz ekle'},
+                'telefon': {'type': 'string', 'description': 'Yeni telefon'},
+                'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk']},
+                'butce_max': {'type': 'number'},
+                'tercih_notlar': {'type': 'string'},
+            },
+        },
+    },
+    {
         'name': 'musteri_listele',
         'description': 'Müşteri listesini getirir',
         'parameters': {'type': 'object', 'properties': {}},
@@ -2863,6 +2879,41 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
                 f'🏷 {islem}\n'
                 f'💰 Bütçe: {f_tl(m.butce_min)} — {f_tl(m.butce_max)} TL\n'
                 + (f'📝 {m.tercih_notlar}' if m.tercih_notlar else ''))
+
+    if fonksiyon_adi == 'musteri_guncelle':
+        # ID veya isimle bul
+        mus = None
+        if args.get('musteri_id'):
+            mus = Musteri.query.filter_by(id=args['musteri_id'], emlakci_id=emlakci.id).first()
+        elif args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+        if not mus:
+            return f'⚠️ Müşteri bulunamadı.'
+
+        degisiklikler = []
+        if args.get('kunye'):
+            mus.kunye = args['kunye']
+            degisiklikler.append(f'Künye: {args["kunye"]}')
+        if args.get('telefon'):
+            mus.telefon = args['telefon']
+            degisiklikler.append(f'Telefon: {args["telefon"]}')
+        if args.get('sicaklik'):
+            mus.sicaklik = args['sicaklik']
+            degisiklikler.append(f'Sıcaklık: {args["sicaklik"]}')
+        if args.get('butce_max'):
+            mus.butce_max = args['butce_max']
+            degisiklikler.append(f'Bütçe max: {int(args["butce_max"]):,} TL'.replace(',', '.'))
+        if args.get('tercih_notlar'):
+            mus.tercih_notlar = (mus.tercih_notlar or '') + '\n' + args['tercih_notlar']
+            degisiklikler.append(f'Not eklendi')
+
+        db.session.commit()
+        if not degisiklikler:
+            return f'⚠️ Güncellenecek bilgi belirtilmedi.'
+        return (f'✅ *{mus.ad_soyad}* güncellendi:\n\n'
+                + '\n'.join([f'• {d}' for d in degisiklikler]))
 
     if fonksiyon_adi == 'musteri_listele':
         sonuc, _ = _musteri_listele(emlakci)
