@@ -16,6 +16,7 @@ from app.models.iletisim_gecmisi import IletisimKayit
 from app.models.grup import EmlakciDizin, Grup, GrupUyelik, GrupBildirim
 from app.models.hafiza_model import MusteriHafiza, KonusmaState
 from app.models.ayarlar import KullaniciAyar, SistemParametre
+from app.models.talep import Talep
 
 
 class Emlakci(db.Model):

@@ -123,6 +123,20 @@ MÜLK EKLEME KURALLARI:
   _Kadıköy 3+1 kiralık daire 25000 TL, asansörlü, kapalı mutfak_"
 """,
 
+    'talep': """
+TALEP İŞLEMLERİ:
+Talep = müşterinin ne istediği. İki yön var:
+- "arayan": kiralık/satılık daire/ev ARIYOR (alıcı/kiracı)
+- "veren": mülkünü kiraya VERMEK / SATMAK istiyor (satıcı/ev sahibi)
+
+Talep ekleme kuralları:
+- Müşteri adı verilirse bağla, verilmezse isimsiz kaydet
+- "kiralık arıyor" = yonu: arayan, islem_turu: kira
+- "satmak istiyor" = yonu: veren, islem_turu: satis
+- "kiraya vermek istiyor" = yonu: veren, islem_turu: kira
+- Müşteri yoksa: "Hangi müşteriden geldi?" sor, "isimsiz" derse null bırak
+""",
+
     'eslestirme': """
 EŞLEŞTIRME: Müşteri tercihleri × mülk özellikleri çapraz karşılaştırma.
 İşlem türü, fiyat, lokasyon, oda sayısı, özellikler puanlanır.

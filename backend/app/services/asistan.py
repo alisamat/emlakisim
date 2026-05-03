@@ -2484,6 +2484,39 @@ _FUNCTIONS = [
             },
         },
     },
+    # ── Talep ──
+    {
+        'name': 'talep_ekle',
+        'description': 'Yeni talep oluşturur. Kiralık/satılık arayan veya mülkünü kiraya vermek/satmak isteyen. Müşteriye bağlı veya isimsiz olabilir.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'yonu': {'type': 'string', 'enum': ['arayan', 'veren'], 'description': 'arayan=daire/ev arıyor, veren=mülkünü kiraya/satışa vermek istiyor'},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
+                'musteri_adi': {'type': 'string', 'description': 'Talep sahibi müşteri adı (yoksa isimsiz kalır)'},
+                'butce_min': {'type': 'number'}, 'butce_max': {'type': 'number'},
+                'tercih_oda': {'type': 'string', 'description': '2+1, 3+1'},
+                'tercih_sehir': {'type': 'string'}, 'tercih_ilce': {'type': 'string'},
+                'tercih_tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis']},
+                'istenen': {'type': 'array', 'items': {'type': 'string'}, 'description': '["asansör", "balkon"]'},
+                'istenmeyen': {'type': 'array', 'items': {'type': 'string'}, 'description': '["açık mutfak"]'},
+                'notlar': {'type': 'string'},
+            },
+            'required': ['islem_turu'],
+        },
+    },
+    {
+        'name': 'talep_listele',
+        'description': 'Talepleri listeler. "talepler", "kiralık arayanlar", "satmak isteyenler" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'yonu': {'type': 'string', 'enum': ['arayan', 'veren']},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
+                'durum': {'type': 'string', 'enum': ['aktif', 'pasif', 'tamamlandi', 'hepsi']},
+            },
+        },
+    },
     # ── İşlem Takip + Geri Alma ──
     {
         'name': 'son_islemler_getir',
@@ -3014,6 +3047,7 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         'fatura_olustur': 'fatura', 'fatura_guncelle': 'fatura', 'fatura_sil': 'fatura',
         'teklif_kaydet': 'teklif', 'teklif_guncelle': 'teklif', 'teklif_sil': 'teklif',
         'satis_kapandi': 'mulk', 'dogum_gunu_kaydet': 'musteri',
+        'talep_ekle': 'talep', 'talep_listele': 'talep',
         'not_goreve_donustur': 'not', 'gosterim_geri_bildirim': 'not',
         'whatsapp_mesaj_gonder': 'iletisim', 'toplu_mesaj_gonder': 'iletisim',
         'asistan_ismi_degistir': 'ayar',
@@ -3125,6 +3159,63 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             return f'⚠️ Güncellenecek bilgi belirtilmedi.'
         return (f'✅ *{mus.ad_soyad}* güncellendi:\n\n'
                 + '\n'.join([f'• {d}' for d in degisiklikler]))
+
+    if fonksiyon_adi == 'talep_ekle':
+        from app.models.talep import Talep
+        musteri_id = None
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+            if mus:
+                musteri_id = mus.id
+            else:
+                return f'⚠️ "{args["musteri_adi"]}" adında müşteri bulunamadı. Önce müşteriyi ekleyin veya "isimsiz kaydet" deyin.'
+
+        t = Talep(
+            emlakci_id=emlakci.id, musteri_id=musteri_id,
+            yonu=args.get('yonu', 'arayan'), islem_turu=args.get('islem_turu'),
+            butce_min=args.get('butce_min'), butce_max=args.get('butce_max'),
+            tercih_oda=args.get('tercih_oda'), tercih_sehir=args.get('tercih_sehir'),
+            tercih_ilce=args.get('tercih_ilce'), tercih_tip=args.get('tercih_tip'),
+            istenen=args.get('istenen', []), istenmeyen=args.get('istenmeyen', []),
+            notlar=args.get('notlar'),
+        )
+        db.session.add(t); db.session.commit()
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        yon = '🔍 Arıyor' if t.yonu == 'arayan' else '🏠 Veriyor'
+        islem_l = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(t.islem_turu, '—')
+        musteri_str = Musteri.query.get(musteri_id).ad_soyad if musteri_id else '(isimsiz)'
+        return (f'✅ *Talep eklendi!*\n\n'
+                f'{yon} · {islem_l}\n'
+                f'👤 {musteri_str}\n'
+                f'💰 {f_tl(t.butce_min)} — {f_tl(t.butce_max)} TL\n'
+                + (f'🛏 {t.tercih_oda}\n' if t.tercih_oda else '')
+                + (f'📍 {t.tercih_ilce or ""} {t.tercih_sehir or ""}\n' if t.tercih_ilce or t.tercih_sehir else '')
+                + (f'✅ İstenen: {", ".join(t.istenen)}\n' if t.istenen else '')
+                + (f'❌ İstenmeyen: {", ".join(t.istenmeyen)}' if t.istenmeyen else ''))
+
+    if fonksiyon_adi == 'talep_listele':
+        from app.models.talep import Talep
+        sorgu = Talep.query.filter_by(emlakci_id=emlakci.id)
+        if args.get('yonu'): sorgu = sorgu.filter(Talep.yonu == args['yonu'])
+        if args.get('islem_turu'): sorgu = sorgu.filter(Talep.islem_turu == args['islem_turu'])
+        durum = args.get('durum', 'aktif')
+        if durum != 'hepsi': sorgu = sorgu.filter(Talep.durum == durum)
+        talepler = sorgu.order_by(Talep.olusturma.desc()).limit(15).all()
+        if not talepler:
+            return '📋 Talep bulunamadı.'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        satirlar = []
+        for i, t in enumerate(talepler):
+            yon_ikon = '🔍' if t.yonu == 'arayan' else '🏠'
+            islem_l = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(t.islem_turu, '?')
+            musteri_str = ''
+            if t.musteri_id:
+                m = Musteri.query.get(t.musteri_id)
+                if m: musteri_str = f' — {m.ad_soyad}'
+            satirlar.append(f'*{i+1}.* {yon_ikon} {islem_l}{musteri_str} · {f_tl(t.butce_max)} TL' + (f' · {t.tercih_oda}' if t.tercih_oda else ''))
+        return f'📋 *Talepler ({len(talepler)}):*\n\n' + '\n'.join(satirlar)
 
     if fonksiyon_adi == 'son_islemler_getir':
         from app.services.islem_takip import son_islemler, islem_formatla

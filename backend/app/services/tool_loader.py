@@ -14,6 +14,9 @@ KATEGORI_TOOLS = {
     'mulk': [
         'mulk_ekle', 'mulk_guncelle', 'mulk_sil', 'mulk_goruntule', 'mulk_listele', 'gelismis_mulk_ara',
     ],
+    'talep': [
+        'talep_ekle', 'talep_listele',
+    ],
     'eslestirme': [
         'eslestir', 'musteri_eslesme_bul', 'gelismis_mulk_ara', 'gelismis_musteri_ara',
     ],

@@ -632,6 +632,13 @@ def _m(m):
 
 
 def _mulk(m):
+    sahip_ad = ''
+    sahip_tel = ''
+    if m.musteri_id:
+        sahip = Musteri.query.get(m.musteri_id)
+        if sahip:
+            sahip_ad = sahip.ad_soyad + (f' ({sahip.kunye})' if sahip.kunye else '')
+            sahip_tel = sahip.telefon or ''
     return {
         'id': m.id, 'baslik': m.baslik, 'adres': m.adres, 'sehir': m.sehir,
         'ilce': m.ilce, 'tip': m.tip, 'islem_turu': m.islem_turu,
@@ -640,6 +647,9 @@ def _mulk(m):
         'detaylar': m.detaylar or {},
         'resimler': m.resimler or [],
         'aktif': m.aktif,
+        'musteri_id': m.musteri_id,
+        'sahip_ad': sahip_ad,      # sadece panel'de — public'te GİZLİ
+        'sahip_tel': sahip_tel,    # sadece panel'de — public'te GİZLİ
         'olusturma': m.olusturma.isoformat() if m.olusturma else None,
     }
 
@@ -965,3 +975,98 @@ def islem_geri_al_endpoint(iid):
     if log:
         return jsonify({'ok': True, 'mesaj': mesaj})
     return jsonify({'message': mesaj}), 400
+
+
+# ════════ TALEPLER ════════
+
+@bp.route('/talepler', methods=['GET'])
+@jwt_required()
+def talepler_liste():
+    """Talepleri listele — filtreleme destekli."""
+    from app.models.talep import Talep
+    sorgu = Talep.query.filter_by(emlakci_id=_eid())
+    yonu = request.args.get('yonu')  # arayan / veren
+    islem = request.args.get('islem')  # kira / satis
+    durum = request.args.get('durum', 'aktif')
+    musteri_id = request.args.get('musteri_id', type=int)
+
+    if yonu: sorgu = sorgu.filter(Talep.yonu == yonu)
+    if islem: sorgu = sorgu.filter(Talep.islem_turu == islem)
+    if durum != 'hepsi': sorgu = sorgu.filter(Talep.durum == durum)
+    if musteri_id: sorgu = sorgu.filter(Talep.musteri_id == musteri_id)
+
+    talepler = sorgu.order_by(Talep.olusturma.desc()).limit(50).all()
+    return jsonify({'talepler': [_talep(t) for t in talepler], 'toplam': sorgu.count()})
+
+
+@bp.route('/talepler', methods=['POST'])
+@jwt_required()
+def talep_ekle():
+    d = request.get_json() or {}
+    from app.models.talep import Talep
+    t = Talep(
+        emlakci_id=_eid(),
+        musteri_id=d.get('musteri_id'),
+        yonu=d.get('yonu', 'arayan'),
+        islem_turu=d.get('islem_turu'),
+        butce_min=d.get('butce_min'),
+        butce_max=d.get('butce_max'),
+        tercih_oda=d.get('tercih_oda'),
+        tercih_sehir=d.get('tercih_sehir'),
+        tercih_ilce=d.get('tercih_ilce'),
+        tercih_tip=d.get('tercih_tip'),
+        istenen=d.get('istenen', []),
+        istenmeyen=d.get('istenmeyen', []),
+        mulk_id=d.get('mulk_id'),
+        notlar=d.get('notlar'),
+    )
+    db.session.add(t); db.session.commit()
+    return jsonify({'talep': _talep(t)}), 201
+
+
+@bp.route('/talepler/<int:tid>', methods=['PUT'])
+@jwt_required()
+def talep_guncelle(tid):
+    from app.models.talep import Talep
+    t = Talep.query.filter_by(id=tid, emlakci_id=_eid()).first_or_404()
+    d = request.get_json() or {}
+    for f in ['musteri_id', 'yonu', 'islem_turu', 'butce_min', 'butce_max', 'tercih_oda', 'tercih_sehir', 'tercih_ilce', 'tercih_tip', 'durum', 'notlar', 'mulk_id']:
+        if f in d: setattr(t, f, d[f])
+    if 'istenen' in d: t.istenen = d['istenen']
+    if 'istenmeyen' in d: t.istenmeyen = d['istenmeyen']
+    db.session.commit()
+    return jsonify({'talep': _talep(t)})
+
+
+@bp.route('/talepler/<int:tid>', methods=['DELETE'])
+@jwt_required()
+def talep_sil(tid):
+    from app.models.talep import Talep
+    t = Talep.query.filter_by(id=tid, emlakci_id=_eid()).first_or_404()
+    db.session.delete(t); db.session.commit()
+    return jsonify({'ok': True})
+
+
+def _talep(t):
+    musteri_ad = ''
+    if t.musteri_id:
+        m = Musteri.query.get(t.musteri_id)
+        if m: musteri_ad = m.ad_soyad + (f' ({m.kunye})' if m.kunye else '')
+    mulk_ad = ''
+    if t.mulk_id:
+        ml = Mulk.query.get(t.mulk_id)
+        if ml: mulk_ad = ml.baslik or ml.adres or ''
+    yon_label = {'arayan': 'Arıyor', 'veren': 'Veriyor'}.get(t.yonu, t.yonu or '')
+    islem_label = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(t.islem_turu, t.islem_turu or '')
+    return {
+        'id': t.id, 'musteri_id': t.musteri_id, 'musteri_ad': musteri_ad,
+        'yonu': t.yonu, 'yon_label': yon_label,
+        'islem_turu': t.islem_turu, 'islem_label': islem_label,
+        'butce_min': t.butce_min, 'butce_max': t.butce_max,
+        'tercih_oda': t.tercih_oda, 'tercih_sehir': t.tercih_sehir,
+        'tercih_ilce': t.tercih_ilce, 'tercih_tip': t.tercih_tip,
+        'istenen': t.istenen or [], 'istenmeyen': t.istenmeyen or [],
+        'mulk_id': t.mulk_id, 'mulk_ad': mulk_ad,
+        'durum': t.durum, 'notlar': t.notlar,
+        'olusturma': t.olusturma.isoformat() if t.olusturma else None,
+    }

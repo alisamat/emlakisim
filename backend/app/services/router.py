@@ -63,6 +63,18 @@ KATEGORILER = {
             '50 bin altı kiralık mülkler',
         ],
     },
+    'talep': {
+        'ornekler': [
+            'yeni talep ekle kiralık 2+1 daire arıyor',
+            'talep oluştur satılık ev arıyor bütçe 500K',
+            'talepleri göster listele',
+            'kiralık arayanlar kimler',
+            'satmak isteyenler',
+            'kiraya vermek istiyor mülkünü',
+            'mülkünü satmak istiyor',
+            'talebi güncelle değiştir',
+        ],
+    },
     'eslestirme': {
         'ornekler': [
             'eşleştirme tablosunu göster',

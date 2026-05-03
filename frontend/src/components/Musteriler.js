@@ -103,6 +103,9 @@ function MusteriFormu({ onKaydet, onIptal, duzenle }) {
       <form onSubmit={kaydet}>
         <div className="grid-2" style={{ marginBottom: 12 }}>
           <div><label className="etiket">Ad Soyad *</label><input className="input" name="ad_soyad" value={form.ad_soyad} onChange={d} required /></div>
+          <div><label className="etiket">Künye / Rumuz</label><input className="input" name="kunye" value={form.kunye || ''} onChange={d} placeholder="Eyyüpteki, mimar, Samilerin..." /></div>
+        </div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
           <div><label className="etiket">Telefon</label><input className="input" name="telefon" value={form.telefon} onChange={d} /></div>
         </div>
         <div className="grid-2" style={{ marginBottom: 12 }}>
@@ -176,6 +179,7 @@ function MusteriKarti({ m, onDuzenle, onSil }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{m.ad_soyad}</span>
+            {m.kunye && <span style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic', marginLeft: 4 }}>({m.kunye})</span>}
             <span style={{ background: s.bg, color: s.renk, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{s.label}</span>
             <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#1d4ed8' : '#92400e', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 }}>
               {m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}
