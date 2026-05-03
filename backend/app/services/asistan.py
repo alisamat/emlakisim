@@ -3479,10 +3479,8 @@ def _gemini_with_functions(api_key, sistem, gecmis, emlakci):
         if not fonksiyon_vardi:
             # AI fonksiyon çağırmadı — metin cevabı
             if tum_sonuclar:
-                son_yorum = response.text if response.text else ''
+                # Fonksiyon sonuçları yeterli
                 birlesik = '\n\n'.join(tum_sonuclar)
-                if son_yorum:
-                    birlesik += f'\n\n{son_yorum}'
                 return (birlesik, nav) if nav else birlesik
             return response.text
 
@@ -3539,11 +3537,8 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci):
         if not msg.tool_calls:
             # AI fonksiyon çağırmadı — metin cevabı döndür
             if tum_sonuclar:
-                # Önceki turlardan sonuçlar var, AI son yorumunu ekledi
-                son_yorum = msg.content or ''
+                # Fonksiyon sonuçları yeterli — AI'ın tekrar yazmasına gerek yok
                 birlesik = '\n\n'.join(tum_sonuclar)
-                if son_yorum:
-                    birlesik += f'\n\n{son_yorum}'
                 return (birlesik, nav) if nav else birlesik
             return msg.content
 
