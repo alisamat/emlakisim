@@ -82,9 +82,11 @@ MÜŞTERİ EKLEME KURALLARI:
 - "kiralık arıyor" = islem_turu: kira. "ev bakıyor" = satis.
 - "30K" = 30000, "1.5M" = 1500000
 - "açık mutfak istemiyor" = istenmeyen_ozellikler: ["açık mutfak"]
-- "yeni müşteri ekle" deyince form gösterme, örnek göster:
+- "yeni müşteri ekle" veya "yeni talep" deyince örnek göster:
   "Müşteri bilgilerini serbest yazabilirsiniz. Örnek:
   _Ahmet Yılmaz, kiralık 2+1 daire arıyor, bütçe 30K, Kadıköy, açık mutfak istemiyor_"
+- İsim YOKSA mutlaka sor: "Müşterinin adı ne?" — isim olmadan ekleme YAPMA, uydurma.
+- Lokasyon bilgisi varsa (Kemerburgaz, Kadıköy) → tercih_ilce'ye yaz.
 """,
 
     'mulk': """

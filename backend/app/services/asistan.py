@@ -2986,6 +2986,10 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
     """AI'nın çağırdığı fonksiyonu yürüt."""
     if fonksiyon_adi == 'musteri_ekle':
         ad = args.get('ad_soyad', '')
+        # Uydurma isim kontrolü
+        sahte_isimler = ['yeni müşteri', 'yeni musteri', 'müşteri', 'musteri', 'bilinmiyor', 'isimsiz', 'belirtilmedi', '']
+        if ad.lower().strip() in sahte_isimler or len(ad.strip()) < 2:
+            return '⚠️ Müşterinin adını belirtir misiniz? İsim olmadan kayıt oluşturamıyorum.'
         f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
 
         # Aynı isimde müşteri kontrolü
