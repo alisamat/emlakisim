@@ -1,11 +1,11 @@
 """
-AKILLI EŞLEŞTİRME — Çok boyutlu puanlama
-Tip(%15) + Fiyat(%25) + Lokasyon(%25) + Oda(%15) + Detay(%20)
+AKILLI EŞLEŞTİRME v3 — Talep ↔ Mülk çapraz puanlama
+Talep modeli varsa onu kullan, yoksa Musteri alanlarına fallback.
 """
 from app.models import Musteri, Mulk
 
 
-def eslesdir(emlakci_id, musteri_id=None, mulk_id=None, limit=10):
+def eslesdir(emlakci_id, musteri_id=None, mulk_id=None, talep_id=None, limit=10):
     """Müşteri→mülk veya mülk→müşteri eşleştirme."""
     if musteri_id:
         musteri = Musteri.query.get(musteri_id)
@@ -26,33 +26,133 @@ def eslesdir(emlakci_id, musteri_id=None, mulk_id=None, limit=10):
 
 
 def tum_eslesme(emlakci_id, limit=20):
-    """Tüm müşteri × tüm mülk çapraz eşleştirme tablosu."""
-    musteriler = Musteri.query.filter_by(emlakci_id=emlakci_id).all()
+    """Talep ↔ Mülk çapraz eşleştirme. Talep varsa onu kullan, yoksa Musteri fallback."""
     mulkler = Mulk.query.filter_by(emlakci_id=emlakci_id, aktif=True).all()
-
-    if not musteriler or not mulkler:
+    if not mulkler:
         return []
 
     sonuclar = []
-    for musteri in musteriler:
-        for mulk in mulkler:
-            puan, nedenler = _puan_hesapla(musteri, mulk)
-            if puan >= 15:  # minimum eşik
-                fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') if mulk.fiyat else '?'
-                sonuclar.append({
-                    'musteri_id': musteri.id,
-                    'musteri_ad': musteri.ad_soyad,
-                    'musteri_sicaklik': musteri.sicaklik,
-                    'mulk_id': mulk.id,
-                    'mulk_baslik': mulk.baslik or mulk.adres or '—',
-                    'mulk_fiyat': fiyat,
-                    'mulk_islem': mulk.islem_turu,
-                    'puan': puan,
-                    'nedenler': nedenler,
-                })
+
+    # 1. Talep modeli ile eşleştir (yeni sistem)
+    try:
+        from app.models.talep import Talep
+        talepler = Talep.query.filter_by(emlakci_id=emlakci_id, durum='aktif', yonu='arayan').all()
+        for talep in talepler:
+            for mulk in mulkler:
+                puan, nedenler = _talep_puan_hesapla(talep, mulk)
+                if puan >= 15:
+                    fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') if mulk.fiyat else '?'
+                    musteri_ad = ''
+                    if talep.musteri_id:
+                        m = Musteri.query.get(talep.musteri_id)
+                        if m: musteri_ad = m.ad_soyad + (f' ({m.kunye})' if m.kunye else '')
+                    sonuclar.append({
+                        'talep_id': talep.id,
+                        'musteri_id': talep.musteri_id,
+                        'musteri_ad': musteri_ad or '(isimsiz)',
+                        'musteri_sicaklik': Musteri.query.get(talep.musteri_id).sicaklik if talep.musteri_id and Musteri.query.get(talep.musteri_id) else 'orta',
+                        'mulk_id': mulk.id,
+                        'mulk_baslik': mulk.baslik or mulk.adres or '—',
+                        'mulk_fiyat': fiyat,
+                        'mulk_islem': mulk.islem_turu,
+                        'puan': puan,
+                        'nedenler': nedenler,
+                    })
+    except Exception:
+        pass
+
+    # 2. Fallback: Eski Musteri alanlarıyla eşleştir (geriye uyumluluk)
+    if not sonuclar:
+        musteriler = Musteri.query.filter_by(emlakci_id=emlakci_id).all()
+        for musteri in musteriler:
+            for mulk in mulkler:
+                puan, nedenler = _puan_hesapla(musteri, mulk)
+                if puan >= 15:
+                    fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') if mulk.fiyat else '?'
+                    sonuclar.append({
+                        'musteri_id': musteri.id,
+                        'musteri_ad': musteri.ad_soyad,
+                        'musteri_sicaklik': musteri.sicaklik,
+                        'mulk_id': mulk.id,
+                        'mulk_baslik': mulk.baslik or mulk.adres or '—',
+                        'mulk_fiyat': fiyat,
+                        'mulk_islem': mulk.islem_turu,
+                        'puan': puan,
+                        'nedenler': nedenler,
+                    })
 
     sonuclar.sort(key=lambda x: x['puan'], reverse=True)
     return sonuclar[:limit]
+
+
+def _talep_puan_hesapla(talep, mulk):
+    """Talep modeli ile mülk puanlama."""
+    puan = 0
+    nedenler = []
+    mulk_det = mulk.detaylar or {}
+
+    # 1. İşlem türü (15) — zorunlu
+    if talep.islem_turu and mulk.islem_turu:
+        if talep.islem_turu == mulk.islem_turu:
+            puan += 15
+            nedenler.append('İşlem uyumlu')
+        else:
+            return 0, []
+
+    # 2. Fiyat (25)
+    if mulk.fiyat and talep.butce_max:
+        if talep.butce_min and talep.butce_min <= mulk.fiyat <= talep.butce_max:
+            puan += 25
+            nedenler.append('Bütçeye tam uygun')
+        elif mulk.fiyat <= talep.butce_max:
+            puan += 20
+            nedenler.append('Bütçe altında')
+        elif mulk.fiyat <= talep.butce_max * 1.1:
+            puan += 12
+            nedenler.append('Bütçeye yakın (+%10)')
+
+    # 3. Lokasyon (20)
+    if talep.tercih_ilce and mulk.ilce:
+        if talep.tercih_ilce.lower() in mulk.ilce.lower():
+            puan += 12
+            nedenler.append(f'İlçe: {mulk.ilce}')
+    if talep.tercih_sehir and mulk.sehir:
+        if talep.tercih_sehir.lower() in mulk.sehir.lower():
+            puan += 8
+            nedenler.append(f'Şehir: {mulk.sehir}')
+
+    # 4. Oda (15)
+    if talep.tercih_oda and mulk.oda_sayisi:
+        if talep.tercih_oda == mulk.oda_sayisi:
+            puan += 15
+            nedenler.append(f'Oda: {mulk.oda_sayisi}')
+        elif talep.tercih_oda.split('+')[0] == mulk.oda_sayisi.split('+')[0]:
+            puan += 8
+            nedenler.append('Oda yakın')
+
+    # 5. İstenen (15)
+    if talep.istenen and isinstance(talep.istenen, list):
+        eslesen = sum(1 for o in talep.istenen if _ozellik_kontrol(o.lower(), mulk_det, mulk))
+        if talep.istenen:
+            puan += int(15 * eslesen / len(talep.istenen))
+            for o in talep.istenen:
+                if _ozellik_kontrol(o.lower(), mulk_det, mulk):
+                    nedenler.append(f'✅ {o}')
+
+    # 6. İstenmeyen (-20 ceza)
+    if talep.istenmeyen and isinstance(talep.istenmeyen, list):
+        for o in talep.istenmeyen:
+            if _ozellik_kontrol(o.lower(), mulk_det, mulk):
+                puan -= 20
+                nedenler.append(f'❌ {o} (istenmiyor!)')
+
+    # 7. Tip
+    if talep.tercih_tip and mulk.tip:
+        if talep.tercih_tip.lower() == mulk.tip.lower():
+            puan += 5
+            nedenler.append(f'Tip: {mulk.tip}')
+
+    return max(0, puan), nedenler
 
 
 def _musteri_icin_mulk(musteri, mulkler, limit):
