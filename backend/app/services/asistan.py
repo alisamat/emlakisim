@@ -2823,28 +2823,19 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         ).all()
 
         if mevcut:
-            # Birebir aynı talep kontrolü
-            for m in mevcut:
-                ayni_talep = (
-                    m.islem_turu == args.get('islem_turu') and
-                    m.butce_max == args.get('butce_max') and
-                    (m.tercih_notlar or '') == (args.get('tercih_notlar') or '')
-                )
-                if ayni_talep:
-                    return (f'⚠️ *{ad}* adında aynı talepte müşteri zaten var!\n\n'
-                            f'👤 {m.ad_soyad} (ID: {m.id})\n'
-                            f'🏷 {m.islem_turu or "—"} · 💰 {f_tl(m.butce_max)} TL\n'
-                            f'📝 {m.tercih_notlar or "—"}\n\n'
-                            '_Yine de eklemek istiyorsanız "evet ekle" yazın._')
-
-            # Aynı isim farklı talep — uyar ama ekle
-            uyari = (f'⚠️ *Dikkat:* "{ad}" adında {len(mevcut)} müşteri zaten var:\n')
+            # Uyar ama yine de ekle — engelleme
+            uyari = f'⚠️ *Dikkat:* "{ad}" adında {len(mevcut)} müşteri zaten var:\n'
             for m in mevcut[:3]:
-                uyari += f'  • {m.ad_soyad} — {m.islem_turu or "?"} · {f_tl(m.butce_max)} TL'
-                if m.tercih_notlar:
-                    uyari += f' · {m.tercih_notlar[:40]}'
+                det = m.detaylar or {}
+                oda = det.get('tercih_oda', '')
+                uyari += f'  • {m.ad_soyad}'
+                if m.kunye:
+                    uyari += f' _({m.kunye})_'
+                uyari += f' — {m.islem_turu or "?"} · {f_tl(m.butce_max)} TL'
+                if oda:
+                    uyari += f' · {oda}'
                 uyari += '\n'
-            uyari += '\n_Farklı kişiyse ayırt etmek için künye ekleyin (örn: "Eyyüpteki Ahmet")_\n\n'
+            uyari += '_Ayırt etmek için künye ekleyebilirsiniz (örn: "Eyyüpteki Ahmet")_\n\n'
         else:
             uyari = ''
 
