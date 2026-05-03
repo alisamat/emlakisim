@@ -1047,6 +1047,39 @@ def talep_sil(tid):
     return jsonify({'ok': True})
 
 
+@bp.route('/eslestirme', methods=['GET'])
+@jwt_required()
+def eslestirme_endpoint():
+    """Talep ↔ Mülk eşleştirme."""
+    talep_id = request.args.get('talep_id', type=int)
+    if talep_id:
+        # Tek talep için eşleştirme
+        from app.models.talep import Talep
+        talep = Talep.query.filter_by(id=talep_id, emlakci_id=_eid()).first()
+        if not talep:
+            return jsonify({'eslesimler': []})
+        mulkler = Mulk.query.filter_by(emlakci_id=_eid(), aktif=True).all()
+        from app.services.eslestirme import _talep_puan_hesapla, _ozellik_kontrol
+        sonuclar = []
+        for mulk in mulkler:
+            puan, nedenler = _talep_puan_hesapla(talep, mulk)
+            if puan > 0:
+                fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') if mulk.fiyat else '?'
+                sonuclar.append({
+                    'mulk_id': mulk.id,
+                    'mulk_baslik': mulk.baslik or mulk.adres or '—',
+                    'mulk_fiyat': fiyat,
+                    'puan': puan, 'nedenler': nedenler,
+                })
+        sonuclar.sort(key=lambda x: x['puan'], reverse=True)
+        return jsonify({'eslesimler': sonuclar[:15]})
+    else:
+        # Tüm eşleştirme
+        from app.services.eslestirme import tum_eslesme
+        sonuclar = tum_eslesme(_eid())
+        return jsonify({'eslesimler': sonuclar})
+
+
 def _talep(t):
     musteri_ad = ''
     if t.musteri_id:

@@ -279,20 +279,35 @@ def grup_eslestirme(gid):
                 'uye_id': u.emlakci_id,  # sadece ID, isim değil
             })
 
-    # Açık talepler
-    acik_talep_uyeler = GrupUyelik.query.filter_by(grup_id=gid, durum='aktif', talep_acik=True).all()
+    # Kendi taleplerim (Talep modeli — yeni sistem)
     talepler = []
-    for u in acik_talep_uyeler:
-        musteriler = Musteri.query.filter_by(emlakci_id=u.emlakci_id).all()
-        for m in musteriler:
-            # Alıcı/satıcı adı GÖSTERİLMEZ
+    try:
+        from app.models.talep import Talep
+        kendi_talepler = Talep.query.filter_by(emlakci_id=_eid(), durum='aktif', yonu='arayan').all()
+        for t in kendi_talepler:
             talepler.append({
-                'islem_turu': m.islem_turu, 'butce_min': m.butce_min,
-                'butce_max': m.butce_max, 'sicaklik': m.sicaklik,
-                'uye_id': u.emlakci_id,
+                'islem_turu': t.islem_turu, 'butce_min': t.butce_min,
+                'butce_max': t.butce_max, 'tercih_oda': t.tercih_oda,
+                'tercih_ilce': t.tercih_ilce,
+                'uye_id': _eid(),
             })
+    except Exception:
+        pass
 
-    # Basit eşleştirme
+    # Fallback: eski müşteri alanları (talep yoksa)
+    if not talepler:
+        acik_talep_uyeler = GrupUyelik.query.filter_by(grup_id=gid, emlakci_id=_eid(), durum='aktif', talep_acik=True).all()
+        for u in acik_talep_uyeler:
+            musteriler = Musteri.query.filter_by(emlakci_id=u.emlakci_id).all()
+            for m in musteriler:
+                if m.islem_turu:
+                    talepler.append({
+                        'islem_turu': m.islem_turu, 'butce_min': m.butce_min,
+                        'butce_max': m.butce_max,
+                        'uye_id': u.emlakci_id,
+                    })
+
+    # Eşleştirme: kendi taleplerim × gruptaki başkalarının mülkleri
     eslesimler = []
     for t in talepler:
         for p in portfoyler:
