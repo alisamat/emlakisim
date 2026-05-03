@@ -35,7 +35,8 @@ INTENT_TANIMLARI = {
     'gorev_ekle': 'görev ekle hatırlatma oluştur randevu toplantı planla',
     'gorev_liste': 'görevleri listele görevlerim ne var yapılacaklar',
     # Not
-    'not_ekle': 'not ekle kaydet yaz not al',
+    'not_ekle': 'yeni not ekle kaydet yaz not al',
+    'not_liste': 'notlar notları göster listele notlarım',
     'unutma': 'unutma hatırla bunu aklında tut sakla kaydet bunu',
     'hatirlatma_liste': 'hatırlatmalar ne var neyi unutmamam lazım',
     # Muhasebe

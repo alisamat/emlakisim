@@ -43,6 +43,8 @@ _PATTERNS = [
     (r'(?:kiralik|kiralık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
     (r'(?:satilik|satılık)(?:\s+\w+|\s*$)',                     'mulk_liste'),
     # ── Not & Hatırlatma ──
+    (r'^notlar$',                                              'not_liste'),
+    (r'(?:not|notlar)\s*(?:listele|göster|goster|liste)',     'not_liste'),
     (r'(?:not)\s*(?:ekle|al|kaydet|yaz)',                     'not_ekle'),
     (r'(?:unutma|hatirla|hatırla|aklinda\s*tut|aklında\s*tut|sakla|kaydet\s*bunu)', 'unutma'),
     (r'(?:hatirlatmalar|hatırlatmalar|neler\s*unutmamam|neyi\s*hatirl)', 'hatirlatma_liste'),
@@ -256,6 +258,7 @@ _NAVIGASYON_PATTERNS = [
     (r'(?:belge|dokuman|doküman)\s*(?:sayfa|git|aç|ac|göster|goster)',   'belgeler',    '📄 Belgeler sayfası açılıyor...'),
     (r'(?:muhasebe)\s*(?:sayfa|git|aç|ac|göster|goster)',               'muhasebe',    '💰 Muhasebe sayfası açılıyor...'),
     (r'(?:hesaplama|hesap)\s*(?:sayfa|git|aç|ac|göster|goster)',        'hesaplamalar','🧮 Hesaplama araçları açılıyor...'),
+    (r'(?:not|notlar)\s*(?:sayfa|git|aç|ac)',                           'notlar',      '📝 Notlar sayfası açılıyor...'),
     (r'(?:planlama|gorev|görev)\s*(?:sayfa|git|aç|ac|göster|goster)',   'planlama',    '📅 Planlama sayfası açılıyor...'),
     (r'(?:yedek|yedekleme|backup)\s*(?:sayfa|git|aç|ac|göster|goster)', 'yedekleme',   '💾 Yedekleme sayfası açılıyor...'),
     (r'(?:toplu)\s*(?:sayfa|git|aç|ac|göster|goster|islem|işlem)',      'toplu',       '📦 Toplu işlemler açılıyor...'),
@@ -763,6 +766,17 @@ def _komut_calistir(komut, emlakci, metin, session):
     if komut == 'performans':
         return _performans_ozet(emlakci)
 
+    if komut == 'not_liste':
+        session['son_komut'] = 'not'
+        notlar_q = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).order_by(Not.olusturma.desc()).limit(10).all()
+        if not notlar_q:
+            return ('📝 Henüz not yok.\n\n_"Not ekle" yazarak yeni not ekleyebilirsiniz._', 'notlar')
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
+        session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar_q]
+        satirlar = [f'*{i+1}.* {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar_q)]
+        toplam = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).count()
+        return f'📝 *Notlarınız ({toplam}):*\n\n' + '\n'.join(satirlar)
+
     if komut == 'not_ekle':
         session['bekleyen_islem'] = 'not_ekle'
         return '*Not yazın:*'
@@ -1011,6 +1025,11 @@ def _bekleyen_isle(session, emlakci, metin):
     islem = session.pop('bekleyen_islem', None)
     if not islem:
         return None
+
+    # İptal kelimeleri — bekleyen işlemi iptal et, yeni komutu işle
+    metin_lower = metin.lower()
+    if re.search(r'(?:iptal|vazgec|vazgeç|listele|göster|goster|rapor|merhaba|yardim|yardım)', metin_lower):
+        return None  # Bekleyen işlem iptal — normal akışa dön
 
     if islem == 'musteri_ekle':
         return _musteri_kaydet(emlakci, metin)
