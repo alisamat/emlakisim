@@ -49,7 +49,7 @@ def emlakci_portfoy(eid):
     fiyat_max = request.args.get('fiyat_max', type=float)
     oda = request.args.get('oda')
 
-    sorgu = Mulk.query.filter_by(emlakci_id=eid, aktif=True)
+    sorgu = Mulk.query.filter_by(emlakci_id=e.id, aktif=True)
     if islem:
         sorgu = sorgu.filter(Mulk.islem_turu == islem)
     if tip:
