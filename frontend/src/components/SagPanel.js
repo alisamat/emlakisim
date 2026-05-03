@@ -68,6 +68,7 @@ const MENU = [
       { ikon: '📋', ad: 'Görevler', tab: 'planlama', aciklama: 'Görev yönetimi, öncelik, durum takibi' },
       { ikon: '📅', ad: 'Takvim', tab: 'takvim', aciklama: 'Aylık takvim görünümü' },
       { ikon: '📋', ad: 'Süreç Takip', tab: 'surec', aciklama: 'Tapu devri, kredi süreci adım takibi' },
+      { ikon: '🕐', ad: 'İşlem Geçmişi', tab: 'islem_gecmisi', aciklama: 'Yapılan tüm işlemler, geri alma' },
     ],
   },
   {

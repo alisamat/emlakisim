@@ -4,7 +4,8 @@ PANEL — Emlakçı dashboard API'leri
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not
+from app.models import Emlakci, Musteri, Mulk, YerGosterme, Not, Teklif
+from sqlalchemy import text
 from app.services.iletisim import email_gonder, musteri_email_sablonu, portfoy_email_sablonu
 from app.services.yedekleme import excel_export, yedek_ozeti, yedek_durumu, yedek_logla, depolama_durumu
 import io
@@ -99,7 +100,19 @@ def musteri_guncelle(mid):
 @jwt_required()
 def musteri_sil(mid):
     m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
-    db.session.delete(m); db.session.commit()
+    # İlişkili kayıtları temizle (foreign key constraints)
+    silinecek = [
+        'iletisim_kayit', 'musteri_atama', 'musteri_hafiza',
+        'yer_gosterme', 'teklif', '"not"', 'gorev', 'surec_takip', 'evrak',
+        'cari', 'fatura', 'geri_bildirim', 'cagri_kayit', 'lead'
+    ]
+    for tablo in silinecek:
+        db.session.execute(text(f'DELETE FROM {tablo} WHERE musteri_id = :mid'), {'mid': mid})
+    # Mülk ve gelir_gider'de musteri_id'yi null yap (kayıtlar silinmesin)
+    db.session.execute(text('UPDATE mulk SET musteri_id = NULL WHERE musteri_id = :mid'), {'mid': mid})
+    db.session.execute(text('UPDATE gelir_gider SET musteri_id = NULL WHERE musteri_id = :mid'), {'mid': mid})
+    db.session.delete(m)
+    db.session.commit()
     return jsonify({'ok': True})
 
 
@@ -909,3 +922,31 @@ def _resim_kucult(dosya_bytes, max_boyut=None):
         return buf.getvalue()
     except ImportError:
         return dosya_bytes
+
+
+# ════════ İŞLEM GEÇMİŞİ ════════
+
+@bp.route('/islem-gecmisi', methods=['GET'])
+@jwt_required()
+def islem_gecmisi_liste():
+    """Son işlemleri listele."""
+    from app.services.islem_takip import IslemGecmisi
+    islemler = IslemGecmisi.query.filter_by(emlakci_id=_eid())\
+        .order_by(IslemGecmisi.olusturma.desc()).limit(50).all()
+    return jsonify({'islemler': [{
+        'id': i.id, 'islem': i.islem, 'tablo': i.tablo,
+        'kayit_id': i.kayit_id, 'ozet': i.ozet,
+        'geri_alindi': i.geri_alindi,
+        'olusturma': i.olusturma.isoformat() if i.olusturma else None,
+    } for i in islemler]})
+
+
+@bp.route('/islem-gecmisi/<int:iid>/geri-al', methods=['POST'])
+@jwt_required()
+def islem_geri_al_endpoint(iid):
+    """İşlemi geri al."""
+    from app.services.islem_takip import islem_geri_al
+    log, mesaj = islem_geri_al(_eid(), iid)
+    if log:
+        return jsonify({'ok': True, 'mesaj': mesaj})
+    return jsonify({'message': mesaj}), 400
