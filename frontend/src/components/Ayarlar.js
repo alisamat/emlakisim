@@ -7,6 +7,12 @@ export default function Ayarlar() {
   const [profilForm, setProfilForm] = useState({
     ad_soyad: user?.ad_soyad || '', telefon: user?.telefon || '',
     acente_adi: user?.acente_adi || '', yetki_no: user?.yetki_no || '',
+    unvan: user?.unvan || '', slogan: user?.slogan || '',
+    adres: user?.adres || '', telefon2: user?.telefon2 || '',
+    website: user?.website || '', ruhsat_no: user?.ruhsat_no || '',
+    vergi_no: user?.vergi_no || '',
+    sosyal_medya: user?.sosyal_medya || {},
+    profil_gorunum: user?.profil_gorunum || {},
   });
   const [sifreForm, setSifreForm] = useState({ eski_sifre: '', yeni_sifre: '' });
   const [logo, setLogo] = useState(localStorage.getItem('emlakisim_logo') || '');
@@ -67,14 +73,72 @@ export default function Ayarlar() {
       <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid var(--border)' }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>👤 Profil</div>
         <div className="grid-2" style={{ marginBottom: 12 }}>
-          <div><label className="etiket">Ad Soyad</label><input className="input" name="ad_soyad" value={profilForm.ad_soyad} onChange={dp} /></div>
-          <div><label className="etiket">Telefon</label><input className="input" name="telefon" value={profilForm.telefon} onChange={dp} /></div>
+          <div><label className="etiket">Ad Soyad *</label><input className="input" name="ad_soyad" value={profilForm.ad_soyad} onChange={dp} /></div>
+          <div><label className="etiket">Ünvan</label><input className="input" name="unvan" value={profilForm.unvan} onChange={dp} placeholder="Gayrimenkul Danışmanı" /></div>
         </div>
-        <div className="grid-2" style={{ marginBottom: 16 }}>
-          <div><label className="etiket">Acente</label><input className="input" name="acente_adi" value={profilForm.acente_adi} onChange={dp} /></div>
-          <div><label className="etiket">Yetki No</label><input className="input" name="yetki_no" value={profilForm.yetki_no} onChange={dp} /></div>
+        <div style={{ marginBottom: 12 }}>
+          <label className="etiket">Slogan</label>
+          <input className="input" name="slogan" value={profilForm.slogan} onChange={dp} placeholder="Güvenilir emlak çözümleri" />
         </div>
-        <button className="btn-yesil" onClick={profilKaydet} disabled={yuk} style={{ fontSize: 13 }}>Kaydet</button>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Acente / Ofis</label><input className="input" name="acente_adi" value={profilForm.acente_adi} onChange={dp} /></div>
+          <div><label className="etiket">Telefon *</label><input className="input" name="telefon" value={profilForm.telefon} onChange={dp} /></div>
+        </div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">İkinci Telefon</label><input className="input" name="telefon2" value={profilForm.telefon2} onChange={dp} /></div>
+          <div><label className="etiket">Web Sitesi</label><input className="input" name="website" value={profilForm.website} onChange={dp} placeholder="https://..." /></div>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label className="etiket">İşyeri Adresi</label>
+          <textarea className="input" name="adres" value={profilForm.adres} onChange={dp} rows={2} style={{ resize: 'vertical' }} placeholder="Cadde/Sokak, İlçe, Şehir" />
+        </div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Yetki Belgesi No</label><input className="input" name="yetki_no" value={profilForm.yetki_no} onChange={dp} /></div>
+          <div><label className="etiket">Emlakçılık Ruhsat No</label><input className="input" name="ruhsat_no" value={profilForm.ruhsat_no} onChange={dp} /></div>
+        </div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Vergi No</label><input className="input" name="vergi_no" value={profilForm.vergi_no} onChange={dp} /></div>
+          <div><label className="etiket">Logo</label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              {profilForm.logo_url ? <img src={profilForm.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} /> : <span style={{ fontSize: 12, color: '#94a3b8' }}>📸 Logo yükle</span>}
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => setProfilForm(p => ({ ...p, logo_url: ev.target.result }));
+                reader.readAsDataURL(file);
+              }} />
+            </label>
+          </div>
+        </div>
+
+        {/* Sosyal Medya */}
+        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, marginTop: 8 }}>📱 Sosyal Medya</div>
+        <div className="grid-2" style={{ marginBottom: 12 }}>
+          <div><label className="etiket">Instagram</label><input className="input" value={profilForm.sosyal_medya?.instagram || ''} onChange={e => setProfilForm(p => ({ ...p, sosyal_medya: { ...p.sosyal_medya, instagram: e.target.value } }))} placeholder="@kullaniciadi" /></div>
+          <div><label className="etiket">Facebook</label><input className="input" value={profilForm.sosyal_medya?.facebook || ''} onChange={e => setProfilForm(p => ({ ...p, sosyal_medya: { ...p.sosyal_medya, facebook: e.target.value } }))} placeholder="facebook.com/..." /></div>
+        </div>
+
+        {/* Görünürlük Ayarları */}
+        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, marginTop: 16 }}>👁 Web Sayfasında Gösterilecek Bilgiler</div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>Kapalı olanlar public sayfanızda görünmez</div>
+        {[
+          ['unvan', 'Ünvan', true], ['slogan', 'Slogan', true], ['logo', 'Logo', true],
+          ['email', 'E-posta', false], ['telefon2', 'İkinci Telefon', true],
+          ['adres', 'İşyeri Adresi', true], ['website', 'Web Sitesi', true],
+          ['sosyal_medya', 'Sosyal Medya', true], ['yetki_no', 'Yetki Belgesi', true],
+          ['ruhsat_no', 'Ruhsat No', true], ['vergi_no', 'Vergi No', false],
+        ].map(([key, label, varsayilan]) => (
+          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-light, #f1f5f9)' }}>
+            <span style={{ fontSize: 12 }}>{label} {!varsayilan && <span style={{ color: '#f59e0b', fontSize: 10 }}>(varsayılan gizli)</span>}</span>
+            <button onClick={() => setProfilForm(p => ({ ...p, profil_gorunum: { ...p.profil_gorunum, [key]: !(p.profil_gorunum?.[key] ?? varsayilan) } }))} style={{
+              width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: (profilForm.profil_gorunum?.[key] ?? varsayilan) ? '#16a34a' : '#e2e8f0', position: 'relative',
+            }}><div style={{ width: 16, height: 16, borderRadius: 8, background: '#fff', position: 'absolute', top: 2, left: (profilForm.profil_gorunum?.[key] ?? varsayilan) ? 18 : 2, boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} /></button>
+          </div>
+        ))}
+
+        <button className="btn-yesil" onClick={profilKaydet} disabled={yuk} style={{ fontSize: 13, marginTop: 16 }}>Profili Kaydet</button>
       </div>
 
       {/* AI Davranış */}

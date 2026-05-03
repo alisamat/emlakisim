@@ -8,6 +8,43 @@ from app.models import Emlakci, Mulk
 bp = Blueprint('public', __name__, url_prefix='/api/public')
 
 
+def _public_profil(e):
+    """Görünürlük ayarlarına göre filtrelenmiş profil bilgileri."""
+    g = e.profil_gorunum or {}
+    # Varsayılan: ad, acente, telefon her zaman gösterilir
+    profil = {
+        'id': e.id,
+        'ad_soyad': e.ad_soyad,
+        'acente_adi': e.acente_adi,
+        'telefon': e.telefon,
+        'slug': e.slug,
+    }
+    # Opsiyonel alanlar — varsayılan göster, kullanıcı kapatabilir
+    if g.get('unvan', True) and e.unvan:
+        profil['unvan'] = e.unvan
+    if g.get('slogan', True) and e.slogan:
+        profil['slogan'] = e.slogan
+    if g.get('logo', True) and e.logo_url:
+        profil['logo_url'] = e.logo_url
+    if g.get('email', False) and e.email:  # email varsayılan gizli
+        profil['email'] = e.email
+    if g.get('telefon2', True) and e.telefon2:
+        profil['telefon2'] = e.telefon2
+    if g.get('adres', True) and e.adres:
+        profil['adres'] = e.adres
+    if g.get('website', True) and e.website:
+        profil['website'] = e.website
+    if g.get('sosyal_medya', True) and e.sosyal_medya:
+        profil['sosyal_medya'] = e.sosyal_medya
+    if g.get('yetki_no', True) and e.yetki_no:
+        profil['yetki_no'] = e.yetki_no
+    if g.get('ruhsat_no', True) and e.ruhsat_no:
+        profil['ruhsat_no'] = e.ruhsat_no
+    if g.get('vergi_no', False) and e.vergi_no:  # vergi no varsayılan gizli
+        profil['vergi_no'] = e.vergi_no
+    return profil
+
+
 def _emlakci_bul(eid):
     """ID veya slug ile emlakçı bul."""
     try:
@@ -23,16 +60,7 @@ def emlakci_profil(eid):
     if not e:
         return jsonify({'message': 'Emlakçı bulunamadı'}), 404
 
-    return jsonify({
-        'emlakci': {
-            'id': e.id,
-            'ad_soyad': e.ad_soyad,
-            'telefon': e.telefon,
-            'email': e.email,
-            'acente_adi': e.acente_adi,
-            'yetki_no': e.yetki_no,
-        }
-    })
+    return jsonify({'emlakci': _public_profil(e)})
 
 
 @bp.route('/emlakci/<eid>/portfoy', methods=['GET'])
@@ -64,11 +92,7 @@ def emlakci_portfoy(eid):
     mulkler = sorgu.order_by(Mulk.olusturma.desc()).all()
 
     return jsonify({
-        'emlakci': {
-            'ad_soyad': e.ad_soyad,
-            'acente_adi': e.acente_adi,
-            'telefon': e.telefon,
-        },
+        'emlakci': _public_profil(e),
         'mulkler': [{
             'id': m.id,
             'baslik': m.baslik,

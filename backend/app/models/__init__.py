@@ -30,6 +30,16 @@ class Emlakci(db.Model):
     yetki_no      = db.Column(db.String(50))           # Taşınmaz Ticareti yetki belgesi
     acente_adi    = db.Column(db.String(120))
     slug          = db.Column(db.String(100), unique=True)  # web sayfası: emlakisim.com/sayfa/arif-kaya
+    unvan         = db.Column(db.String(100))              # "Gayrimenkul Danışmanı", "Broker" vb.
+    slogan        = db.Column(db.String(200))              # "Güvenilir emlak çözümleri"
+    logo_url      = db.Column(db.Text)                     # logo base64 veya URL
+    adres         = db.Column(db.Text)                     # işyeri adresi
+    telefon2      = db.Column(db.String(20))               # ikinci telefon
+    website       = db.Column(db.String(200))              # kişisel web sitesi
+    sosyal_medya  = db.Column(db.JSON, default=dict)       # {"instagram": "...", "facebook": "...", "linkedin": "..."}
+    ruhsat_no     = db.Column(db.String(50))               # emlakçılık ruhsat numarası
+    vergi_no      = db.Column(db.String(20))               # vergi numarası
+    profil_gorunum = db.Column(db.JSON, default=dict)      # hangi bilgiler public sayfada gösterilecek
     aktif         = db.Column(db.Boolean, default=True)
     kredi         = db.Column(db.Float, default=10.0)
     kredi_son_kullanma = db.Column(db.DateTime)    # kredi son kullanma tarihi

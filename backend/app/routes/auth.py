@@ -73,9 +73,13 @@ def profil():
 def profil_guncelle():
     e = Emlakci.query.get(int(get_jwt_identity()))
     d = request.get_json() or {}
-    for f in ['ad_soyad', 'telefon', 'acente_adi', 'yetki_no']:
+    for f in ['ad_soyad', 'telefon', 'acente_adi', 'yetki_no', 'unvan', 'slogan', 'logo_url', 'adres', 'telefon2', 'website', 'ruhsat_no', 'vergi_no']:
         if f in d:
             setattr(e, f, d[f])
+    if 'sosyal_medya' in d:
+        e.sosyal_medya = d['sosyal_medya']
+    if 'profil_gorunum' in d:
+        e.profil_gorunum = d['profil_gorunum']
     db.session.commit()
     return jsonify({'user': _user(e)})
 
@@ -172,4 +176,9 @@ def _user(e):
         'telefon': e.telefon, 'acente_adi': e.acente_adi,
         'yetki_no': e.yetki_no, 'kredi': e.kredi,
         'kredi_son_kullanma': e.kredi_son_kullanma.isoformat() if e.kredi_son_kullanma else None,
+        'slug': e.slug, 'unvan': e.unvan, 'slogan': e.slogan,
+        'logo_url': e.logo_url, 'adres': e.adres, 'telefon2': e.telefon2,
+        'website': e.website, 'sosyal_medya': e.sosyal_medya or {},
+        'ruhsat_no': e.ruhsat_no, 'vergi_no': e.vergi_no,
+        'profil_gorunum': e.profil_gorunum or {},
     }

@@ -109,11 +109,33 @@ export default function PublicPortfoy() {
     <div style={{ maxWidth: 900, margin: '0 auto', padding: 20, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <img src="/logo192.png" alt="Emlakisim" style={{ width: 48, height: 48, borderRadius: 12, marginBottom: 8 }} />
+        {emlakci.logo_url ? (
+          <img src={emlakci.logo_url} alt="" style={{ width: 72, height: 72, borderRadius: 16, objectFit: 'cover', marginBottom: 8, border: '2px solid #e2e8f0' }} />
+        ) : (
+          <img src="/logo192.png" alt="Emlakisim" style={{ width: 48, height: 48, borderRadius: 12, marginBottom: 8 }} />
+        )}
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>{emlakci.ad_soyad}</h1>
+        {emlakci.unvan && <div style={{ fontSize: 13, color: '#16a34a', fontWeight: 600 }}>{emlakci.unvan}</div>}
         {emlakci.acente_adi && <div style={{ fontSize: 14, color: '#64748b' }}>{emlakci.acente_adi}</div>}
-        {emlakci.telefon && <div style={{ fontSize: 13, color: '#16a34a', marginTop: 4 }}>📞 {emlakci.telefon}</div>}
-        <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>{mulkler.length} aktif ilan</div>
+        {emlakci.slogan && <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic', marginTop: 4 }}>"{emlakci.slogan}"</div>}
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap', fontSize: 13 }}>
+          {emlakci.telefon && <span style={{ color: '#16a34a' }}>📞 {emlakci.telefon}</span>}
+          {emlakci.telefon2 && <span style={{ color: '#64748b' }}>📱 {emlakci.telefon2}</span>}
+          {emlakci.email && <span style={{ color: '#64748b' }}>📧 {emlakci.email}</span>}
+        </div>
+        {emlakci.adres && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>📍 {emlakci.adres}</div>}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+          {emlakci.yetki_no && <span style={{ fontSize: 11, background: '#f0fdf4', color: '#16a34a', padding: '2px 8px', borderRadius: 4 }}>🏛 Yetki: {emlakci.yetki_no}</span>}
+          {emlakci.ruhsat_no && <span style={{ fontSize: 11, background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: 4 }}>📋 Ruhsat: {emlakci.ruhsat_no}</span>}
+        </div>
+        {emlakci.sosyal_medya && (
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 8 }}>
+            {emlakci.sosyal_medya.instagram && <a href={`https://instagram.com/${emlakci.sosyal_medya.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#e4405f' }}>📸 Instagram</a>}
+            {emlakci.sosyal_medya.facebook && <a href={emlakci.sosyal_medya.facebook.startsWith('http') ? emlakci.sosyal_medya.facebook : `https://facebook.com/${emlakci.sosyal_medya.facebook}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#1877f2' }}>👤 Facebook</a>}
+          </div>
+        )}
+        {emlakci.website && <div style={{ marginTop: 4 }}><a href={emlakci.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#16a34a' }}>🌐 {emlakci.website}</a></div>}
+        <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 8 }}>{mulkler.length} aktif ilan</div>
       </div>
 
       {/* Filtreler */}
