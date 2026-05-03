@@ -20,80 +20,61 @@ logger = logging.getLogger(__name__)
 # Komut tanımları — her biri bir "intent"
 # key: komut adı, value: açıklama (Türkçe, doğal dil)
 INTENT_TANIMLARI = {
+    # ═══ SADECE OKUMA / LİSTELEME / SORGULAMA ═══
+    # Yazma komutları (ekle/sil/güncelle) → AI function calling çözsün
+
     # Müşteri
-    'musteri_ekle': 'yeni müşteri ekle kaydet oluştur müşteri kaydı',
-    'musteri_liste': 'müşteri listele göster müşterilerim kimler kaç müşterim var',
-    'musteri_ara': 'müşterilerde ara bul isimle müşteri ara telefon ile ara',
+    'musteri_liste': 'müşteri listele göster müşterilerim kimler kaç müşterim var tüm müşteriler',
+    'musteri_ara': 'müşterilerde ara bul isimle müşteri ara telefon ile ara müşteri var mı',
     # Portföy
-    'mulk_ekle': 'yeni mülk ekle portföye ekle ilan ekle daire villa arsa kaydet',
-    'mulk_liste': 'portföy listele mülkleri göster ilanlarım kaç mülk var kiralık satılık',
-    'mulk_ara': 'portföyde ara mülk bul daire ara lokasyon ile ara',
+    'mulk_liste': 'portföy listele mülkleri göster ilanlarım kaç mülk var portföyüm kiralık satılık mülkler',
+    'mulk_ara': 'portföyde ara mülk bul daire ara lokasyon ile ara ilçede mülk',
     # Rapor
-    'rapor': 'rapor özet genel durum nasıl gidiyor ne durumda istatistik',
-    'bugun_ozet': 'bugün ne var günlük plan program bugünkü görevler',
+    'rapor': 'rapor özet genel durum nasıl gidiyor ne durumda genel bakış istatistik durum raporu',
+    'bugun_ozet': 'bugün ne var günlük plan program bugünkü görevler bugünkü işler',
     # Görev
-    'gorev_ekle': 'görev ekle hatırlatma oluştur randevu toplantı planla',
-    'gorev_liste': 'görevleri listele görevlerim ne var yapılacaklar',
+    'gorev_liste': 'görevleri listele görevlerim ne var yapılacaklar aktif görevler görev listesi',
     # Not
-    'not_ekle': 'yeni not ekle kaydet yaz not al',
-    'not_liste': 'notlar notları göster listele notlarım',
-    'unutma': 'unutma hatırla bunu aklında tut sakla kaydet bunu',
-    'hatirlatma_liste': 'hatırlatmalar ne var neyi unutmamam lazım',
+    'not_liste': 'notlar notları göster listele notlarım not listesi kayıtlı notlar',
+    'hatirlatma_liste': 'hatırlatmalar ne var neyi unutmamam lazım hatırlatma listesi',
     # Muhasebe
-    'muhasebe_rapor': 'gelir gider kar zarar muhasebe ne kadar kazandım harcadım',
-    'cari_rapor': 'cari hesap alacak borç ne kadar borcum var',
+    'muhasebe_rapor': 'gelir gider kar zarar muhasebe ne kadar kazandım harcadım muhasebe raporu mali durum',
+    'cari_rapor': 'cari hesap alacak borç ne kadar borcum var cari durum',
     # Fatura
-    'fatura_ekle': 'fatura oluştur kes hazırla fatura ekle',
-    'fatura_liste': 'fatura listele göster son faturalar',
+    'fatura_liste': 'fatura listele göster son faturalar fatura listesi',
     # Eşleştirme
-    'eslestirme': 'eşleştir uygun mülk bul müşteriye uygun kim uygun',
-    # Döviz
-    'doviz_kuru': 'döviz kuru dolar euro sterlin kur ne kadar',
-    'altin_fiyat': 'altın fiyatı gram altın ne kadar',
-    'fiyat_cevir': 'TL dolar çevir euro çevir fiyat dönüştür',
+    'eslestirme': 'eşleştir eşleştirme uygun mülk bul müşteriye uygun kim uygun portföy müşteri eşleşme',
     # Hava
-    'hava_durumu_cmd': 'hava durumu hava nasıl yarın hava yağmur yağacak mı gösterim hava uygun',
+    'hava_durumu_cmd': 'hava durumu hava nasıl yarın hava yağmur yağacak mı gösterim için hava uygun mu dışarısı nasıl',
     # Haber
-    'haber_cmd': 'emlak haberleri sektör haberleri piyasa ne oldu son gelişmeler',
+    'haber_cmd': 'emlak haberleri sektör haberleri piyasa ne oldu son gelişmeler sektörde neler oluyor',
     # QR
-    'qr_cmd': 'QR kod oluştur portföy QR barkod',
-    'qr_kartvizit_cmd': 'kartvizit QR kodu vCard',
+    'qr_cmd': 'QR kod oluştur portföy QR barkod broşüre QR',
+    'qr_kartvizit_cmd': 'kartvizit QR kodu vCard kartvizit barkod',
     # Web
-    'web_sayfa_link': 'web sayfamın linki sayfam portföy linki müşteriye paylaşım linki',
+    'web_sayfa_link': 'web sayfamın linki sayfam portföy linki müşteriye paylaşım linki web adresim',
     # Yedek
-    'yedek_durum': 'yedekleme ne zaman yedek aldım son yedek yedekleme durumu',
+    'yedek_durum': 'yedekleme ne zaman yedek aldım son yedek yedekleme durumu backup',
     # Excel
-    'portfoy_excel': 'portföy excel indir mülk listesi excel ver',
-    'musteri_excel': 'müşteri excel indir müşteri listesi excel ver',
-    'tum_excel': 'tüm veriyi excel indir tüm veri export her şeyi indir',
-    'tum_zip': 'zip indir tüm veri zip export',
+    'portfoy_excel': 'portföy excel indir mülk listesi excel ver portföyü indir',
+    'musteri_excel': 'müşteri excel indir müşteri listesi excel ver müşterileri indir',
+    'tum_excel': 'tüm veriyi excel indir tüm veri export her şeyi indir tüm verileri indir',
+    'tum_zip': 'zip indir tüm veri zip export zip olarak indir',
     # Tahmin
-    'satici_tahmin': 'satıcı tahmin kimin satma ihtimali yüksek müşteri analiz ciddi mi',
-    'isi_haritasi': 'ısı haritası ilçe analiz piyasa sıcak bölge',
+    'satici_tahmin': 'satıcı tahmin kimin satma ihtimali yüksek müşteri ciddi mi analiz tahmin',
+    'isi_haritasi': 'ısı haritası ilçe analiz piyasa sıcak bölge pazar analizi bölge analizi',
     # Performans
-    'performans': 'performans KPI verimlilik nasıl gidiyorum',
-    'strateji': 'strateji öneri tavsiye ne yapmalıyım yol haritası',
-    # İlan
-    'ilan_olustur': 'ilan metni yaz ilan hazırla reklam sosyal medya içerik',
+    'performans': 'performans KPI verimlilik nasıl gidiyorum performans raporu',
+    'strateji': 'strateji öneri tavsiye ne yapmalıyım yol haritası akıllı öneri',
     # Yasal
-    'yasal_bilgi': 'yasal durum hukuki ipotek haciz iskan kontrol',
-    'piyasa_bilgi': 'piyasa değer analiz rapor karşılaştır m2 fiyat',
-    'surec_ozet_cmd': 'süreç durum ne durumda süreç takip',
-    # Selamlama
-    'yardim': 'merhaba selam hey yardım ne yapabilirsin özellikler',
-    'tesekkur': 'teşekkür sağol eyvallah',
-    'gunaydin': 'günaydın iyi sabahlar',
-    'iyi_aksam': 'iyi akşamlar iyi geceler',
-    # Kredi
-    'kredi_panel': 'kredi satın al kredi yükle kredim bitti kontör uygulama kredisi',
+    'yasal_bilgi': 'yasal durum hukuki ipotek haciz iskan kontrol yasal risk',
+    'piyasa_bilgi': 'piyasa değer analiz rapor karşılaştır m2 fiyat piyasa değeri metrekare fiyat',
+    'surec_ozet_cmd': 'süreç durum ne durumda süreç takip süreç özeti',
     # Grup
-    'grup_kur': 'grup kur oluştur yeni grup aç',
-    'grup_liste': 'gruplarım grup listele gruplar neler',
-    'grup_esles': 'grup eşleştir grup portföy talep eşleşme',
-    'grup_uyeleri': 'grup üyeleri kimler var',
+    'grup_liste': 'gruplarım grup listele gruplar neler grup listesi',
+    'grup_uyeleri': 'grup üyeleri kimler var üye listesi',
     # Emlakçı dizini
-    'emlakci_ekle': 'emlakçı ekle kaydet rehbere ekle',
-    'emlakci_liste': 'emlakçı listele dizin rehber göster',
+    'emlakci_liste': 'emlakçı listele dizin rehber göster emlakçı rehberi emlakçılar',
 }
 
 # Cache
@@ -126,8 +107,8 @@ def _komut_embeddingler_yukle():
     """Komut açıklamalarının embedding'lerini hesapla ve cache'le."""
     global _embedding_cache, _cache_zamani
 
-    # 24 saatte bir yenile
-    if _cache_zamani and (datetime.utcnow() - _cache_zamani).seconds < 86400 and _embedding_cache:
+    # 6 saatte bir yenile (intent tanımları değişebilir)
+    if _cache_zamani and (datetime.utcnow() - _cache_zamani).seconds < 21600 and _embedding_cache:
         return
 
     api_key = os.environ.get('OPENAI_API_KEY', '')
