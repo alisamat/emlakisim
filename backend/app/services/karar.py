@@ -19,9 +19,18 @@ def baglam_karar(emlakci_id, metin, metin_norm):
     Mesajı bağlam + niyet ile analiz et.
     Döndürür: (komut, args) veya None (pattern'a devret)
     """
+    # Uzun/karmaşık cümleler → AI'a bırak (bağlamsal karar yanlış eşleşme riski)
+    kelime = len(metin.split())
+    if kelime > 8:
+        return None
+
+    # Yazma fiilleri varsa → AI'a bırak
+    if re.search(r'(?:ekle|kaydet|oluştur|olustur|sil|güncelle|düzenle)', metin_norm):
+        return None
+
     state = KonusmaState.query.filter_by(emlakci_id=emlakci_id).first()
 
-    # 1. "ARA" bağlam çözme
+    # 1. "ARA" bağlam çözme — sadece kısa, net cümleler
     ara_sonuc = _ara_baglam(emlakci_id, metin, metin_norm, state)
     if ara_sonuc:
         return ara_sonuc
