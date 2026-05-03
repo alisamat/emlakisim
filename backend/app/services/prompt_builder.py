@@ -101,6 +101,12 @@ Mülk eklerken şu alanları çıkar:
 "İlanı göster/görüntüle" → mulk_goruntule çağır, kendi metin çıktısı oluşturma.
 Portföyde tek mülk varsa güncellemede sormaya gerek yok.
 
+MÜLK SAHİBİ BAĞLAMA:
+Mülk eklerken mutlaka "Mülk sahibi kim?" sor.
+- İsim verirse → müşterilerde ara, varsa bağla, yoksa "önce müşteriyi ekleyeyim mi?" sor
+- "isimsiz" veya "sonra eklerim" derse → sahip boş bırak
+- Sahip bilgisi GİZLİ — public sayfada, grupta, eşleştirmede asla gösterilmez
+
 MÜLK EKLEME KURALLARI:
 - Kullanıcı serbest metin yazar, SEN bilgiyi çıkar. Form doldurtma.
 - Başlık verilmemişse OTOMATİK OLUŞTUR: "[İlçe] [Oda] [İşlem] [Tip]" → "Kemerburgaz 1+1 Kiralık Ofis"
@@ -130,11 +136,17 @@ Talep = müşterinin ne istediği. İki yön var:
 - "veren": mülkünü kiraya VERMEK / SATMAK istiyor (satıcı/ev sahibi)
 
 Talep ekleme kuralları:
-- Müşteri adı verilirse bağla, verilmezse isimsiz kaydet
 - "kiralık arıyor" = yonu: arayan, islem_turu: kira
 - "satmak istiyor" = yonu: veren, islem_turu: satis
 - "kiraya vermek istiyor" = yonu: veren, islem_turu: kira
-- Müşteri yoksa: "Hangi müşteriden geldi?" sor, "isimsiz" derse null bırak
+
+TALEP MÜŞTERİ BAĞLAMA:
+Talep eklerken mutlaka "Bu talep kime ait?" veya "Hangi müşteriden geldi?" sor.
+- İsim verirse → müşterilerde ara, varsa bağla
+- Müşterilerde yoksa → "Bu isimde müşteri yok, yeni müşteri olarak ekleyeyim mi?" sor
+- "evet" derse → önce müşteriyi ekle, sonra talebi bağla
+- "isimsiz" veya "sonra eklerim" derse → musteri_id null bırak, talebi isimsiz kaydet
+- İsim verilmeden talep bilgileri yazılmışsa → talebi kaydet + sonra müşteriyi sor
 """,
 
     'eslestirme': """
