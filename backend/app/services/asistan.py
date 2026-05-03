@@ -1097,18 +1097,31 @@ def _bugun_ozet(emlakci):
 
 
 def _eslestirme_ozet(emlakci):
+    """Tüm müşteri × mülk çapraz eşleştirme tablosu."""
+    from app.services.eslestirme import tum_eslesme
     musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).all()
     mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
-    eslesme = 0
-    for m in musteriler:
-        for p in mulkler:
-            if m.islem_turu == p.islem_turu:
-                if m.butce_max and p.fiyat and p.fiyat <= m.butce_max:
-                    eslesme += 1
-    return (f'🔗 *Eşleştirme Özeti*\n\n'
-            f'👥 {len(musteriler)} müşteri · 🏢 {len(mulkler)} mülk\n'
-            f'✅ {eslesme} potansiyel eşleşme\n\n'
-            f'_Detaylı eşleştirme için uygulama menüsünden "Eşleştirme" sayfasını açın._')
+
+    sonuclar = tum_eslesme(emlakci.id, limit=15)
+
+    if not sonuclar:
+        return (f'🔗 *Eşleştirme Tablosu*\n\n'
+                f'👥 {len(musteriler)} müşteri · 🏢 {len(mulkler)} mülk\n'
+                f'❌ Eşleşme bulunamadı.\n\n'
+                '_Müşteri bütçe/tercih bilgilerini ve mülk detaylarını ekledikçe eşleşmeler artacak._')
+
+    sicaklik_ikon = {'sicak': '🔥', 'ilgili': '🟡', 'soguk': '❄️'}
+    satirlar = []
+    for s in sonuclar:
+        ikon = sicaklik_ikon.get(s['musteri_sicaklik'], '⚪')
+        satirlar.append(
+            f'{ikon} *{s["musteri_ad"]}* → *{s["mulk_baslik"]}*\n'
+            f'   💰 {s["mulk_fiyat"]} TL · Uyum: %{s["puan"]}'
+        )
+
+    return (f'🔗 *Eşleştirme Tablosu*\n\n'
+            f'👥 {len(musteriler)} müşteri · 🏢 {len(mulkler)} mülk · ✅ {len(sonuclar)} eşleşme\n\n'
+            + '\n'.join(satirlar))
 
 
 def _gorev_kaydet(emlakci, metin):
@@ -2358,13 +2371,12 @@ _FUNCTIONS = [
     },
     {
         'name': 'eslestir',
-        'description': 'Müşteriye uygun mülkleri bulur',
+        'description': 'Eşleştirme tablosunu getirir. Müşteri ID verilirse o müşteriye uygun mülkleri bulur, verilmezse tüm müşteri×mülk çapraz eşleştirme tablosunu döndürür.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'musteri_id': {'type': 'integer', 'description': 'Müşteri ID'},
+                'musteri_id': {'type': 'integer', 'description': 'Müşteri ID (opsiyonel — verilmezse tüm tablo)'},
             },
-            'required': ['musteri_id'],
         },
     },
     {
@@ -2871,12 +2883,16 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         return f'✅ Fatura oluşturuldu: {f.fatura_no} — {int(f.toplam):,} TL'.replace(',', '.')
 
     if fonksiyon_adi == 'eslestir':
-        from app.services.eslestirme import eslesdir
-        sonuclar = eslesdir(emlakci.id, musteri_id=args.get('musteri_id'), limit=5)
-        if not sonuclar:
-            return '📭 Uygun mülk bulunamadı.'
-        satirlar = [f'• {s["baslik"]} — {s["fiyat_str"]} (%{s["puan"]})' for s in sonuclar]
-        return f'🔗 *{len(sonuclar)} uygun mülk:*\n\n' + '\n'.join(satirlar)
+        if args.get('musteri_id'):
+            from app.services.eslestirme import eslesdir
+            sonuclar = eslesdir(emlakci.id, musteri_id=args.get('musteri_id'), limit=5)
+            if not sonuclar:
+                return '📭 Uygun mülk bulunamadı.'
+            satirlar = [f'• {s["baslik"]} — {s["fiyat_str"]} (%{s["puan"]})' for s in sonuclar]
+            return f'🔗 *{len(sonuclar)} uygun mülk:*\n\n' + '\n'.join(satirlar)
+        else:
+            # Tüm eşleştirme tablosu
+            return _eslestirme_ozet(emlakci)
 
     if fonksiyon_adi == 'kira_vergisi_hesapla':
         from app.services.hesaplama import kira_vergisi

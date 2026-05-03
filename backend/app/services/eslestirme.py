@@ -21,7 +21,38 @@ def eslesdir(emlakci_id, musteri_id=None, mulk_id=None, limit=10):
         musteriler = Musteri.query.filter_by(emlakci_id=emlakci_id).all()
         return _mulk_icin_musteri(mulk, musteriler, limit)
 
-    return []
+    # Tüm eşleştirme tablosu
+    return tum_eslesme(emlakci_id, limit)
+
+
+def tum_eslesme(emlakci_id, limit=20):
+    """Tüm müşteri × tüm mülk çapraz eşleştirme tablosu."""
+    musteriler = Musteri.query.filter_by(emlakci_id=emlakci_id).all()
+    mulkler = Mulk.query.filter_by(emlakci_id=emlakci_id, aktif=True).all()
+
+    if not musteriler or not mulkler:
+        return []
+
+    sonuclar = []
+    for musteri in musteriler:
+        for mulk in mulkler:
+            puan, nedenler = _puan_hesapla(musteri, mulk)
+            if puan >= 15:  # minimum eşik
+                fiyat = f'{int(mulk.fiyat):,}'.replace(',', '.') if mulk.fiyat else '?'
+                sonuclar.append({
+                    'musteri_id': musteri.id,
+                    'musteri_ad': musteri.ad_soyad,
+                    'musteri_sicaklik': musteri.sicaklik,
+                    'mulk_id': mulk.id,
+                    'mulk_baslik': mulk.baslik or mulk.adres or '—',
+                    'mulk_fiyat': fiyat,
+                    'mulk_islem': mulk.islem_turu,
+                    'puan': puan,
+                    'nedenler': nedenler,
+                })
+
+    sonuclar.sort(key=lambda x: x['puan'], reverse=True)
+    return sonuclar[:limit]
 
 
 def _musteri_icin_mulk(musteri, mulkler, limit):
