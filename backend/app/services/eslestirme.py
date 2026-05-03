@@ -96,100 +96,149 @@ def _mulk_icin_musteri(mulk, musteriler, limit):
 
 
 def _puan_hesapla(musteri, mulk):
-    """Çok boyutlu eşleştirme puanı."""
+    """
+    Eşleştirme v2 — yapısal tercihler + istenmeyen özellik kontrolü.
+
+    Puanlama:
+    - İşlem türü: 15 (zorunlu eşleşme)
+    - Fiyat: 25 (bütçe aralığı)
+    - Lokasyon: 20 (şehir/ilçe/semt)
+    - Oda: 15 (tercih_oda ↔ mulk.oda_sayisi)
+    - İstenen özellikler: 15 (asansör, balkon → mulk detayları)
+    - İstenmeyen özellikler: -20 (açık mutfak → mulk kapalıysa +0, açıksa -20)
+    - Sıcaklık bonusu: 5
+    - Toplam max: 100
+    """
     puan = 0
     nedenler = []
+    musteri_det = musteri.detaylar or {}
+    mulk_det = mulk.detaylar or {}
 
-    # 1. İşlem türü (%15)
+    # 1. İşlem türü (15) — zorunlu
     if musteri.islem_turu and mulk.islem_turu:
         if musteri.islem_turu == mulk.islem_turu:
             puan += 15
-            nedenler.append('İşlem türü uyumlu')
+            nedenler.append('İşlem uyumlu')
         else:
-            return 0, []  # Kira arayan satılık istemez
+            return 0, []
 
-    # 2. Fiyat (%25)
+    # 2. Fiyat (25)
     if mulk.fiyat:
-        if musteri.butce_max and musteri.butce_min:
-            if musteri.butce_min <= mulk.fiyat <= musteri.butce_max:
+        if musteri.butce_max:
+            if musteri.butce_min and musteri.butce_min <= mulk.fiyat <= musteri.butce_max:
                 puan += 25
                 nedenler.append('Bütçeye tam uygun')
+            elif mulk.fiyat <= musteri.butce_max:
+                puan += 20
+                nedenler.append('Bütçe altında')
             elif mulk.fiyat <= musteri.butce_max * 1.1:
-                puan += 15
+                puan += 12
                 nedenler.append('Bütçeye yakın (+%10)')
             elif mulk.fiyat <= musteri.butce_max * 1.2:
-                puan += 8
+                puan += 5
                 nedenler.append('Bütçe üstü (+%20)')
-        elif musteri.butce_max:
-            if mulk.fiyat <= musteri.butce_max:
-                puan += 20
-                nedenler.append('Max bütçe altında')
 
-    # 3. Lokasyon (%25)
-    musteri_det = musteri.detaylar or {}
+    # 3. Lokasyon (20)
     tercih_sehir = (musteri_det.get('tercih_sehir') or '').lower()
     tercih_ilce = (musteri_det.get('tercih_ilce') or '').lower()
-    tercih_semt = (musteri_det.get('tercih_semt') or '').lower()
     mulk_sehir = (mulk.sehir or '').lower()
     mulk_ilce = (mulk.ilce or '').lower()
-    mulk_adres = (mulk.adres or '').lower()
 
     if tercih_sehir and tercih_sehir in mulk_sehir:
-        puan += 10
-        nedenler.append(f'Şehir uyumlu ({mulk.sehir})')
+        puan += 8
+        nedenler.append(f'Şehir: {mulk.sehir}')
     if tercih_ilce and tercih_ilce in mulk_ilce:
-        puan += 10
-        nedenler.append(f'İlçe uyumlu ({mulk.ilce})')
-    if tercih_semt and tercih_semt in mulk_adres:
-        puan += 5
-        nedenler.append('Semt/mahalle uyumlu')
+        puan += 12
+        nedenler.append(f'İlçe: {mulk.ilce}')
 
     # Tercih notlarından lokasyon
     if musteri.tercih_notlar:
-        tercihler = musteri.tercih_notlar.lower().split()
-        for t in tercihler:
-            if len(t) > 3 and (t in mulk_ilce or t in mulk_adres or t in (mulk.baslik or '').lower()):
+        for t in musteri.tercih_notlar.lower().split():
+            if len(t) > 3 and (t in mulk_ilce or t in (mulk.adres or '').lower()):
                 puan += 5
-                nedenler.append(f'Tercih: "{t}"')
+                nedenler.append(f'Lokasyon: "{t}"')
                 break
 
-    # 4. Oda sayısı (%15)
-    tercih_oda = musteri_det.get('tercih_oda', '').lower()
+    # 4. Oda sayısı (15)
+    tercih_oda = (musteri_det.get('tercih_oda') or '').lower()
     mulk_oda = (mulk.oda_sayisi or '').lower()
     if tercih_oda and mulk_oda:
-        if tercih_oda in mulk_oda or mulk_oda in tercih_oda:
+        if tercih_oda == mulk_oda:
             puan += 15
-            nedenler.append(f'Oda uyumlu ({mulk_oda})')
+            nedenler.append(f'Oda: {mulk_oda}')
+        elif tercih_oda in mulk_oda or mulk_oda in tercih_oda:
+            puan += 10
+            nedenler.append(f'Oda yakın: {mulk_oda}')
         elif tercih_oda.split('+')[0] == mulk_oda.split('+')[0]:
-            puan += 8
-            nedenler.append('Oda yakın')
+            puan += 6
+            nedenler.append('Oda benzer')
 
-    # 5. Detay (%20)
-    mulk_det = mulk.detaylar or {}
+    # 5. İstenen özellikler (15)
+    istenen = musteri_det.get('istenen_ozellikler', [])
+    if isinstance(istenen, list) and istenen:
+        eslesen = 0
+        for ozellik in istenen:
+            oz_lower = ozellik.lower()
+            # Mülk detaylarında bu özellik var mı?
+            if _ozellik_kontrol(oz_lower, mulk_det, mulk):
+                eslesen += 1
+                nedenler.append(f'✅ {ozellik}')
+        if istenen:
+            puan += int(15 * eslesen / len(istenen))
 
-    # Eşya tercihi
-    tercih_esya = musteri_det.get('tercih_esyali', '').lower()
-    mulk_esya = (mulk_det.get('esyali') or '').lower()
-    if tercih_esya and mulk_esya:
-        if ('eşyalı' in tercih_esya and mulk_esya == 'Evet') or ('boş' in tercih_esya and mulk_esya == 'Hayır'):
-            puan += 5
-            nedenler.append('Eşya tercihi uyumlu')
+    # 6. İstenmeyen özellikler (-20 ceza)
+    istenmeyen = musteri_det.get('istenmeyen_ozellikler', [])
+    if isinstance(istenmeyen, list) and istenmeyen:
+        for ozellik in istenmeyen:
+            oz_lower = ozellik.lower()
+            if _ozellik_kontrol(oz_lower, mulk_det, mulk):
+                puan -= 20
+                nedenler.append(f'❌ {ozellik} (istenmiyor!)')
 
-    # Kredi uygunluğu
-    if musteri_det.get('kredi_kullanimi') == 'Evet' and mulk_det.get('krediye_uygun') == 'Evet':
-        puan += 5
-        nedenler.append('Krediye uygun')
-
-    # Tip eşleşmesi
+    # 7. Tip eşleşmesi
     tercih_tip = musteri_det.get('tercih_tip', '').lower()
     if tercih_tip and mulk.tip:
-        if tercih_tip == mulk.tip.lower() or 'farketmez' in tercih_tip:
+        if tercih_tip == mulk.tip.lower():
             puan += 5
-            nedenler.append(f'Tip uyumlu ({mulk.tip})')
+            nedenler.append(f'Tip: {mulk.tip}')
 
-    # Sıcak müşteri bonusu
+    # 8. Sıcak müşteri bonusu
     if musteri.sicaklik == 'sicak':
         puan += 5
-        nedenler.append('Sıcak müşteri')
+        nedenler.append('🔥 Sıcak')
 
-    return puan, nedenler
+    return max(0, puan), nedenler
+
+
+def _ozellik_kontrol(ozellik, mulk_det, mulk):
+    """Mülkte bu özellik var mı kontrol et."""
+    # Özellik → mülk detay alanı eşleştirmesi
+    eslesme = {
+        'asansör': ('asansor', ['Var']),
+        'asansor': ('asansor', ['Var']),
+        'balkon': ('balkon', ['Var']),
+        'otopark': ('otopark', ['Açık', 'Kapalı']),
+        'eşyalı': ('esyali', ['Evet']),
+        'esyali': ('esyali', ['Evet']),
+        'site içi': ('site_icerisinde', ['Evet']),
+        'site ici': ('site_icerisinde', ['Evet']),
+        'açık mutfak': ('mutfak', ['Açık (Amerikan)', 'Açık']),
+        'acik mutfak': ('mutfak', ['Açık (Amerikan)', 'Açık']),
+        'kapalı mutfak': ('mutfak', ['Kapalı']),
+        'kapali mutfak': ('mutfak', ['Kapalı']),
+        'doğalgaz': ('isinma', ['Kombi (Doğalgaz)']),
+        'dogalgaz': ('isinma', ['Kombi (Doğalgaz)']),
+        'merkezi ısıtma': ('isinma', ['Merkezi']),
+        'zemin kat': ('bulundugu_kat', ['Zemin', '0', 'Bodrum']),
+        'bodrum': ('bulundugu_kat', ['Bodrum', 'Bodrum Kat']),
+        'krediye uygun': ('krediye_uygun', ['Evet']),
+    }
+
+    if ozellik in eslesme:
+        alan, degerler = eslesme[ozellik]
+        mulk_deger = str(mulk_det.get(alan, '')).strip()
+        return any(d.lower() in mulk_deger.lower() for d in degerler)
+
+    # Serbest metin araması (başlık, adres, detaylar)
+    tum_metin = f'{mulk.baslik or ""} {mulk.adres or ""} {str(mulk_det)}'.lower()
+    return ozellik in tum_metin
