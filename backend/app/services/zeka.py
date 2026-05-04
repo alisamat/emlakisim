@@ -205,10 +205,6 @@ def mesaj_zenginlestir(emlakci, metin, ai_cevap):
 
     niyet = niyet_analiz(metin)
 
-    # Acil mesajlarda hızlı aksiyon öner
-    if niyet['aciliyet'] >= 8:
-        ek += '\n\n⚡ _Acil olarak işaretlendi._'
-
     # Müşteri sorgulandığında analiz ekle
     if niyet['hedef'] == 'musteri' and niyet['islem_tipi'] == 'sorgu':
         state = KonusmaState.query.filter_by(emlakci_id=emlakci.id).first()
@@ -217,9 +213,7 @@ def mesaj_zenginlestir(emlakci, metin, ai_cevap):
             if analiz.get('oneri'):
                 ek += f'\n\n💡 _{analiz["oneri"]}_'
 
-    # "Daha ucuz" / "başka" deyince alternatif öner
-    if niyet['alt_niyet'] in ('fiyat_filtre', 'alternatif'):
-        ek += '\n\n💡 _Daha fazla seçenek için filtreleri değiştirin veya bütçeyi güncelleyin._'
+    # "Daha ucuz" / "başka" deyince alternatif öner (fonksiyon çağrısı ile halledilir)
 
     return ai_cevap + ek if ek else ai_cevap
 
