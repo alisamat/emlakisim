@@ -3355,6 +3355,11 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             not_obj = Not.query.filter_by(id=args['not_id'], emlakci_id=emlakci.id).first()
         elif args.get('not_icerik_ara'):
             not_obj = Not.query.filter_by(emlakci_id=emlakci.id).filter(Not.icerik.ilike(f'%{args["not_icerik_ara"]}%')).first()
+        # ID ve arama verilmemişse + tek not varsa → onu seç
+        if not not_obj and not args.get('not_id') and not args.get('not_icerik_ara'):
+            notlar = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).all()
+            if len(notlar) == 1:
+                not_obj = notlar[0]
         if not not_obj:
             return '⚠️ Not bulunamadı.'
         if args.get('onay') == True:
@@ -3589,6 +3594,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             g = Gorev.query.filter_by(id=args['gorev_id'], emlakci_id=emlakci.id).first()
         elif args.get('gorev_baslik'):
             g = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.baslik.ilike(f'%{args["gorev_baslik"]}%')).first()
+        if not g and not args.get('gorev_id') and not args.get('gorev_baslik'):
+            gorevler = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').all()
+            if len(gorevler) == 1:
+                g = gorevler[0]
         if not g:
             return '⚠️ Görev bulunamadı.'
         if args.get('onay') == True:

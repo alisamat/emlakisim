@@ -42,6 +42,11 @@ KATEGORILER = {
             'yaklaşan doğum günleri',
             # Eşleşme
             'Ahmet Beye uygun mülk var mı',
+            # Silme / Güncelleme
+            'müşteriyi sil',
+            '2 numaralı müşteriyi sil',
+            'Ahmetin telefonunu güncelle',
+            'müşteriyi güncelle',
         ],
     },
     'mulk': {
@@ -61,6 +66,11 @@ KATEGORILER = {
             'Kadıköy de daire var mı portföyde',
             'portföyde 3+1 kiralık ara',
             '50 bin altı kiralık mülkler',
+            # Silme / Güncelleme
+            'mülkü sil',
+            'ilanı sil portföyden kaldır',
+            'fiyatı güncelle 30 bin yap',
+            'mülkü güncelle',
         ],
     },
     'talep': {
@@ -73,6 +83,8 @@ KATEGORILER = {
             'kiraya vermek istiyor mülkünü',
             'mülkünü satmak istiyor',
             'talebi güncelle değiştir',
+            'talebi sil kaldır',
+            '1 numaralı talebi sil',
         ],
     },
     'eslestirme': {
@@ -97,6 +109,7 @@ KATEGORILER = {
             'tapu masrafı ne kadar olur',
             'kira vergisi hesapla yıllık 120 bin',
             'kira getirisi hesapla',
+            'faturayı sil iptal et',
         ],
     },
     'planlama': {
@@ -109,7 +122,9 @@ KATEGORILER = {
             'görevlerimi göster',
             'bugün ne var programım ne',
             'bu haftaki planım',
-            'görevi tamamla iptal et',
+            'görevi tamamla iptal et sil',
+            'görevi sil',
+            '2 numaralı görevi sil',
             'randevu ayarla',
             'hatırlat bana akşam 6 da Mehmet i ara',
         ],
@@ -126,6 +141,14 @@ KATEGORILER = {
             'bu notu göreve dönüştür',
             'unutma yarın Fatma hanımı ara',
             'hatırlatmalarım ne',
+            # Silme / Güncelleme
+            'notu sil',
+            'notumu sil',
+            '2 numaralı notu sil',
+            'tek notum var onu da sil',
+            'kalan notu sil',
+            'tüm notları sil',
+            'notu güncelle değiştir',
         ],
     },
     'iletisim': {
