@@ -3356,14 +3356,19 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 not_obj = notlar[0]
         if not not_obj:
             return '⚠️ Not bulunamadı.'
+        degisiklikler = []
         if args.get('yeni_icerik'):
             not_obj.icerik = args['yeni_icerik']
+            degisiklikler.append(f'İçerik: {args["yeni_icerik"][:60]}')
         if args.get('tamamlandi') is not None:
             not_obj.tamamlandi = args['tamamlandi']
+            degisiklikler.append('Tamamlandı' if args['tamamlandi'] else 'Tekrar açıldı')
         if args.get('etiket'):
             not_obj.etiket = args['etiket']
+            etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu'}
+            degisiklikler.append(f'Etiket: {etiket_label.get(args["etiket"], args["etiket"])}')
         db.session.commit()
-        return f'✅ Not güncellendi: {not_obj.icerik[:60]}'
+        return f'✅ *Not güncellendi:*\n📝 {not_obj.icerik[:100]}\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
 
     if fonksiyon_adi == 'not_sil':
         not_obj = None
@@ -3466,7 +3471,14 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 etiket=args.get('etiket', 'not'), musteri_id=musteri_id)
         db.session.add(n)
         db.session.commit()
-        return f'✅ Not kaydedildi.{musteri_str}'
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
+        etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not'}
+        return (f'✅ *{etiket_label.get(n.etiket, "Not")} kaydedildi:*\n\n'
+                f'{etiket_ikon.get(n.etiket, "📝")} {n.icerik[:200]}'
+                f'{musteri_str}'
+                + (f'\n🏷 Etiket: {etiket_label.get(n.etiket, n.etiket)}' if n.etiket != 'not' else '')
+                + f'\n📅 {n.olusturma.strftime("%d.%m.%Y %H:%M") if n.olusturma else ""}')
+
 
     if fonksiyon_adi == 'not_ara':
         sorgu = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False)
@@ -3517,10 +3529,17 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 musteri_id = mus.id
                 musteri_str = f'\n👤 {mus.ad_soyad}'
         g = Gorev(emlakci_id=emlakci.id, baslik=args.get('baslik', ''), aciklama=args.get('aciklama'),
-                  tip=args.get('tip', 'gorev'), baslangic=baslangic, musteri_id=musteri_id)
+                  tip=args.get('tip', 'gorev'), baslangic=baslangic, oncelik=args.get('oncelik', 'normal'), musteri_id=musteri_id)
         db.session.add(g); db.session.commit()
-        tarih_str = baslangic.strftime('%d.%m.%Y %H:%M') if baslangic else ''
-        return f'✅ Görev eklendi: {args.get("baslik")}' + (f'\n📅 {tarih_str}' if tarih_str else '') + musteri_str
+        tarih_str = baslangic.strftime('%d.%m.%Y %H:%M') if baslangic else '—'
+        tip_ikon = {'gorev': '📌', 'toplanti': '🤝', 'gosterim': '🏠', 'hatirlatma': '🔔'}
+        oncelik_ikon = {'dusuk': '🟢', 'normal': '🟡', 'yuksek': '🟠', 'acil': '🔴'}
+        return (f'✅ *Görev eklendi:*\n\n'
+                f'{tip_ikon.get(g.tip, "📌")} {g.baslik}\n'
+                f'📅 {tarih_str}\n'
+                f'{oncelik_ikon.get(g.oncelik, "🟡")} Öncelik: {g.oncelik or "normal"}'
+                + (f'\n📝 {g.aciklama[:100]}' if g.aciklama else '')
+                + musteri_str)
 
     if fonksiyon_adi == 'fatura_olustur':
         from app.models.fatura import Fatura
@@ -3529,7 +3548,14 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                    tip=args.get('tip', 'hizmet'), kdv_oran=20, kdv_tutar=round(tutar*0.2, 2),
                    toplam=round(tutar*1.2, 2), fatura_no=f'F-{datetime.now().strftime("%Y%m%d%H%M")}')
         db.session.add(f); db.session.commit()
-        return f'✅ Fatura oluşturuldu: {f.fatura_no} — {int(f.toplam):,} TL'.replace(',', '.')
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+        return (f'✅ *Fatura oluşturuldu:*\n\n'
+                f'🧾 {f.fatura_no}\n'
+                f'👤 Alıcı: {f.alici_ad or "—"}\n'
+                f'💰 Tutar: {f_tl(f.tutar)} TL\n'
+                f'📊 KDV (%{f.kdv_oran}): {f_tl(f.kdv_tutar)} TL\n'
+                f'💵 Toplam: {f_tl(f.toplam)} TL\n'
+                f'📋 Durum: {f.durum or "taslak"}')
 
     if fonksiyon_adi == 'eslestir':
         if args.get('musteri_id'):
