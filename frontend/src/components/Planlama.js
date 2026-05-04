@@ -113,11 +113,13 @@ function GorevKarti({ g, onDurumDegistir, onSil }) {
               color: '#fff', fontSize: 12,
             }}>{tamamlandi ? '✓' : ''}</button>
             <span style={{ fontWeight: 600, fontSize: 14, color: '#1e293b', textDecoration: tamamlandi ? 'line-through' : 'none' }}>{g.baslik}</span>
+            <span style={{ fontSize: 10, background: `${o.renk}15`, color: o.renk, padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>{o.label}</span>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>{TIP_LABEL[g.tip] || g.tip}</span>
           </div>
           {g.aciklama && <div style={{ fontSize: 12, color: '#94a3b8', marginLeft: 28 }}>{g.aciklama}</div>}
           <div style={{ fontSize: 11, color: '#64748b', marginLeft: 28, marginTop: 2 }}>
             📅 {g.baslangic ? tarihGoster(g.baslangic) : 'Tarih belirtilmedi'}
+            {g.musteri_ad && <span> · 👤 {g.musteri_ad}</span>}
           </div>
         </div>
         <button onClick={() => onSil(g.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 14 }}>🗑</button>
@@ -132,6 +134,8 @@ export default function Planlama() {
   const [formAcik, setFormAcik] = useState(false);
   const [yukleniyor, setYuk] = useState(false);
   const [filtre, setFiltre] = useState('aktif'); // aktif, tamamlandi, hepsi
+  const [tipFiltre, setTipFiltre] = useState('');
+  const [oncelikFiltre, setOncelikFiltre] = useState('');
 
   const yukle = useCallback(async () => {
     setYuk(true);
@@ -164,6 +168,8 @@ export default function Planlama() {
   let liste = gorevler;
   if (filtre === 'aktif') liste = liste.filter(g => g.durum !== 'tamamlandi' && g.durum !== 'iptal');
   else if (filtre === 'tamamlandi') liste = liste.filter(g => g.durum === 'tamamlandi');
+  if (tipFiltre) liste = liste.filter(g => g.tip === tipFiltre);
+  if (oncelikFiltre) liste = liste.filter(g => g.oncelik === oncelikFiltre);
 
   const aktifSayi = gorevler.filter(g => g.durum !== 'tamamlandi' && g.durum !== 'iptal').length;
   const tamamSayi = gorevler.filter(g => g.durum === 'tamamlandi').length;
@@ -200,14 +206,32 @@ export default function Planlama() {
 
       {formAcik && <GorevFormu onKaydet={onKaydet} onIptal={() => setFormAcik(false)} />}
 
-      {/* Filtre */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      {/* Durum Filtresi */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
         {[['aktif', `📌 Aktif (${aktifSayi})`], ['tamamlandi', `✅ Tamamlandı (${tamamSayi})`], ['hepsi', 'Hepsi']].map(([v, l]) => (
           <button key={v} onClick={() => setFiltre(v)} style={{
             padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer',
             background: filtre === v ? '#16a34a' : '#fff', color: filtre === v ? '#fff' : '#374151',
             border: `1px solid ${filtre === v ? '#16a34a' : '#e2e8f0'}`,
           }}>{l}</button>
+        ))}
+      </div>
+      {/* Tip + Öncelik Filtreleri */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[['', 'Tüm Tipler'], ...Object.entries(TIP_LABEL)].map(([k, v]) => (
+          <button key={`tip-${k}`} onClick={() => setTipFiltre(k)} style={{
+            padding: '4px 10px', borderRadius: 14, fontSize: 11, cursor: 'pointer',
+            background: tipFiltre === k ? '#3b82f6' : '#f8fafc', color: tipFiltre === k ? '#fff' : '#64748b',
+            border: `1px solid ${tipFiltre === k ? '#3b82f6' : '#e2e8f0'}`,
+          }}>{v}</button>
+        ))}
+        <span style={{ color: '#e2e8f0' }}>|</span>
+        {[['', 'Tüm Öncelik'], ...Object.entries(ONCELIK).map(([k, v]) => [k, v.label])].map(([k, v]) => (
+          <button key={`onc-${k}`} onClick={() => setOncelikFiltre(k)} style={{
+            padding: '4px 10px', borderRadius: 14, fontSize: 11, cursor: 'pointer',
+            background: oncelikFiltre === k ? '#f59e0b' : '#f8fafc', color: oncelikFiltre === k ? '#fff' : '#64748b',
+            border: `1px solid ${oncelikFiltre === k ? '#f59e0b' : '#e2e8f0'}`,
+          }}>{v}</button>
         ))}
       </div>
 

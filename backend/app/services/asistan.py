@@ -230,8 +230,8 @@ def _baglam_filtre(metin_norm, emlakci, session):
             elif son_komut == 'not':
                 n = Not.query.get(secilen['id'])
                 if n:
-                    etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐'}
-                    etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not', 'onemli': 'Önemli'}
+                    etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
+                    etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not', 'onemli': 'Önemli', 'acil': 'Acil'}
                     return (f'{etiket_ikon.get(n.etiket, "📝")} *{etiket_label.get(n.etiket, "Not")}*\n\n'
                             f'📝 {n.icerik}\n'
                             f'🏷 Etiket: {etiket_label.get(n.etiket, n.etiket)}\n'
@@ -624,7 +624,7 @@ def _komut_calistir(komut, emlakci, metin, session):
         notlar_q = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).order_by(Not.olusturma.desc()).limit(10).all()
         if not notlar_q:
             return ('📝 Henüz not yok.\n\n_"Not ekle" yazarak yeni not ekleyebilirsiniz._', 'notlar')
-        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐'}
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
         session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar_q]
         satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar_q)]
         toplam = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).count()
@@ -2446,7 +2446,7 @@ _FUNCTIONS = [
                 'not_icerik_ara': {'type': 'string', 'description': 'Not içeriğinden ara (ID bilinmiyorsa)'},
                 'yeni_icerik': {'type': 'string'},
                 'tamamlandi': {'type': 'boolean'},
-                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not', 'onemli']},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not', 'onemli', 'acil']},
             },
         },
     },
@@ -2504,7 +2504,7 @@ _FUNCTIONS = [
             'properties': {
                 'icerik': {'type': 'string', 'description': 'Not içeriği'},
                 'musteri_adi': {'type': 'string', 'description': 'İlişkili müşteri adı (opsiyonel)'},
-                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'onemli'], 'description': 'Not tipi. "önemli" → onemli'},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'onemli', 'acil'], 'description': 'Not tipi. "önemli" → onemli, "acil" → acil'},
             },
             'required': ['icerik'],
         },
@@ -2516,7 +2516,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'arama': {'type': 'string', 'description': 'Aranacak kelime'},
-                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not', 'onemli'], 'description': 'Not tipi filtresi'},
+                'etiket': {'type': 'string', 'enum': ['not', 'hatirlatici', 'gosterim', 'sesli_not', 'onemli', 'acil'], 'description': 'Not tipi filtresi'},
             },
         },
     },
@@ -3410,10 +3410,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             degisiklikler.append('Tamamlandı' if args['tamamlandi'] else 'Tekrar açıldı')
         if args.get('etiket'):
             not_obj.etiket = args['etiket']
-            etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'onemli': 'Önemli'}
+            etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'onemli': 'Önemli', 'acil': 'Acil'}
             degisiklikler.append(f'Etiket: {etiket_label.get(args["etiket"], args["etiket"])}')
         db.session.commit()
-        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐'}
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
         return (f'✅ *Not güncellendi:*\n'
                 f'{etiket_ikon.get(not_obj.etiket, "📝")} {not_obj.icerik[:150]}'
                 + (f'\n\n' + '\n'.join([f'• {d}' for d in degisiklikler]) if degisiklikler else ''))
@@ -3519,8 +3519,8 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 etiket=args.get('etiket', 'not'), musteri_id=musteri_id)
         db.session.add(n)
         db.session.commit()
-        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐'}
-        etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not', 'onemli': 'Önemli'}
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
+        etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not', 'onemli': 'Önemli', 'acil': 'Acil'}
         return (f'✅ *{etiket_label.get(n.etiket, "Not")} kaydedildi:*\n\n'
                 f'{etiket_ikon.get(n.etiket, "📝")} {n.icerik[:200]}'
                 f'{musteri_str}'
@@ -3537,7 +3537,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         notlar = sorgu.order_by(Not.olusturma.desc()).limit(10).all()
         if not notlar:
             return '📝 Not bulunamadı.'
-        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐'}
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
         satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar)]
         return f'📝 *Notlar ({len(notlar)}):*\n\n' + '\n'.join(satirlar)
 
