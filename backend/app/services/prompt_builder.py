@@ -179,7 +179,8 @@ Zorunlu değil — müşteri bağlamadan da görev oluşturulabilir.
 """,
 
     'not': """
-NOT: Not ekle/ara/listele/göreve dönüştür/sil. Tipler: not, hatirlatici, gosterim, sesli_not.
+NOT: Not ekle/ara/listele/göreve dönüştür/sil. Tipler: not, hatirlatici, gosterim, onemli, sesli_not.
+"önemli olarak işaretle" → etiket: onemli. "acil" DEĞİL — acil görev önceliğidir, not etiketi değil.
 Notta müşteri adı geçiyorsa → musteri_id bağla. Zorunlu değil.
 
 ÖNEMLİ: Kullanıcı silme veya güncelleme bağlamında numara verirse (örn: "1") → o numaralı kaydı sil/güncelle.
