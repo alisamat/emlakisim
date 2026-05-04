@@ -344,14 +344,14 @@ def multi_route(metin, threshold=0.40, min_fark=0.10, gecmis=None):
     "Kuveyttürk sanal pos" tek başına mulk'e gider ama
     bağlamda "görev ekle" varsa planlama'ya gider.
     """
-    # Bağlam varsa mesajı zenginleştir
+    # Bağlam varsa mesajı zenginleştir — sadece kullanıcı mesajları
+    # AI cevapları (hata mesajları, emoji'li metinler) bağlamı kirletiyor
     baglam_metin = metin
     if gecmis and len(gecmis) >= 2:
-        # Son 2 mesajı (user + assistant) bağlam olarak ekle
-        son_mesajlar = gecmis[-2:]
-        baglam = ' → '.join([m.get('content', '')[:80] for m in son_mesajlar])
-        baglam_metin = f'{baglam} → {metin}'
-        logger.info(f'[Router] bağlam_metin: "{baglam_metin[:100]}"')
+        son_user = [m.get('content', '')[:60] for m in gecmis[-4:] if m.get('role') == 'user']
+        if son_user:
+            baglam_metin = f'{" → ".join(son_user[-2:])} → {metin}'
+            logger.info(f'[Router] bağlam_metin: "{baglam_metin[:120]}"')
 
     sonuclar = route(baglam_metin, threshold)
 
