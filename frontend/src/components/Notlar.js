@@ -5,6 +5,7 @@ const ETIKETLER = {
   not: { ikon: '📝', ad: 'Not', renk: '#3b82f6' },
   hatirlatici: { ikon: '🧠', ad: 'Hatırlatma', renk: '#f59e0b' },
   gosterim: { ikon: '🏠', ad: 'Gösterim', renk: '#16a34a' },
+  onemli: { ikon: '⭐', ad: 'Önemli', renk: '#dc2626' },
   sesli_not: { ikon: '🎤', ad: 'Sesli Not', renk: '#8b5cf6' },
 };
 
@@ -73,7 +74,7 @@ export default function Notlar() {
 
       {/* Filtreler */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        {[['', 'Tümü'], ['not', '📝 Not'], ['hatirlatici', '🧠 Hatırlatma'], ['gosterim', '🏠 Gösterim'], ['sesli_not', '🎤 Sesli']].map(([k, v]) => (
+        {[['', 'Tümü'], ['not', '📝 Not'], ['hatirlatici', '🧠 Hatırlatma'], ['gosterim', '🏠 Gösterim'], ['onemli', '⭐ Önemli'], ['sesli_not', '🎤 Sesli']].map(([k, v]) => (
           <button key={k} onClick={() => setFiltre(k)} style={{
             padding: '5px 12px', borderRadius: 16, fontSize: 12, cursor: 'pointer',
             background: filtre === k ? '#16a34a' : 'var(--bg-card)', color: filtre === k ? '#fff' : 'var(--text-primary)',

@@ -546,7 +546,9 @@ def notlar():
     mulk_id = request.args.get('mulk_id', type=int)
 
     sorgu = Not.query.filter_by(emlakci_id=_eid())
-    if not tamamlandi:
+    if tamamlandi:
+        sorgu = sorgu.filter(Not.tamamlandi == True)
+    else:
         sorgu = sorgu.filter(Not.tamamlandi == False)
     if etiket:
         sorgu = sorgu.filter(Not.etiket == etiket)
