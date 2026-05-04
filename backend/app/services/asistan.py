@@ -3359,7 +3359,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         degisiklikler = []
         if args.get('yeni_icerik'):
             not_obj.icerik = args['yeni_icerik']
-            degisiklikler.append(f'İçerik: {args["yeni_icerik"][:60]}')
+            degisiklikler.append('İçerik güncellendi')
         if args.get('tamamlandi') is not None:
             not_obj.tamamlandi = args['tamamlandi']
             degisiklikler.append('Tamamlandı' if args['tamamlandi'] else 'Tekrar açıldı')
@@ -3368,7 +3368,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu'}
             degisiklikler.append(f'Etiket: {etiket_label.get(args["etiket"], args["etiket"])}')
         db.session.commit()
-        return f'✅ *Not güncellendi:*\n📝 {not_obj.icerik[:100]}\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
+        etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
+        return (f'✅ *Not güncellendi:*\n'
+                f'{etiket_ikon.get(not_obj.etiket, "📝")} {not_obj.icerik[:150]}'
+                + (f'\n\n' + '\n'.join([f'• {d}' for d in degisiklikler]) if degisiklikler else ''))
 
     if fonksiyon_adi == 'not_sil':
         not_obj = None
