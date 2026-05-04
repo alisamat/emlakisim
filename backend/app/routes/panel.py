@@ -853,31 +853,34 @@ def mulk_resim_ekle(mid):
         return jsonify({'message': f'En fazla {max_resim} fotoğraf eklenebilir' + (' (dış depolama aktif değil)' if storage == 'local' else '')}), 400
 
     # Multipart file upload
+    import logging as _log
+    _log.getLogger(__name__).info(f'[RESIM] content_type: {request.content_type} | files: {list(request.files.keys())}')
+
     if request.files.get('image'):
         dosya = request.files['image']
         dosya_bytes = dosya.read()
-        # Boyut sınırı: 5MB
         if len(dosya_bytes) > 5 * 1024 * 1024:
             return jsonify({'message': 'Fotoğraf 5MB\'dan küçük olmalı'}), 400
-        # Resmi küçült
         dosya_bytes = _resim_kucult(dosya_bytes)
         from app.services.dosya import dosya_yukle
         basarili, url = dosya_yukle(dosya_bytes, dosya.filename, f'mulk/{mid}')
         if not basarili:
             return jsonify({'message': f'Yükleme hatası: {url}'}), 500
-    elif request.json and request.json.get('image_base64'):
-        import base64
-        b64 = request.json['image_base64']
-        dosya_bytes = base64.b64decode(b64)
-        if len(dosya_bytes) > 5 * 1024 * 1024:
-            return jsonify({'message': 'Fotoğraf 5MB\'dan küçük olmalı'}), 400
-        dosya_bytes = _resim_kucult(dosya_bytes)
-        from app.services.dosya import dosya_yukle
-        basarili, url = dosya_yukle(dosya_bytes, f'mulk_{mid}_{len(resimler)}.jpg', f'mulk/{mid}')
-        if not basarili:
-            return jsonify({'message': f'Yükleme hatası: {url}'}), 500
     else:
-        return jsonify({'message': 'Fotoğraf gerekli'}), 400
+        # JSON body (base64) — silent=True ile 415 engelle
+        json_data = request.get_json(silent=True) or {}
+        if json_data.get('image_base64'):
+            import base64
+            dosya_bytes = base64.b64decode(json_data['image_base64'])
+            if len(dosya_bytes) > 5 * 1024 * 1024:
+                return jsonify({'message': 'Fotoğraf 5MB\'dan küçük olmalı'}), 400
+            dosya_bytes = _resim_kucult(dosya_bytes)
+            from app.services.dosya import dosya_yukle
+            basarili, url = dosya_yukle(dosya_bytes, f'mulk_{mid}_{len(resimler)}.jpg', f'mulk/{mid}')
+            if not basarili:
+                return jsonify({'message': f'Yükleme hatası: {url}'}), 500
+        else:
+            return jsonify({'message': 'Fotoğraf gerekli (multipart image veya base64)'}), 400
 
     aciklama = (request.form or request.json or {}).get('aciklama', '')
     ana = len(resimler) == 0  # İlk resim = kapak
