@@ -2461,17 +2461,35 @@ _FUNCTIONS = [
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
                 'notlar': {'type': 'string', 'description': 'Not ekle/güncelle'},
                 'metrekare': {'type': 'number'},
+                'brut_metrekare': {'type': 'number'},
                 'oda_sayisi': {'type': 'string', 'description': '2+1, 3+1 vb.'},
-                'isitma': {'type': 'string', 'description': 'Kombi (Doğalgaz), Merkezi, Soba, Klima, Yerden Isıtma'},
-                'mutfak': {'type': 'string', 'description': 'Açık (Amerikan) veya Kapalı'},
+                'isitma': {'type': 'string', 'description': 'Kombi, Merkezi, Soba, Yerden...'},
+                'mutfak': {'type': 'string', 'description': 'Açık veya Kapalı'},
                 'kat': {'type': 'string', 'description': 'Bulunduğu kat'},
-                'bina_yasi': {'type': 'integer'},
+                'kat_sayisi': {'type': 'integer', 'description': 'Binanın toplam kat sayısı'},
+                'bina_yasi': {'type': 'string'},
+                'banyo_sayisi': {'type': 'integer'},
                 'esyali': {'type': 'string', 'description': 'Evet veya Hayır'},
                 'asansor': {'type': 'string', 'description': 'Var veya Yok'},
                 'otopark': {'type': 'string', 'description': 'Açık, Kapalı veya Yok'},
                 'balkon': {'type': 'string', 'description': 'Var veya Yok'},
                 'site_icerisinde': {'type': 'string', 'description': 'Evet veya Hayır'},
                 'aidat': {'type': 'number', 'description': 'Aylık aidat TL'},
+                'cephe': {'type': 'string'},
+                'tapu_durumu': {'type': 'string'},
+                'kullanim_durumu': {'type': 'string', 'description': 'Boş, kiracılı, sahibi oturuyor'},
+                'bina_tipi': {'type': 'string'},
+                'yapinin_durumu': {'type': 'string', 'description': 'Sıfır, ikinci el'},
+                'kiracili': {'type': 'boolean'},
+                'krediye_uygun': {'type': 'boolean'},
+                'imar_durumu': {'type': 'string'},
+                'm2_fiyati': {'type': 'number'},
+                'ada_no': {'type': 'string'},
+                'parsel_no': {'type': 'string'},
+                'kaks': {'type': 'string'},
+                'gabari': {'type': 'string'},
+                'takas': {'type': 'boolean'},
+                'zemin_etudu': {'type': 'boolean'},
             },
         },
     },
@@ -3423,19 +3441,20 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             degisiklikler.append(f'Oda: {args["oda_sayisi"]}')
 
         # Detay alanları → mulk.detaylar JSON
-        detay_alanlar = ['isitma', 'mutfak', 'kat', 'bina_yasi', 'esyali', 'asansor', 'otopark', 'balkon', 'site_icerisinde', 'aidat']
+        detay_alanlar = [
+            'isitma', 'mutfak', 'kat', 'bina_yasi', 'esyali', 'asansor', 'otopark',
+            'balkon', 'site_icerisinde', 'aidat', 'banyo_sayisi', 'cephe', 'brut_metrekare',
+            'kat_sayisi', 'tapu_durumu', 'kullanim_durumu', 'bina_tipi', 'yapinin_durumu',
+            'kiracili', 'krediye_uygun', 'imar_durumu', 'm2_fiyati', 'ada_no', 'parsel_no',
+            'kaks', 'gabari', 'takas', 'zemin_etudu',
+        ]
+        # Alan ismi mapping (API parametresi → DB alanı)
+        alan_map = {'isitma': 'isinma', 'kat': 'bulundugu_kat', 'site_icerisinde': 'site_ici'}
         det = mulk.detaylar or {}
         for alan in detay_alanlar:
             if args.get(alan) is not None:
-                # İsitma alanı için özel mapping
-                if alan == 'isitma' and 'doğalgaz' in str(args[alan]).lower():
-                    det['isinma'] = 'Kombi (Doğalgaz)'
-                elif alan == 'isitma':
-                    det['isinma'] = args[alan]
-                elif alan == 'kat':
-                    det['bulundugu_kat'] = str(args[alan])
-                else:
-                    det[alan] = args[alan]
+                db_alan = alan_map.get(alan, alan)
+                det[db_alan] = args[alan]
                 degisiklikler.append(f'{alan}: {args[alan]}')
         mulk.detaylar = det
 
