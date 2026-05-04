@@ -213,8 +213,6 @@ def mesaj_zenginlestir(emlakci, metin, ai_cevap):
             if analiz.get('oneri'):
                 ek += f'\n\n💡 _{analiz["oneri"]}_'
 
-    # "Daha ucuz" / "başka" deyince alternatif öner (fonksiyon çağrısı ile halledilir)
-
     return ai_cevap + ek if ek else ai_cevap
 
 

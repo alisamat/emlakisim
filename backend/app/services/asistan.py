@@ -2362,7 +2362,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'musteri_adi': {'type': 'string', 'description': 'Güncellenecek müşterinin adı'},
-                'musteri_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'musteri_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'kunye': {'type': 'string', 'description': 'Yeni künye/rumuz ekle'},
                 'telefon': {'type': 'string', 'description': 'Yeni telefon'},
                 'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk']},
@@ -2402,7 +2402,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul (veya bağlamdan son mülk)'},
-                'mulk_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'mulk_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
@@ -2461,7 +2461,7 @@ _FUNCTIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'not_icerik_ara': {'type': 'string', 'description': 'Not içeriğinden ara (ID bilinmiyorsa)'},
                 'yeni_icerik': {'type': 'string'},
                 'tamamlandi': {'type': 'boolean'},
@@ -2471,11 +2471,11 @@ _FUNCTIONS = [
     },
     {
         'name': 'not_sil',
-        'description': 'Notu siler. Kullanıcı "2 numarayı sil" derse listedeki (#ID) değerini kullan, sıra numarasını değil. Örn: listede "2. (#47) ..." varsa not_id=47 gönder.',
+        'description': 'Notu siler. Listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'not_icerik_ara': {'type': 'string'},
             },
         },
@@ -2545,7 +2545,7 @@ _FUNCTIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'not_icerik': {'type': 'string', 'description': 'Not içeriğinden arama (ID bilinmiyorsa)'},
             },
         },
@@ -2610,7 +2610,7 @@ _FUNCTIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara'},
             },
         },
@@ -2773,7 +2773,7 @@ _FUNCTIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
+                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara (ID bilinmiyorsa)'},
                 'durum': {'type': 'string', 'enum': ['bekliyor', 'devam', 'tamamlandi', 'iptal']},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
@@ -4227,20 +4227,10 @@ def _mahalle_format(data, konum):
 
 # ─── AI Model Çağrıları ───────────────────────────────────
 def _cevap_temizle(metin):
-    """AI'nın fonksiyon sonucuna eklediği gereksiz yorumları temizle."""
+    """Cevap formatını temizle."""
     if not isinstance(metin, str):
         return metin
     import re
-    # Bilinen gereksiz AI ek metinleri
-    gereksiz = [
-        r'⚡\s*Acil olarak işaretlendi\.?',
-        r'📌\s*Öncelik verildi\.?',
-        r'⭐\s*Önemli olarak işaretlendi\.?',
-        r'🔴\s*Acil olarak işaretlendi\.?',
-    ]
-    for p in gereksiz:
-        metin = re.sub(p, '', metin)
-    # Boş satırları temizle
     metin = re.sub(r'\n{3,}', '\n\n', metin)
     return metin.strip()
 

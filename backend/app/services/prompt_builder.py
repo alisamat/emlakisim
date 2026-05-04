@@ -42,20 +42,11 @@ Türkçe konuş. *bold* ve _italic_ kullan.
 Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 Çoklu istek varsa hepsini yap. Koşullu istek varsa önce kontrol et.
 Bilgi yeterliyse hemen yap, gereksiz soru sorma.
-Geçmiş cevaplarını tekrar etme — her zaman fonksiyon çağır, güncel veriyi getir.
-Mülk/müşteri bilgisini kendi metin olarak yazma — ilgili fonksiyonu çağır.
-FONKSİYON SONUCU: Fonksiyon çağrısı sonucu döndükten sonra o sonucu AYNEN göster. Üstüne kendi yorum/ek metin EKLEME. "⚡ Acil olarak işaretlendi", "📌 Öncelik verildi" gibi fonksiyon sonucunda OLMAYAN bilgiler YAZMA.
-TEK İŞLEM: Kullanıcı tek işlem istiyorsa TEK fonksiyon çağır. "notu güncelle" deyince SADECE not_guncelle çağır, gorev_guncelle veya başka fonksiyon ÇAĞIRMA.
-NUMARA BAĞLAMI: Kullanıcı "1" veya "2 numara" gibi SADECE numara verirse:
-  - Listede her kayıt (#ID) ile işaretlidir. "2. (#47)" demek ID=47.
-  - SADECE numara verildiyse ("2 numara", "1", "ikinci") → o kaydın DETAYINI göster, SİLME.
-  - "2 numarayı SİL" derse → sil fonksiyonunu (#ID) ile çağır
-  - "2 numarayı GÜNCELLE" derse → güncelle (#ID) ile
-  - Asla tek rakamı yeni kayıt olarak ekleme.
-  - Asla sıra numarasını (1, 2, 3) doğrudan ID olarak kullanma — (#ID) değerine bak.
-  - Numara + işlem belirtilmemişse ASLA silme/güncelleme YAPMA. Detay göster veya "ne yapmak istiyorsunuz?" sor.
-SİLME İSTEĞİ: Kullanıcı "sil" dediğinde SADECE sil fonksiyonunu çağır. Ek işlem yapma (güncelleme, öncelik değiştirme, acil işaretleme vb. YAPMA). Silme onay butonu döndükten sonra kendi metin ekleme.
-İLGİSİZ CEVAP VERME: "bütçeyi güncelleyin", "filtreleri değiştirin" gibi bağlamla alakasız cevaplar yazma."""
+Her bilgi için ilgili fonksiyonu çağır, güncel veriyi getir.
+Fonksiyon sonucunu olduğu gibi göster — ek yorum ekleme.
+Her istek için tek ilgili fonksiyonu çağır.
+ID KURALI: Listelerde her kayıt (#ID) ile işaretlidir. "2. (#47)" → ID=47. Fonksiyonlara bu (#ID) değerini gönder.
+Numara + işlem belirtilmemişse detay göster veya "ne yapmak istiyorsunuz?" sor."""
 
     # ═══ TIER 2: Kategoriye göre (~300 token) ═══
     tier2 = ''
@@ -181,12 +172,8 @@ Zorunlu değil — müşteri bağlamadan da görev oluşturulabilir.
     'not': """
 NOT: Not ekle/ara/listele/göreve dönüştür/sil. Tipler: not, hatirlatici, gosterim, onemli, acil, sesli_not.
 "önemli olarak işaretle" → etiket: onemli. "acil olarak işaretle" → etiket: acil.
-Not etiketi ile görev önceliği FARKLI — not etiketlerken sadece not_ekle/not_guncelle kullan, gorev fonksiyonu ÇAĞIRMA.
+Not etiketlerken not_ekle veya not_guncelle kullan.
 Notta müşteri adı geçiyorsa → musteri_id bağla. Zorunlu değil.
-
-ÖNEMLİ: Kullanıcı silme veya güncelleme bağlamında numara verirse (örn: "1") → o numaralı kaydı sil/güncelle.
-"1" yazarsa ve önceki mesajda "hangi notu silmek istiyorsun" gibi soru varsa → not_sil çağır, not_ekle DEĞİL.
-Tek rakam veya kısa cevap geldiğinde YENİ KAYIT OLUŞTURMA — bağlama bak.
 """,
 
     'iletisim': """
