@@ -74,6 +74,10 @@ def musteriler():
 @jwt_required()
 def musteri_ekle():
     d = request.get_json() or {}
+    # Boş stringleri None'a çevir (Float alanlar için)
+    for f in ('butce_min', 'butce_max'):
+        if d.get(f) == '':
+            d[f] = None
     _temel = ['ad_soyad', 'telefon', 'tc_kimlik', 'email', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik', 'grup']
     m = Musteri(emlakci_id=_eid(), **{k: d.get(k) for k in _temel if d.get(k) is not None})
     if d.get('detaylar'):
@@ -87,6 +91,9 @@ def musteri_ekle():
 def musteri_guncelle(mid):
     m = Musteri.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
     d = request.get_json() or {}
+    for f in ('butce_min', 'butce_max'):
+        if d.get(f) == '':
+            d[f] = None
     for f in ['ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'sicaklik', 'grup']:
         if f in d:
             setattr(m, f, d[f])
