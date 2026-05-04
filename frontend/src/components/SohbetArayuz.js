@@ -44,6 +44,7 @@ import SanalStaging from './SanalStaging';
 import IsiHaritasi from './IsiHaritasi';
 import Notlar from './Notlar';
 import IslemGecmisiSayfa from './IslemGecmisi';
+import Haberler from './Haberler';
 import '../sohbet.css';
 
 export default function SohbetArayuz() {
@@ -165,6 +166,7 @@ export default function SohbetArayuz() {
       case 'isi_haritasi': return <div className="sayfa-icerik"><IsiHaritasi /></div>;
       case 'notlar':       return <div className="sayfa-icerik"><Notlar /></div>;
       case 'islem_gecmisi': return <div className="sayfa-icerik"><IslemGecmisiSayfa /></div>;
+      case 'haberler':     return <div className="sayfa-icerik"><Haberler /></div>;
       case 'profil':       return <div className="sayfa-icerik"><Profil /></div>;
       default:
         return (

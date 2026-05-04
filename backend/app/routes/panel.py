@@ -1080,6 +1080,15 @@ def eslestirme_endpoint():
         return jsonify({'eslesimler': sonuclar})
 
 
+@bp.route('/haberler', methods=['GET'])
+@jwt_required()
+def haberler_endpoint():
+    """Emlak haberleri — cache'den."""
+    from app.services.haber_rss import haberleri_getir
+    haberler = haberleri_getir(limit=15)
+    return jsonify({'haberler': haberler})
+
+
 def _talep(t):
     musteri_ad = ''
     if t.musteri_id:

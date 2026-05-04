@@ -49,8 +49,11 @@ def zamanlayici_baslat(app):
         # Her 6 saat — yeni eşleşme bildirimi (otonom agent)
         _scheduler.add_job(lambda: _with_app(app, _otonom_eslesme), 'interval', hours=6, id='otonom_eslesme')
 
+        # Her gün 07:30 — RSS haber çekme
+        _scheduler.add_job(lambda: _with_app(app, _rss_haber_cek), 'cron', hour=7, minute=30, id='rss_haber')
+
         _scheduler.start()
-        logger.info('[Zamanlayıcı] Başlatıldı — 11 görev aktif')
+        logger.info('[Zamanlayıcı] Başlatıldı — 12 görev aktif')
     except ImportError:
         logger.warning('[Zamanlayıcı] apscheduler yüklü değil, atlanıyor')
     except Exception as e:
@@ -221,6 +224,16 @@ def _otonom_takip():
         logger.info('[Zamanlayıcı] Otonom takip hatırlatması yapıldı')
     except Exception as e:
         logger.error(f'[Zamanlayıcı] Otonom takip hatası: {e}')
+
+
+def _rss_haber_cek():
+    """RSS'den emlak haberleri çek."""
+    try:
+        from app.services.haber_rss import rss_cek
+        sayi = rss_cek()
+        logger.info(f'[Zamanlayıcı] RSS: {sayi} yeni haber')
+    except Exception as e:
+        logger.error(f'[Zamanlayıcı] RSS hata: {e}')
 
 
 def _otonom_eslesme():

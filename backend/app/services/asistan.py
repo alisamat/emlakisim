@@ -3707,9 +3707,14 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         return f'⚠️ {sonuc.get("hata", "Çeviri yapılamadı")}'
 
     if fonksiyon_adi == 'emlak_haberleri':
-        from app.services.haberler import emlak_haberleri, haber_formatla
-        sonuc = emlak_haberleri(args.get('konu', 'emlak piyasası türkiye'))
-        return haber_formatla(sonuc)
+        try:
+            from app.services.haber_rss import haberleri_getir, haber_formatla_rss
+            haberler = haberleri_getir(limit=8)
+            return haber_formatla_rss(haberler)
+        except Exception:
+            from app.services.haberler import emlak_haberleri, haber_formatla
+            sonuc = emlak_haberleri(args.get('konu', 'emlak piyasası türkiye'))
+            return haber_formatla(sonuc)
 
     if fonksiyon_adi == 'web_sayfa_bilgi':
         import os

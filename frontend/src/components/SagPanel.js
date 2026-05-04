@@ -8,7 +8,7 @@ const MENU = (isAdmin) => [
     baslik: '🏆 Performans',
     items: [
       { ikon: '🏆', ad: 'Performans & Analiz', tab: 'performans', aciklama: 'KPI, gelir, sektör haberleri' },
-      { ikon: '📰', ad: 'Sektör Haberleri', mesaj: 'Emlak sektöründeki son gelişmeler neler?', aciklama: 'AI ile güncel piyasa bilgisi' },
+      { ikon: '📰', ad: 'Sektör Haberleri', tab: 'haberler', aciklama: 'Gerçek emlak haberleri, güncel piyasa' },
     ],
   },
   {
