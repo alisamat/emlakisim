@@ -4207,6 +4207,25 @@ def _mahalle_format(data, konum):
 
 
 # ─── AI Model Çağrıları ───────────────────────────────────
+def _cevap_temizle(metin):
+    """AI'nın fonksiyon sonucuna eklediği gereksiz yorumları temizle."""
+    if not isinstance(metin, str):
+        return metin
+    import re
+    # Bilinen gereksiz AI ek metinleri
+    gereksiz = [
+        r'⚡\s*Acil olarak işaretlendi\.?',
+        r'📌\s*Öncelik verildi\.?',
+        r'⭐\s*Önemli olarak işaretlendi\.?',
+        r'🔴\s*Acil olarak işaretlendi\.?',
+    ]
+    for p in gereksiz:
+        metin = re.sub(p, '', metin)
+    # Boş satırları temizle
+    metin = re.sub(r'\n{3,}', '\n\n', metin)
+    return metin.strip()
+
+
 def _ai_cevap(metin: str, gecmis: list, sistem: str) -> str:
     """Model seçimi: önce Gemini (function calling), yedekte Claude."""
     metin_lower = metin.lower()
@@ -4303,12 +4322,12 @@ def _gemini_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None)
         if not fonksiyon_vardi:
             # AI fonksiyon çağırmadı — metin cevabı
             if tum_sonuclar:
-                # Fonksiyon sonuçları yeterli
-                birlesik = '\n\n'.join(tum_sonuclar)
+                # Fonksiyon sonuçları yeterli — AI ek metnini görmezden gel
+                birlesik = _cevap_temizle('\n\n'.join(tum_sonuclar))
                 return (birlesik, nav) if nav else birlesik
-            return response.text
+            return _cevap_temizle(response.text)
 
-    birlesik = '\n\n'.join(tum_sonuclar) if tum_sonuclar else 'İşlem tamamlandı.'
+    birlesik = _cevap_temizle('\n\n'.join(tum_sonuclar)) if tum_sonuclar else 'İşlem tamamlandı.'
     return (birlesik, nav) if nav else birlesik
 
 
@@ -4372,9 +4391,9 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None)
 
         if not msg.tool_calls:
             if tum_sonuclar:
-                birlesik = '\n\n'.join(tum_sonuclar)
+                birlesik = _cevap_temizle('\n\n'.join(tum_sonuclar))
                 return (birlesik, nav) if nav else birlesik
-            return msg.content
+            return _cevap_temizle(msg.content)
 
         messages.append(msg)
 
@@ -4405,7 +4424,7 @@ def _openai_with_functions(api_key, sistem, gecmis, emlakci, secilen_tools=None)
             })
 
     # Max tur aşıldı
-    birlesik = '\n\n'.join(tum_sonuclar) if tum_sonuclar else 'İşlem tamamlandı.'
+    birlesik = _cevap_temizle('\n\n'.join(tum_sonuclar)) if tum_sonuclar else 'İşlem tamamlandı.'
     return (birlesik, nav) if nav else birlesik
 
 
