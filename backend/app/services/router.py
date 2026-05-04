@@ -341,4 +341,5 @@ def multi_route(metin, threshold=0.40, min_fark=0.10):
         if birinci_skor - skor <= min_fark:
             kategoriler.append(kat)
 
+    logger.info(f'[Router] multi_route("{metin[:50]}") → {kategoriler} | tüm skorlar: {sonuclar[:5]}')
     return kategoriler

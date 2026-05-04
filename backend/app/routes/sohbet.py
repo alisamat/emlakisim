@@ -52,39 +52,39 @@ def mesaj_gonder():
 
     metin_norm = _normalize(metin)
     kullanilan_model = None
-    nav_tab = None  # Sayfa navigasyonu
+    nav_tab = None
 
-    # 0. Navigasyon kontrolü — "ayarlara git", "müşterileri aç" vb.
+    # ── LOG: Giriş ──
+    logger.info(f'[SOHBET] ═══ YENİ MESAJ ═══')
+    logger.info(f'[SOHBET] metin: "{metin}"')
+    logger.info(f'[SOHBET] norm:  "{metin_norm}"')
+    logger.info(f'[SOHBET] gecmis: {len(gecmis)} mesaj | session_keys: {list(session.keys())}')
+    logger.info(f'[SOHBET] son_komut: {session.get("son_komut")} | son_liste: {len(session.get("son_liste", []))} kayıt')
+
+    # 0. Navigasyon kontrolü
     nav = _navigasyon_kontrol(metin_norm)
     if nav:
         nav_tab, cevap = nav
         kullanilan_model = 'navigasyon'
-        # Mesajı kaydet ve direkt dön
+        logger.info(f'[SOHBET] ✓ NAVİGASYON yakaladı → tab={nav_tab}')
         db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
         db.session.commit()
-        return jsonify({
-            'cevap': cevap,
-            'kredi_kalan': emlakci.kredi,
-            'sohbet_id': sohbet.id,
-            'tab': nav_tab,
-        })
+        return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id, 'tab': nav_tab})
 
-    # 0.5. Bağlam filtresi — "bunlardan sıcak olanları", "1. numarayı göster"
+    # 1. Bağlam filtresi
     baglam = _baglam_filtre(metin_norm, emlakci, session)
     if baglam:
         cevap = baglam
         kullanilan_model = 'baglam_filtre'
+        logger.info(f'[SOHBET] ✓ BAĞLAM FİLTRE yakaladı → {cevap[:80]}...')
         db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
         db.session.commit()
         return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id})
 
-    # ═══════════════════════════════════════════════════
-    # YENİ MİMARİ v2: Router → Tool Loader → Prompt → LLM
-    # ═══════════════════════════════════════════════════
-
-    # 1. Minimal pattern (selamlama, döviz, kredi — bedava, 5 kelimeden kısa)
+    # 2. Pattern matching
     komut = _pattern_isle(metin_norm, emlakci, metin)
     if komut:
+        logger.info(f'[SOHBET] ✓ PATTERN yakaladı → komut={komut}')
         sonuc = _komut_calistir(komut, emlakci, metin, session)
         if isinstance(sonuc, tuple):
             cevap, nav_tab = sonuc
@@ -95,11 +95,6 @@ def mesaj_gonder():
         kredi_dus(emlakci, komut, aciklama=metin[:100], model='pattern')
         kullanilan_model = 'pattern'
 
-    # 2. Bağlam filtre (bunlardan sıcak olanları, 1. numarayı göster)
-    elif _baglam_filtre(metin_norm, emlakci, session):
-        cevap = _baglam_filtre(metin_norm, emlakci, session)
-        kullanilan_model = 'baglam_filtre'
-
     # 3. AI — Semantic Router → Dinamik Tool → Katmanlı Prompt → LLM
     else:
         if not kredi_kontrol(emlakci, 1):
@@ -108,7 +103,9 @@ def mesaj_gonder():
             db.session.commit()
             return jsonify({'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id, 'kredi_yetersiz': True}), 200
 
-        # 3a. Semantic Router — kategori belirle (~100ms, ~$0)
+        logger.info(f'[SOHBET] → NAVİGASYON: hayır | BAĞLAM: hayır | PATTERN: hayır → AI\'ya gidiyor')
+
+        # 3a. Semantic Router
         from app.services.router import multi_route
         from app.services.tool_loader import tools_yukle
         from app.services.prompt_builder import prompt_olustur
@@ -116,21 +113,27 @@ def mesaj_gonder():
 
         try:
             kategoriler = multi_route(metin)
-        except Exception:
+        except Exception as e:
+            logger.error(f'[SOHBET] Router hatası: {e}')
             kategoriler = []
         kat_isimleri = [k for k, _ in kategoriler] if kategoriler and isinstance(kategoriler[0], tuple) else kategoriler
+        logger.info(f'[SOHBET] ROUTER → kategoriler: {kategoriler}')
 
-        # 3b. Dinamik Tool Yükleme — sadece ilgili 4-5 tool
+        # 3b. Dinamik Tool Yükleme
         secilen_tools = tools_yukle(kat_isimleri, _FUNCTIONS)
+        tool_isimleri = [t['name'] for t in secilen_tools] if secilen_tools else []
+        logger.info(f'[SOHBET] TOOLS → {len(tool_isimleri)} tool: {tool_isimleri}')
 
-        # 3c. Katmanlı Prompt — 500-700 token (3000+ yerine)
+        # 3c. Katmanlı Prompt
         sistem = prompt_olustur(emlakci, kat_isimleri, metin)
+        logger.info(f'[SOHBET] PROMPT → {len(sistem)} karakter | kategoriler: {kat_isimleri}')
 
-        # 3d. LLM çağır — az tool + kısa prompt = hızlı + ucuz
+        # 3d. LLM çağır
         try:
             openai_key = os.environ.get('OPENAI_API_KEY', '')
             gemini_key = os.environ.get('GEMINI_API_KEY', '')
             if openai_key:
+                logger.info(f'[SOHBET] LLM → OpenAI seçildi | gecmis: {len(gecmis)} mesaj')
                 from app.services.asistan import _openai_with_functions_v2 as owf
                 ai_sonuc = owf(openai_key, sistem, gecmis, emlakci, secilen_tools)
                 if isinstance(ai_sonuc, tuple):
@@ -139,6 +142,7 @@ def mesaj_gonder():
                     cevap = ai_sonuc
                 kullanilan_model = 'openai'
             elif gemini_key:
+                logger.info(f'[SOHBET] LLM → Gemini seçildi | gecmis: {len(gecmis)} mesaj')
                 from app.services.asistan import _gemini_with_functions_v2 as gwf
                 try:
                     ai_sonuc = gwf(gemini_key, sistem, gecmis, emlakci, secilen_tools)
@@ -147,28 +151,33 @@ def mesaj_gonder():
                     else:
                         cevap = ai_sonuc
                     kullanilan_model = 'gemini'
-                except Exception:
+                except Exception as e:
+                    logger.error(f'[SOHBET] Gemini hatası, fallback: {e}')
                     cevap = _ai_cevap(metin, gecmis, sistem)
                     kullanilan_model = 'gemini'
             else:
+                logger.info(f'[SOHBET] LLM → Claude fallback')
                 cevap = _ai_cevap(metin, gecmis, sistem)
                 kullanilan_model = 'claude'
         except Exception as e:
-            logger.error(f'[Sohbet] AI hatası: {e}')
+            logger.error(f'[SOHBET] AI hatası: {e}')
             cevap = 'Bir hata oluştu, lütfen tekrar deneyin.'
             kullanilan_model = 'hata'
 
-        # AI kredi düş
+        logger.info(f'[SOHBET] AI CEVAP → model={kullanilan_model} | cevap: "{str(cevap)[:120]}..."')
         kredi_dus(emlakci, 'ai_sohbet', aciklama=f'router:{",".join(kat_isimleri[:2])} {metin[:60]}', model=kullanilan_model)
 
-    # Zeka motoru — cevabı zenginleştir
+    # Zeka motoru
     try:
         from app.services.zeka import mesaj_zenginlestir
+        cevap_once = cevap
         cevap = mesaj_zenginlestir(emlakci, metin, cevap)
+        if cevap != cevap_once:
+            logger.info(f'[SOHBET] ZEKA zenginleştirdi: +{len(cevap) - len(cevap_once)} karakter')
     except Exception:
         pass
 
-    # Diyaloğu kaydet (eğitim verisi)
+    # Eğitim verisi
     islem_adi = 'ai_sohbet'
     if kullanilan_model == 'pattern':
         islem_adi = 'pattern'
@@ -176,22 +185,19 @@ def mesaj_gonder():
         islem_adi = 'ogrenilen'
     diyalog_kaydet(emlakci.id, metin, metin_norm, islem_adi, model=kullanilan_model)
 
-    # Konuşma özetini uzun dönem hafızaya kaydet
     try:
         from app.services.hafiza import konusma_ozeti_kaydet
         konusma_ozeti_kaydet(emlakci.id, gecmis)
     except Exception:
         pass
 
-    # Asistan mesajını kaydet
+    # Kaydet ve dön
     db.session.add(PanelMesaj(sohbet_id=sohbet.id, rol='assistant', icerik=cevap))
     db.session.commit()
 
-    resp = {
-        'cevap': cevap,
-        'kredi_kalan': emlakci.kredi,
-        'sohbet_id': sohbet.id,
-    }
+    logger.info(f'[SOHBET] ═══ SONUÇ: model={kullanilan_model} ═══')
+
+    resp = {'cevap': cevap, 'kredi_kalan': emlakci.kredi, 'sohbet_id': sohbet.id}
     if nav_tab:
         resp['tab'] = nav_tab
     return jsonify(resp)

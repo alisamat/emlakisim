@@ -156,6 +156,8 @@ _BAGLAM_PATTERNS = [
 
 def _baglam_filtre(metin_norm, emlakci, session):
     """Bağlamsal takip filtresi — önceki listeyi filtrele."""
+    import logging as _log
+    _log.getLogger(__name__).info(f'[BAGLAM] kontrol: "{metin_norm}" | son_komut={session.get("son_komut")} | son_liste={len(session.get("son_liste", []))}')
     # Etiket filtreleri — son_liste olmasa da çalışır (kısa takip mesajları)
     etiket_patterns = {
         'onemli': r'(?:onemli|önemli)\s*(?:olan|olanlari|olanları|notlar)?',
@@ -3105,6 +3107,8 @@ _FUNCTIONS = [
 
 def _ai_function_call(fonksiyon_adi, args, emlakci):
     """AI'nın çağırdığı fonksiyonu yürüt + otomatik işlem loglama."""
+    import logging
+    logging.getLogger(__name__).info(f'[SOHBET] AI FONKSİYON ÇAĞRISI → {fonksiyon_adi}({args})')
     # Yazma fonksiyonlarını logla
     yazma_fonksiyonlari = {
         'musteri_ekle': 'musteri', 'musteri_guncelle': 'musteri', 'musteri_sil': 'musteri',
