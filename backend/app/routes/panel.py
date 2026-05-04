@@ -159,10 +159,13 @@ def musteri_ara():
 @jwt_required()
 def mulkler():
     goster = request.args.get('pasif', 'false')
-    if goster == 'true':
-        kayitlar = Mulk.query.filter_by(emlakci_id=_eid()).order_by(Mulk.olusturma.desc()).all()
-    else:
-        kayitlar = Mulk.query.filter_by(emlakci_id=_eid(), aktif=True).order_by(Mulk.olusturma.desc()).all()
+    musteri_id = request.args.get('musteri_id', type=int)
+    sorgu = Mulk.query.filter_by(emlakci_id=_eid())
+    if goster != 'true':
+        sorgu = sorgu.filter(Mulk.aktif == True)
+    if musteri_id:
+        sorgu = sorgu.filter(Mulk.musteri_id == musteri_id)
+    kayitlar = sorgu.order_by(Mulk.olusturma.desc()).all()
     return jsonify({'mulkler': [_mulk(m) for m in kayitlar]})
 
 

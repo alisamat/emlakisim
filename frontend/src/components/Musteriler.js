@@ -163,10 +163,77 @@ function MusteriFormu({ onKaydet, onIptal, duzenle }) {
   );
 }
 
+function BagliListe({ musteriId, tip }) {
+  const [data, setData] = useState(null);
+  const [secili, setSecili] = useState(null);
+  const [yuk, setYuk] = useState(true);
+
+  useEffect(() => {
+    const url = tip === 'talep' ? `/api/panel/talepler?musteri_id=${musteriId}&durum=hepsi` : `/api/panel/mulkler?musteri_id=${musteriId}`;
+    api.get(url).then(r => setData(tip === 'talep' ? r.data.talepler : r.data.mulkler)).catch(() => setData([])).finally(() => setYuk(false));
+  }, [musteriId, tip]);
+
+  if (yuk) return <div style={{ fontSize: 12, color: '#94a3b8', padding: 8 }}>Yükleniyor...</div>;
+  if (!data || data.length === 0) return <div style={{ fontSize: 12, color: '#94a3b8', padding: 8 }}>{tip === 'talep' ? 'Bağlı talep yok' : 'Bağlı mülk yok'}</div>;
+
+  if (secili) {
+    return (
+      <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12, marginTop: 6, border: '1px solid #e2e8f0' }}>
+        <button onClick={() => setSecili(null)} style={{ background: 'none', border: 'none', color: '#16a34a', fontSize: 12, cursor: 'pointer', marginBottom: 8 }}>← Listeye dön</button>
+        {tip === 'talep' ? (
+          <div style={{ fontSize: 13 }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{secili.yonu === 'arayan' ? '🔍 Arıyor' : '🏠 Veriyor'} · {secili.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}</div>
+            {(secili.butce_min || secili.butce_max) && <div>💰 {secili.butce_min ? Number(secili.butce_min).toLocaleString('tr-TR') : '—'} — {secili.butce_max ? Number(secili.butce_max).toLocaleString('tr-TR') : '—'} TL</div>}
+            {secili.tercih_oda && <div>🛏 {secili.tercih_oda}</div>}
+            {secili.tercih_ilce && <div>📍 {secili.tercih_ilce} {secili.tercih_sehir || ''}</div>}
+            {secili.istenen?.length > 0 && <div>✅ {secili.istenen.join(', ')}</div>}
+            {secili.istenmeyen?.length > 0 && <div>❌ {secili.istenmeyen.join(', ')}</div>}
+            <div style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>📊 {secili.durum} · {secili.olusturma ? new Date(secili.olusturma).toLocaleDateString('tr-TR') : ''}</div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13 }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{secili.baslik || secili.adres || '—'}</div>
+            <div>🏷 {secili.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'} · {secili.tip || '—'}</div>
+            <div>💰 {secili.fiyat ? Number(secili.fiyat).toLocaleString('tr-TR') + ' TL' : '—'}</div>
+            {secili.oda_sayisi && <div>🛏 {secili.oda_sayisi} · {secili.metrekare || '—'}m²</div>}
+            {secili.ilce && <div>📍 {secili.ilce}{secili.sehir ? `, ${secili.sehir}` : ''}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 6 }}>
+      {data.map(item => (
+        <div key={item.id} onClick={() => setSecili(item)} style={{
+          fontSize: 12, padding: '6px 10px', marginBottom: 4, background: '#f8fafc',
+          borderRadius: 6, border: '1px solid #e2e8f0', cursor: 'pointer',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          {tip === 'talep' ? (
+            <>
+              <span>{item.yonu === 'arayan' ? '🔍' : '🏠'} {item.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}{item.tercih_oda ? ` ${item.tercih_oda}` : ''}{item.tercih_ilce ? ` ${item.tercih_ilce}` : ''}</span>
+              <span style={{ color: '#64748b' }}>{item.butce_max ? Number(item.butce_max).toLocaleString('tr-TR') + ' TL' : ''}</span>
+            </>
+          ) : (
+            <>
+              <span>🏢 {item.baslik || item.adres || '—'}</span>
+              <span style={{ color: '#16a34a', fontWeight: 600 }}>{item.fiyat ? Number(item.fiyat).toLocaleString('tr-TR') + ' TL' : ''}</span>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MusteriKarti({ m, onDuzenle, onSil }) {
   const s = SICAKLIK[m.sicaklik] || SICAKLIK.orta;
   const [menuAcik, setMenuAcik] = useState(false);
   const [detayAcik, setDetayAcik] = useState(false);
+  const [talepAcik, setTalepAcik] = useState(false);
+  const [mulkAcik, setMulkAcik] = useState(false);
   const det = m.detaylar || {};
   const badges = Object.entries(det).filter(([, v]) => v).map(([k, v]) => {
     const alan = [...(MUSTERI_DETAY[m.islem_turu] || []), ...MUSTERI_DETAY._ortak].find(a => a.key === k);
@@ -208,6 +275,21 @@ function MusteriKarti({ m, onDuzenle, onSil }) {
               )}
             </>
           )}
+          {/* Bağlı Talepler + Mülkler */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button onClick={() => { setTalepAcik(p => !p); setMulkAcik(false); }} style={{
+              padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600,
+              background: talepAcik ? '#eff6ff' : '#f8fafc', color: talepAcik ? '#1d4ed8' : '#64748b',
+              border: `1px solid ${talepAcik ? '#bfdbfe' : '#e2e8f0'}`,
+            }}>📋 Talepleri</button>
+            <button onClick={() => { setMulkAcik(p => !p); setTalepAcik(false); }} style={{
+              padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600,
+              background: mulkAcik ? '#f0fdf4' : '#f8fafc', color: mulkAcik ? '#16a34a' : '#64748b',
+              border: `1px solid ${mulkAcik ? '#bbf7d0' : '#e2e8f0'}`,
+            }}>🏢 Mülkleri</button>
+          </div>
+          {talepAcik && <BagliListe musteriId={m.id} tip="talep" />}
+          {mulkAcik && <BagliListe musteriId={m.id} tip="mulk" />}
         </div>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setMenuAcik(p => !p)} style={{
