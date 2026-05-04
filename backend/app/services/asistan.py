@@ -3452,7 +3452,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         ]
         # Alan ismi mapping (API parametresi → DB alanı)
         alan_map = {'isitma': 'isinma', 'kat': 'bulundugu_kat', 'site_icerisinde': 'site_ici'}
-        det = mulk.detaylar or {}
+        det = dict(mulk.detaylar or {})  # kopya al — SQLAlchemy mutation tracking
         for alan in detay_alanlar:
             if args.get(alan) is not None:
                 db_alan = alan_map.get(alan, alan)
@@ -3475,6 +3475,8 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 }.get(alan, alan)
                 degisiklikler.append(f'{alan_label}: {gosterim}')
         mulk.detaylar = det
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(mulk, 'detaylar')
 
         db.session.commit()
         if not degisiklikler:
