@@ -167,6 +167,37 @@ function mesajRender(text) {
   return sonuc;
 }
 
+// Süreli silme butonu — 2 dakika sonra devre dışı
+function SilButonu({ label, url }) {
+  const [kalan, setKalan] = React.useState(120);
+  const [silindi, setSilindi] = React.useState(false);
+  React.useEffect(() => {
+    if (kalan <= 0) return;
+    const t = setTimeout(() => setKalan(k => k - 1), 1000);
+    return () => clearTimeout(t);
+  }, [kalan]);
+  const sureDoldu = kalan <= 0;
+  const silOnay = async (e) => {
+    e.preventDefault();
+    if (sureDoldu || silindi) return;
+    if (!window.confirm('Bu kayıt kalıcı olarak silinecek. Emin misiniz?')) return;
+    try {
+      const r = await api.get(url);
+      setSilindi(true);
+      alert(r.data.mesaj || 'Silindi');
+    } catch { alert('Silme hatası'); }
+  };
+  if (silindi) return <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 13 }}>Silindi</span>;
+  return (
+    <button onClick={silOnay} disabled={sureDoldu}
+      style={{ display: 'inline-block', margin: '6px 0', padding: '10px 20px',
+        background: sureDoldu ? '#9ca3af' : '#dc2626', color: '#fff', borderRadius: 8,
+        border: 'none', fontSize: 13, fontWeight: 700,
+        cursor: sureDoldu ? 'not-allowed' : 'pointer', opacity: sureDoldu ? 0.6 : 1 }}
+    >{sureDoldu ? 'Süre doldu' : `${label} (${Math.floor(kalan/60)}:${String(kalan%60).padStart(2,'0')})`}</button>
+  );
+}
+
 // Satır içi biçimlendirme: *bold*, _italic_, `code`, [link](url)
 function satirIciBicimle(text) {
   if (!text) return text;
@@ -176,21 +207,9 @@ function satirIciBicimle(text) {
     const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
     if (linkMatch) {
       const [, label, url] = linkMatch;
-      // Silme onay butonu
+      // Silme onay butonu — 2 dakika süreli
       if (url.includes('sil-onayla')) {
-        const silOnay = async (e) => {
-          e.preventDefault();
-          if (!window.confirm('Bu kayıt kalıcı olarak silinecek. Emin misiniz?')) return;
-          try {
-            const r = await api.get(url);
-            alert(r.data.mesaj || 'Silindi');
-          } catch { alert('Silme hatası'); }
-        };
-        return (
-          <button key={i} onClick={silOnay}
-            style={{ display: 'inline-block', margin: '6px 0', padding: '10px 20px', background: '#dc2626', color: '#fff', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >{label}</button>
-        );
+        return <SilButonu key={i} label={label} url={url} />;
       }
 
       // İndirme butonu
