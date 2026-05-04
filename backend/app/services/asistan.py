@@ -3360,7 +3360,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if args.get('yeni_icerik'):
             not_obj.icerik = args['yeni_icerik']
             degisiklikler.append('İçerik güncellendi')
-        if args.get('tamamlandi') is not None:
+        if args.get('tamamlandi') is not None and args['tamamlandi'] != not_obj.tamamlandi:
             not_obj.tamamlandi = args['tamamlandi']
             degisiklikler.append('Tamamlandı' if args['tamamlandi'] else 'Tekrar açıldı')
         if args.get('etiket'):
@@ -3629,16 +3629,16 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if not g:
             return '⚠️ Görev bulunamadı.'
         degisiklikler = []
-        if args.get('durum'):
+        if args.get('durum') and args['durum'] != g.durum:
             g.durum = args['durum']
             degisiklikler.append(f'Durum: {args["durum"]}')
-        if args.get('baslik'):
+        if args.get('baslik') and args['baslik'] != g.baslik:
             g.baslik = args['baslik']
             degisiklikler.append(f'Başlık: {args["baslik"]}')
         if args.get('aciklama'):
             g.aciklama = args['aciklama']
             degisiklikler.append('Açıklama güncellendi')
-        if args.get('oncelik'):
+        if args.get('oncelik') and args['oncelik'] != g.oncelik:
             g.oncelik = args['oncelik']
             degisiklikler.append(f'Öncelik: {args["oncelik"]}')
         if args.get('tarih') or args.get('saat'):
