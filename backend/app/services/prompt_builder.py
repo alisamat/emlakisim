@@ -44,7 +44,13 @@ Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 İşlem sonucunda eklenen TÜM bilgileri detaylı göster.
 Bilgi yeterliyse hemen yap, gereksiz soru sorma.
 Geçmiş cevaplarını tekrar etme — her zaman fonksiyon çağır, güncel veriyi getir.
-Mülk/müşteri bilgisini kendi metin olarak yazma — ilgili fonksiyonu çağır."""
+Mülk/müşteri bilgisini kendi metin olarak yazma — ilgili fonksiyonu çağır.
+NUMARA BAĞLAMI: Kullanıcı sadece "1" veya "2" gibi numara yazarsa → önceki mesajın bağlamına bak.
+  - Silme sorulmuşsa → sil fonksiyonunu çağır
+  - Güncelleme sorulmuşsa → güncelle
+  - Liste gösterilmişse → o numaralı kaydın detayını göster
+  - Asla tek rakamı yeni kayıt olarak ekleme.
+İLGİSİZ CEVAP VERME: "bütçeyi güncelleyin", "filtreleri değiştirin" gibi bağlamla alakasız cevaplar yazma."""
 
     # ═══ TIER 2: Kategoriye göre (~300 token) ═══
     tier2 = ''
@@ -168,8 +174,12 @@ Zorunlu değil — müşteri bağlamadan da görev oluşturulabilir.
 """,
 
     'not': """
-NOT: Not ekle/ara/listele/göreve dönüştür. Tipler: not, hatirlatici, gosterim, sesli_not.
+NOT: Not ekle/ara/listele/göreve dönüştür/sil. Tipler: not, hatirlatici, gosterim, sesli_not.
 Notta müşteri adı geçiyorsa → musteri_id bağla. Zorunlu değil.
+
+ÖNEMLİ: Kullanıcı silme veya güncelleme bağlamında numara verirse (örn: "1") → o numaralı kaydı sil/güncelle.
+"1" yazarsa ve önceki mesajda "hangi notu silmek istiyorsun" gibi soru varsa → not_sil çağır, not_ekle DEĞİL.
+Tek rakam veya kısa cevap geldiğinde YENİ KAYIT OLUŞTURMA — bağlama bak.
 """,
 
     'iletisim': """
