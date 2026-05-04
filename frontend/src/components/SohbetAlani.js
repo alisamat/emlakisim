@@ -197,6 +197,24 @@ function SilButonu({ label, url }) {
   );
 }
 
+// Kopyala butonu — geçici tik gösterir
+function KopyalaButon({ icerik }) {
+  const [kopyalandi, setKopyalandi] = React.useState(false);
+  const kopyala = () => {
+    navigator.clipboard.writeText(icerik);
+    setKopyalandi(true);
+    setTimeout(() => setKopyalandi(false), 2000);
+  };
+  return (
+    <button onClick={kopyala} style={{
+      background: kopyalandi ? '#f0fdf4' : 'none', border: kopyalandi ? '1px solid #bbf7d0' : 'none',
+      borderRadius: 6, cursor: 'pointer', fontSize: 11,
+      color: kopyalandi ? '#16a34a' : '#94a3b8', padding: '1px 6px', transition: 'all 0.2s',
+      fontWeight: kopyalandi ? 600 : 400,
+    }} title="Kopyala">{kopyalandi ? '✓ Kopyalandı' : '📋'}</button>
+  );
+}
+
 // Satır içi biçimlendirme: *bold*, _italic_, `code`, [link](url)
 function satirIciBicimle(text) {
   if (!text) return text;
@@ -405,9 +423,7 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
                   {new Date(m.olusturma).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
                 <span style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={() => navigator.clipboard.writeText(m.icerik)} style={{
-                    background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#94a3b8', padding: '0 2px',
-                  }} title="Kopyala">📋</button>
+                  <KopyalaButon icerik={m.icerik} />
                   <button onClick={() => {
                     if (navigator.share) navigator.share({ text: m.icerik });
                     else navigator.clipboard.writeText(m.icerik);
