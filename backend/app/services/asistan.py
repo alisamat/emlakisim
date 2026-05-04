@@ -2445,6 +2445,7 @@ _FUNCTIONS = [
                 'gabari': {'type': 'string'},
                 'takas': {'type': 'boolean', 'description': 'Takas kabul eder mi'},
                 'aciklama': {'type': 'string', 'description': 'Mülk açıklaması/tanıtım yazısı'},
+                'sahip_adi': {'type': 'string', 'description': 'Mülk sahibi — müşteri adıyla bağla'},
             },
             'required': ['baslik'],
         },
@@ -2457,6 +2458,7 @@ _FUNCTIONS = [
             'properties': {
                 'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul (veya bağlamdan son mülk)'},
                 'mulk_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
+                'sahip_adi': {'type': 'string', 'description': 'Mülk sahibi — müşteri adıyla ara ve bağla'},
                 'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
@@ -3432,6 +3434,15 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if args.get('aktif') is not None:
             mulk.aktif = args['aktif']
             degisiklikler.append('Aktif yapıldı' if args['aktif'] else 'Pasife alındı')
+        if args.get('sahip_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["sahip_adi"]}%')
+            ).first()
+            if mus:
+                mulk.musteri_id = mus.id
+                degisiklikler.append(f'🔒 Sahip: {mus.ad_soyad} (gizli)')
+            else:
+                degisiklikler.append(f'⚠️ "{args["sahip_adi"]}" adında müşteri bulunamadı')
         if args.get('notlar'):
             mulk.notlar = (mulk.notlar or '') + '\n' + args['notlar']
             degisiklikler.append('Not eklendi')
@@ -3631,6 +3642,15 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         temel_alanlar = ('baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi')
         temel = {k: v for k, v in args.items() if k in temel_alanlar}
         m = Mulk(emlakci_id=emlakci.id, **temel)
+        # Sahip bağlama
+        sahip_str = ''
+        if args.get('sahip_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["sahip_adi"]}%')
+            ).first()
+            if mus:
+                m.musteri_id = mus.id
+                sahip_str = f'\n🔒 Sahip: {mus.ad_soyad} (gizli)'
         # Detay alanlarını JSON'a yaz
         detay_alanlar = ('bulundugu_kat', 'kat_sayisi', 'bina_yasi', 'isitma', 'mutfak',
                          'banyo_sayisi', 'balkon', 'asansor', 'otopark', 'esyali', 'site_ici',
@@ -3689,6 +3709,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 f'💰 {f_tl(m.fiyat)} TL\n'
                 f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²\n'
                 + (f'\n{detay_str}\n' if detay_str else '')
+                + sahip_str
                 + f'\n🌐 _İlan sayfanızda görüntüleyin:_ {sayfa_link}')
 
     if fonksiyon_adi == 'mulk_listele':
