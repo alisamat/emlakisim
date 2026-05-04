@@ -248,12 +248,14 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
   const { user } = useAuth();
   const [girdi, setGirdi] = useState('');
   const [asistanIsmi, setAsistanIsmi] = useState('');
+  const [haberler, setHaberler] = useState([]);
 
   useEffect(() => {
     api.get('/api/panel/ayarlar').then(r => {
       const ayar = r.data.ayarlar || {};
       setAsistanIsmi(ayar.asistan_ismi || '');
     }).catch(() => {});
+    api.get('/api/panel/haberler').then(r => setHaberler((r.data.haberler || []).slice(0, 2))).catch(() => {});
   }, []);
   const [yukleniyor, setYuk] = useState(false);
   const mesajlarRef = useRef(null);
@@ -374,6 +376,24 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
                 </button>
               ))}
             </div>
+            {/* Haberler */}
+            {haberler.length > 0 && (
+              <div style={{ width: '100%', maxWidth: 420, marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>📰 Emlak Sektörü Haberleri</div>
+                {haberler.map((h, i) => (
+                  <a key={i} href={h.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginBottom: 6 }}>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 12, lineHeight: 1.4 }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: 2 }}>{h.baslik}</div>
+                      {h.kaynak && <span style={{ fontSize: 10, color: '#94a3b8' }}>{h.kaynak}</span>}
+                    </div>
+                  </a>
+                ))}
+                <button onClick={() => onTabAc && onTabAc('haberler')}
+                  style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '4px 0' }}>
+                  Tümünü göster →
+                </button>
+              </div>
+            )}
             <ZekaOnerileri />
           </div>
         ) : (
