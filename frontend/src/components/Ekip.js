@@ -6,6 +6,9 @@ export default function Ekip() {
   const [formAcik, setFormAcik] = useState(false);
   const [form, setForm] = useState({ ad_soyad: '', telefon: '', email: '', uzmanlik: '' });
   const [yuk, setYuk] = useState(false);
+  const [emlakcilar, setEmlakcilar] = useState([]);
+  const [emlakciArama, setEmlakciArama] = useState('');
+  const [secimAcik, setSecimAcik] = useState(false);
 
   const yukle = useCallback(async () => {
     setYuk(true);
@@ -14,6 +17,23 @@ export default function Ekip() {
   }, []);
 
   useEffect(() => { yukle(); }, [yukle]);
+
+  // Form açıldığında emlakçı dizinini yükle
+  useEffect(() => {
+    if (formAcik) {
+      api.get('/api/panel/emlakcilar').then(r => setEmlakcilar(r.data.emlakcilar || [])).catch(() => {});
+    }
+  }, [formAcik]);
+
+  const emlakciSec = (e) => {
+    setForm({ ad_soyad: e.ad_soyad || '', telefon: e.telefon || '', email: e.email || '', uzmanlik: e.uzmanlik || '' });
+    setSecimAcik(false);
+    setEmlakciArama('');
+  };
+
+  const filtrelenmis = emlakciArama.trim()
+    ? emlakcilar.filter(e => (e.ad_soyad || '').toLowerCase().includes(emlakciArama.toLowerCase()) || (e.telefon || '').includes(emlakciArama))
+    : emlakcilar;
 
   const ekle = async e => {
     e.preventDefault();
@@ -35,6 +55,38 @@ export default function Ekip() {
 
       {formAcik && (
         <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid var(--border)' }}>
+          {/* Emlakçı dizininden seç */}
+          {emlakcilar.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <button type="button" onClick={() => setSecimAcik(p => !p)}
+                style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 14px', fontSize: 12, color: '#1d4ed8', cursor: 'pointer', fontWeight: 600, width: '100%', textAlign: 'left' }}>
+                📒 Emlakçı Dizininden Seç {secimAcik ? '▲' : '▼'}
+              </button>
+              {secimAcik && (
+                <div style={{ border: '1px solid var(--border)', borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto', background: '#fff' }}>
+                  <input
+                    placeholder="🔍 Emlakçı ara..."
+                    value={emlakciArama}
+                    onChange={e => setEmlakciArama(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid #e2e8f0', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  {filtrelenmis.length === 0 ? (
+                    <div style={{ padding: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>Emlakçı bulunamadı</div>
+                  ) : filtrelenmis.map(e => (
+                    <div key={e.id} onClick={() => emlakciSec(e)}
+                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: 12, transition: 'background 0.1s' }}
+                      onMouseOver={ev => ev.currentTarget.style.background = '#f0fdf4'}
+                      onMouseOut={ev => ev.currentTarget.style.background = '#fff'}>
+                      <div style={{ fontWeight: 600 }}>{e.ad_soyad}</div>
+                      <div style={{ color: '#64748b', fontSize: 11 }}>
+                        {e.telefon && `📞 ${e.telefon}`} {e.bolge && `· 📍 ${e.bolge}`} {e.uzmanlik && `· ${e.uzmanlik}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <form onSubmit={ekle}>
             <div className="grid-2" style={{ marginBottom: 12 }}>
               <div><label className="etiket">Ad Soyad</label><input className="input" value={form.ad_soyad} onChange={e => setForm(p => ({ ...p, ad_soyad: e.target.value }))} required /></div>
@@ -46,7 +98,7 @@ export default function Ekip() {
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn-yesil" type="submit">Kaydet</button>
-              <button className="btn-gri" type="button" onClick={() => setFormAcik(false)}>İptal</button>
+              <button className="btn-gri" type="button" onClick={() => { setFormAcik(false); setSecimAcik(false); }}>İptal</button>
             </div>
           </form>
         </div>
