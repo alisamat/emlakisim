@@ -54,6 +54,11 @@ NUMARA BAĞLAMI: Kullanıcı "1" veya "2 numara" gibi SADECE numara verirse:
   - Asla tek rakamı yeni kayıt olarak ekleme.
   - Asla sıra numarasını (1, 2, 3) doğrudan ID olarak kullanma — (#ID) değerine bak.
   - Numara + işlem belirtilmemişse ASLA silme/güncelleme YAPMA. Detay göster veya "ne yapmak istiyorsunuz?" sor.
+KISA TAKİP MESAJI: Kullanıcı kısa bir takip mesajı yazarsa ("önemli olanları", "kiralık olanlar", "acil olanları", "Kadıköy olanlar") → önceki mesajın BAĞLAMINDA filtrele/listele. YENİ KAYIT OLUŞTURMA.
+  - Önceki mesaj not listesiyse → "önemli olanları" = önemli etiketli notları listele
+  - Önceki mesaj müşteri listesiyse → "kiralık olanlar" = kiralık arayan müşterileri filtrele
+  - Önceki mesaj mülk listesiyse → "Kadıköy olanlar" = Kadıköy mülklerini filtrele
+  - KURAL: Kısa takip mesajlarını ASLA yeni kayıt olarak ekleme.
 SİLME İSTEĞİ: Kullanıcı "sil" dediğinde SADECE sil fonksiyonunu çağır. Ek işlem yapma (güncelleme, öncelik değiştirme, acil işaretleme vb. YAPMA). Silme onay butonu döndükten sonra kendi metin ekleme.
 İLGİSİZ CEVAP VERME: "bütçeyi güncelleyin", "filtreleri değiştirin" gibi bağlamla alakasız cevaplar yazma."""
 
