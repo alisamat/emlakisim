@@ -344,21 +344,25 @@ def multi_route(metin, threshold=0.40, min_fark=0.10, gecmis=None):
     "Kuveyttürk sanal pos" tek başına mulk'e gider ama
     bağlamda "görev ekle" varsa planlama'ya gider.
     """
-    # Bağlam varsa mesajı zenginleştir — sadece kullanıcı mesajları
-    # AI cevapları (hata mesajları, emoji'li metinler) bağlamı kirletiyor
-    baglam_metin = metin
+    # İki yönlü routing: bağlamsız + bağlamlı → en iyi sonucu seç
+    # Bağlam bazen yardımcı (görev ekle → Kuveyttürk) bazen kirletici (müşteri → villa bul)
+    sonuclar = route(metin, threshold)
+    logger.info(f'[Router] bağlamsız: "{metin[:50]}" → {sonuclar[:3]}')
+
     if gecmis and len(gecmis) >= 2:
         son_user = [m.get('content', '')[:60] for m in gecmis[-4:] if m.get('role') == 'user']
         if son_user:
             baglam_metin = f'{" → ".join(son_user[-2:])} → {metin}'
-            logger.info(f'[Router] bağlam_metin: "{baglam_metin[:120]}"')
+            baglam_sonuc = route(baglam_metin, threshold)
+            logger.info(f'[Router] bağlamlı: "{baglam_metin[:80]}" → {baglam_sonuc[:3]}')
 
-    sonuclar = route(baglam_metin, threshold)
-
-    # Bağlamlı sonuç çok düşükse, bağlamsız dene
-    if not sonuclar and baglam_metin != metin:
-        logger.info(f'[Router] bağlamlı sonuç boş, bağlamsız deneniyor')
-        sonuclar = route(metin, threshold)
+            # Bağlamlı sonuç daha yüksek skorluysa onu kullan
+            if baglam_sonuc and sonuclar:
+                if baglam_sonuc[0][1] > sonuclar[0][1]:
+                    logger.info(f'[Router] bağlamlı skor daha yüksek, bağlamlı kullanılıyor')
+                    sonuclar = baglam_sonuc
+            elif baglam_sonuc and not sonuclar:
+                sonuclar = baglam_sonuc
 
     if not sonuclar:
         return []
