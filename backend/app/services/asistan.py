@@ -2357,22 +2357,14 @@ def _satis_kapandi(emlakci, args):
 _FUNCTIONS = [
     {
         'name': 'musteri_ekle',
-        'description': 'Yeni müşteri ekler. Tüm bilgileri doğal dilden çıkar. Aynı isimde müşteri varsa uyarır.',
+        'description': 'Yeni müşteri ekler. Müşteri = kişi bilgisi. Bütçe/tercih/özellik bilgileri müşteriye değil TALEP\'e aittir — talep_ekle kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'ad_soyad': {'type': 'string', 'description': 'Müşterinin adı soyadı'},
                 'telefon': {'type': 'string', 'description': 'Telefon numarası'},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
-                'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL (30K=30000, 1.5M=1500000)'},
-                'butce_max': {'type': 'number', 'description': 'Maksimum bütçe TL'},
-                'tercih_oda': {'type': 'string', 'description': 'İstenen oda sayısı: 1+1, 2+1, 3+1, 4+1'},
-                'tercih_sehir': {'type': 'string', 'description': 'Tercih edilen şehir'},
-                'tercih_ilce': {'type': 'string', 'description': 'Tercih edilen ilçe'},
-                'istenen_ozellikler': {'type': 'array', 'items': {'type': 'string'}, 'description': 'İstenen özellikler: asansör, balkon, otopark, site içi, eşyalı...'},
-                'istenmeyen_ozellikler': {'type': 'array', 'items': {'type': 'string'}, 'description': 'İstenmeyen özellikler: açık mutfak, zemin kat, bodrum...'},
+                'email': {'type': 'string'},
                 'kunye': {'type': 'string', 'description': 'Ayırt edici künye: Eyyüpteki, Samilerin, mimar'},
-                'tercih_notlar': {'type': 'string', 'description': 'Diğer serbest metin notlar'},
             },
             'required': ['ad_soyad'],
         },
@@ -2387,9 +2379,8 @@ _FUNCTIONS = [
                 'musteri_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
                 'kunye': {'type': 'string', 'description': 'Yeni künye/rumuz ekle'},
                 'telefon': {'type': 'string', 'description': 'Yeni telefon'},
+                'email': {'type': 'string'},
                 'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk']},
-                'butce_max': {'type': 'number'},
-                'tercih_notlar': {'type': 'string'},
             },
         },
     },
@@ -3277,55 +3268,26 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
     """Fonksiyon işleme — asıl iş burada."""
     if fonksiyon_adi == 'musteri_ekle':
         ad = args.get('ad_soyad', '')
-        # Uydurma isim kontrolü
         sahte_isimler = ['yeni müşteri', 'yeni musteri', 'müşteri', 'musteri', 'bilinmiyor', 'isimsiz', 'belirtilmedi', '']
         if ad.lower().strip() in sahte_isimler or len(ad.strip()) < 2:
             return '⚠️ Müşterinin adını belirtir misiniz? İsim olmadan kayıt oluşturamıyorum.'
-        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
 
         # Aynı isimde müşteri kontrolü
         mevcut = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
             Musteri.ad_soyad.ilike(f'%{ad}%')
-        ).all()
+        ).first()
+        uyari = f'⚠️ *Dikkat:* "{ad}" adında müşteri zaten var: {mevcut.ad_soyad}' + (f' _({mevcut.kunye})_' if mevcut and mevcut.kunye else '') + '\n\n' if mevcut else ''
 
-        if mevcut:
-            # Uyar ama yine de ekle — engelleme
-            uyari = f'⚠️ *Dikkat:* "{ad}" adında {len(mevcut)} müşteri zaten var:\n'
-            for m in mevcut[:3]:
-                det = m.detaylar or {}
-                oda = det.get('tercih_oda', '')
-                uyari += f'  • {m.ad_soyad}'
-                if m.kunye:
-                    uyari += f' _({m.kunye})_'
-                uyari += f' — {m.islem_turu or "?"} · {f_tl(m.butce_max)} TL'
-                if oda:
-                    uyari += f' · {oda}'
-                uyari += '\n'
-            uyari += '_Ayırt etmek için künye ekleyebilirsiniz (örn: "Eyyüpteki Ahmet")_\n\n'
-        else:
-            uyari = ''
-
-        # Müşteri ekle
-        # Temel alanlar
-        temel = {k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'islem_turu', 'butce_min', 'butce_max', 'tercih_notlar', 'kunye')}
-        # Yapısal tercihler → detaylar JSON
-        detaylar = {}
-        for alan in ('tercih_oda', 'tercih_sehir', 'tercih_ilce', 'istenen_ozellikler', 'istenmeyen_ozellikler'):
-            if args.get(alan):
-                detaylar[alan] = args[alan]
-        temel['detaylar'] = detaylar
-
+        # Müşteri = sadece kişi bilgisi
+        temel = {k: v for k, v in args.items() if k in ('ad_soyad', 'telefon', 'email', 'kunye')}
         m = Musteri(emlakci_id=emlakci.id, **temel)
         db.session.add(m)
         db.session.commit()
 
-        islem = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(m.islem_turu, m.islem_turu or '—')
         return (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
-                + (f' _({m.kunye})_' if m.kunye else '') +
-                f'\n\n📞 {m.telefon or "—"}\n'
-                f'🏷 {islem}\n'
-                f'💰 Bütçe: {f_tl(m.butce_min)} — {f_tl(m.butce_max)} TL\n'
-                + (f'📝 {m.tercih_notlar}' if m.tercih_notlar else ''))
+                + (f' _({m.kunye})_' if m.kunye else '')
+                + f'\n\n📞 {m.telefon or "—"}'
+                + (f'\n📧 {m.email}' if m.email else ''))
 
     if fonksiyon_adi == 'musteri_guncelle':
         # ID veya isimle bul
@@ -3350,15 +3312,12 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if args.get('telefon'):
             mus.telefon = args['telefon']
             degisiklikler.append(f'Telefon: {args["telefon"]}')
+        if args.get('email'):
+            mus.email = args['email']
+            degisiklikler.append(f'Email: {args["email"]}')
         if args.get('sicaklik'):
             mus.sicaklik = args['sicaklik']
             degisiklikler.append(f'Sıcaklık: {args["sicaklik"]}')
-        if args.get('butce_max'):
-            mus.butce_max = args['butce_max']
-            degisiklikler.append(f'Bütçe max: {int(args["butce_max"]):,} TL'.replace(',', '.'))
-        if args.get('tercih_notlar'):
-            mus.tercih_notlar = (mus.tercih_notlar or '') + '\n' + args['tercih_notlar']
-            degisiklikler.append(f'Not eklendi')
 
         db.session.commit()
         if not degisiklikler:

@@ -66,29 +66,11 @@ Numara + işlem belirtilmemişse detay göster veya "ne yapmak istiyorsunuz?" so
 
 KATEGORI_PROMPTLARI = {
     'musteri': """
-MÜŞTERİ İŞLEMLERİ:
-DİKKAT: "müşterimize ekle", "müşteri kaydet", "arıyor", "arayışı var", "talep ediyor" → MÜŞTERİ ekle (mulk_ekle DEĞİL!).
-"kiralık daire arıyor" = müşteri talebi. "kiralık daire ilan ekle" = mülk ekle. Farkı anla.
-Müşteri eklerken şu alanları doğal dilden çıkar:
-- ad_soyad (zorunlu), telefon, islem_turu (kira/satis)
-- butce_min, butce_max (TL — "30K"=30000, "1.5M"=1500000)
-- tercih_oda ("2+1", "3+1"), tercih_sehir, tercih_ilce
-- istenen_ozellikler: ["asansör", "balkon", "site içi", "otopark"]
-- istenmeyen_ozellikler: ["açık mutfak", "zemin kat", "bodrum"]
-- kunye: ayırt edici lakap ("Eyyüpteki", "mimar")
-Aynı isimde müşteri varsa uyar. "Elimizde ne var" = portföy, müşteri DEĞİL.
-
-MÜŞTERİ EKLEME KURALLARI:
-- Kullanıcı serbest yazar, SEN bilgiyi çıkar. Form doldurtma.
-- Eksik bilgi varsa SADECE eksik olanı sor
-- "kiralık arıyor" = islem_turu: kira. "ev bakıyor" = satis.
-- "30K" = 30000, "1.5M" = 1500000
-- "açık mutfak istemiyor" = istenmeyen_ozellikler: ["açık mutfak"]
-- "yeni müşteri ekle" veya "yeni talep" deyince örnek göster:
-  "Müşteri bilgilerini serbest yazabilirsiniz. Örnek:
-  _Ahmet Yılmaz, kiralık 2+1 daire arıyor, bütçe 30K, Kadıköy, açık mutfak istemiyor_"
-- İsim YOKSA mutlaka sor: "Müşterinin adı ne?" — isim olmadan ekleme YAPMA, uydurma.
-- Lokasyon bilgisi varsa (Kemerburgaz, Kadıköy) → tercih_ilce'ye yaz.
+MÜŞTERİ = KİŞİ BİLGİSİ. Bütçe, tercih, özellik bilgileri müşteriye değil TALEP'e aittir.
+Müşteri eklerken: ad_soyad (zorunlu), telefon, email, kunye.
+"kiralık 2+1 arıyor bütçe 30K" → önce musteri_ekle(ad, tel) + sonra talep_ekle(islem, bütçe, tercih).
+"müşteri ekle Selim Ok" → musteri_ekle(ad_soyad="Selim Ok"). Bütçe/tercih SORMA.
+Aynı isimde müşteri varsa uyar. "Elimizde ne var" = portföy.
 """,
 
     'mulk': """
