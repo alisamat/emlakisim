@@ -322,15 +322,30 @@ def route(metin, threshold=0.40):
     return sirali
 
 
-def multi_route(metin, threshold=0.40, min_fark=0.10):
+def multi_route(metin, threshold=0.40, min_fark=0.10, gecmis=None):
     """
-    Multi-intent: birden fazla kategori döndür.
-    İkinci kategori birinciden min_fark kadar yakınsa dahil et.
+    Bağlam-duyarlı multi-intent routing.
 
-    Returns:
-        ['musteri', 'planlama'] veya ['musteri']
+    gecmis varsa son kullanıcı+asistan mesajını bağlam olarak kullanır.
+    "Kuveyttürk sanal pos" tek başına mulk'e gider ama
+    bağlamda "görev ekle" varsa planlama'ya gider.
     """
-    sonuclar = route(metin, threshold)
+    # Bağlam varsa mesajı zenginleştir
+    baglam_metin = metin
+    if gecmis and len(gecmis) >= 2:
+        # Son 2 mesajı (user + assistant) bağlam olarak ekle
+        son_mesajlar = gecmis[-2:]
+        baglam = ' → '.join([m.get('content', '')[:80] for m in son_mesajlar])
+        baglam_metin = f'{baglam} → {metin}'
+        logger.info(f'[Router] bağlam_metin: "{baglam_metin[:100]}"')
+
+    sonuclar = route(baglam_metin, threshold)
+
+    # Bağlamlı sonuç çok düşükse, bağlamsız dene
+    if not sonuclar and baglam_metin != metin:
+        logger.info(f'[Router] bağlamlı sonuç boş, bağlamsız deneniyor')
+        sonuclar = route(metin, threshold)
+
     if not sonuclar:
         return []
 
@@ -341,5 +356,5 @@ def multi_route(metin, threshold=0.40, min_fark=0.10):
         if birinci_skor - skor <= min_fark and len(kategoriler) < 3:
             kategoriler.append(kat)
 
-    logger.info(f'[Router] multi_route("{metin[:50]}") → {kategoriler} | tüm skorlar: {sonuclar[:5]}')
+    logger.info(f'[Router] multi_route → {kategoriler} | skorlar: {sonuclar[:5]}')
     return kategoriler
