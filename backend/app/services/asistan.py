@@ -2400,7 +2400,7 @@ _FUNCTIONS = [
     },
     {
         'name': 'mulk_ekle',
-        'description': 'Portföye yeni mülk ekler',
+        'description': 'Portföye yeni mülk ekler. Tüm bilgileri doğal dilden çıkar.',
         'parameters': {
             'type': 'object',
             'properties': {
@@ -2411,8 +2411,24 @@ _FUNCTIONS = [
                 'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis']},
                 'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
                 'fiyat': {'type': 'number'},
-                'metrekare': {'type': 'number'},
+                'metrekare': {'type': 'number', 'description': 'Net m²'},
+                'brut_metrekare': {'type': 'number', 'description': 'Brüt m²'},
                 'oda_sayisi': {'type': 'string'},
+                'bulundugu_kat': {'type': 'string', 'description': 'Giriş, 1, 2, Çatı...'},
+                'kat_sayisi': {'type': 'integer', 'description': 'Binanın toplam kat sayısı'},
+                'bina_yasi': {'type': 'string', 'description': '0=sıfır/yeni, 5, 10-20...'},
+                'isitma': {'type': 'string', 'description': 'Kombi, merkezi, soba, yerden...'},
+                'mutfak': {'type': 'string', 'enum': ['acik', 'kapali'], 'description': 'Açık (Amerikan) veya Kapalı'},
+                'banyo_sayisi': {'type': 'integer'},
+                'balkon': {'type': 'boolean'},
+                'asansor': {'type': 'boolean'},
+                'otopark': {'type': 'string', 'description': 'Yok, Açık, Kapalı'},
+                'esyali': {'type': 'boolean'},
+                'site_ici': {'type': 'boolean'},
+                'aidat': {'type': 'number', 'description': 'Aylık aidat TL'},
+                'tapu_durumu': {'type': 'string', 'description': 'Kat mülkiyeti, kat irtifakı, hisseli...'},
+                'kullanim_durumu': {'type': 'string', 'description': 'Boş, kiracılı, sahibi oturuyor'},
+                'cephe': {'type': 'string', 'description': 'Güney, kuzey, doğu, batı...'},
             },
             'required': ['baslik'],
         },
@@ -3558,7 +3574,19 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         return sonuc
 
     if fonksiyon_adi == 'mulk_ekle':
-        m = Mulk(emlakci_id=emlakci.id, **{k: v for k, v in args.items() if k in ('baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi')})
+        temel_alanlar = ('baslik', 'adres', 'sehir', 'ilce', 'tip', 'islem_turu', 'fiyat', 'metrekare', 'oda_sayisi')
+        temel = {k: v for k, v in args.items() if k in temel_alanlar}
+        m = Mulk(emlakci_id=emlakci.id, **temel)
+        # Detay alanlarını JSON'a yaz
+        detay_alanlar = ('bulundugu_kat', 'kat_sayisi', 'bina_yasi', 'isitma', 'mutfak',
+                         'banyo_sayisi', 'balkon', 'asansor', 'otopark', 'esyali', 'site_ici',
+                         'aidat', 'tapu_durumu', 'kullanim_durumu', 'cephe', 'brut_metrekare')
+        detaylar = {}
+        for alan in detay_alanlar:
+            if args.get(alan) is not None:
+                detaylar[alan] = args[alan]
+        if detaylar:
+            m.detaylar = detaylar
         db.session.add(m)
         db.session.commit()
         f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
@@ -3566,12 +3594,32 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         import os
         frontend = os.environ.get('FRONTEND_URL', 'https://emlakisim.com')
         sayfa_link = f'{frontend}/sayfa/{emlakci.slug or emlakci.id}'
+        # Detaylı çıktı
+        det = m.detaylar or {}
+        detay_satirlar = []
+        if det.get('bulundugu_kat'): detay_satirlar.append(f'🏢 Kat: {det["bulundugu_kat"]}' + (f'/{det["kat_sayisi"]}' if det.get('kat_sayisi') else ''))
+        if det.get('bina_yasi'): detay_satirlar.append(f'🏗 Bina yaşı: {det["bina_yasi"]}')
+        if det.get('isitma'): detay_satirlar.append(f'🔥 Isıtma: {det["isitma"]}')
+        if det.get('mutfak'): detay_satirlar.append(f'🍳 Mutfak: {"Açık" if det["mutfak"] == "acik" else "Kapalı"}')
+        if det.get('banyo_sayisi'): detay_satirlar.append(f'🚿 Banyo: {det["banyo_sayisi"]}')
+        if det.get('balkon'): detay_satirlar.append('🌅 Balkon: Var')
+        if det.get('asansor'): detay_satirlar.append('🛗 Asansör: Var')
+        if det.get('otopark'): detay_satirlar.append(f'🅿️ Otopark: {det["otopark"]}')
+        if det.get('esyali'): detay_satirlar.append('🪑 Eşyalı: Evet')
+        if det.get('site_ici'): detay_satirlar.append('🏘 Site içi: Evet')
+        if det.get('aidat'): detay_satirlar.append(f'💳 Aidat: {f_tl(det["aidat"])} TL')
+        if det.get('brut_metrekare'): detay_satirlar.append(f'📐 Brüt: {det["brut_metrekare"]}m²')
+        if det.get('tapu_durumu'): detay_satirlar.append(f'📜 Tapu: {det["tapu_durumu"]}')
+        if det.get('kullanim_durumu'): detay_satirlar.append(f'🏠 Durum: {det["kullanim_durumu"]}')
+        if det.get('cephe'): detay_satirlar.append(f'🧭 Cephe: {det["cephe"]}')
+        detay_str = '\n'.join(detay_satirlar)
         return (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
                 f'📍 {m.adres or "—"}{", " + m.ilce if m.ilce else ""}{", " + m.sehir if m.sehir else ""}\n'
                 f'🏷 {islem} · {m.tip or "—"}\n'
                 f'💰 {f_tl(m.fiyat)} TL\n'
-                f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²\n\n'
-                f'🌐 _İlan sayfanızda görüntüleyin:_ {sayfa_link}')
+                f'🛏 {m.oda_sayisi or "—"} · {m.metrekare or "—"}m²\n'
+                + (f'\n{detay_str}\n' if detay_str else '')
+                + f'\n🌐 _İlan sayfanızda görüntüleyin:_ {sayfa_link}')
 
     if fonksiyon_adi == 'mulk_listele':
         sonuc, _ = _mulk_listele(emlakci)
