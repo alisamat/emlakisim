@@ -237,6 +237,41 @@ def _baglam_filtre(metin_norm, emlakci, session):
                             f'🏷 Etiket: {etiket_label.get(n.etiket, n.etiket)}\n'
                             f'📅 {n.olusturma.strftime("%d.%m.%Y %H:%M") if n.olusturma else "—"}'
                             + (f'\n👤 Müşteri: {Musteri.query.get(n.musteri_id).ad_soyad}' if n.musteri_id and Musteri.query.get(n.musteri_id) else ''))
+            elif son_komut == 'talep':
+                from app.models.talep import Talep
+                t = Talep.query.get(secilen['id'])
+                if t:
+                    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+                    yon = '🔍 Arıyor' if t.yonu == 'arayan' else '🏠 Veriyor'
+                    islem_l = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(t.islem_turu, '—')
+                    musteri_str = ''
+                    if t.musteri_id:
+                        m = Musteri.query.get(t.musteri_id)
+                        if m: musteri_str = f'\n👤 {m.ad_soyad}'
+                    return (f'📋 *Talep Detayı*\n\n'
+                            f'{yon} · {islem_l}\n'
+                            f'💰 Bütçe: {f_tl(t.butce_min)} — {f_tl(t.butce_max)} TL'
+                            + (f'\n🛏 {t.tercih_oda}' if t.tercih_oda else '')
+                            + (f'\n📍 {t.tercih_ilce or ""} {t.tercih_sehir or ""}' if t.tercih_ilce or t.tercih_sehir else '')
+                            + (f'\n✅ İstenen: {", ".join(t.istenen)}' if t.istenen else '')
+                            + (f'\n❌ İstenmeyen: {", ".join(t.istenmeyen)}' if t.istenmeyen else '')
+                            + musteri_str
+                            + f'\n📊 Durum: {t.durum or "aktif"}')
+            elif son_komut == 'teklif':
+                from app.models import Teklif
+                t = Teklif.query.get(secilen['id'])
+                if t:
+                    f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '—'
+                    mulk_ad = Mulk.query.get(t.mulk_id).baslik if t.mulk_id and Mulk.query.get(t.mulk_id) else '—'
+                    mus_ad = Musteri.query.get(t.musteri_id).ad_soyad if t.musteri_id and Musteri.query.get(t.musteri_id) else '—'
+                    durum_ikon = {'bekliyor': '⏳', 'kabul': '✅', 'red': '❌', 'karsi_teklif': '🔄'}
+                    return (f'💰 *Teklif Detayı*\n\n'
+                            f'{durum_ikon.get(t.durum, "⏳")} Durum: {t.durum or "bekliyor"}\n'
+                            f'💰 Teklif: {f_tl(t.teklif_tutar)} TL\n'
+                            + (f'🏷 İstenen: {f_tl(t.istenen_tutar)} TL\n' if t.istenen_tutar else '')
+                            + f'🏢 Mülk: {mulk_ad}\n'
+                            f'👤 Müşteri: {mus_ad}\n'
+                            f'📅 {t.olusturma.strftime("%d.%m.%Y") if t.olusturma else "—"}')
 
         if filtre.startswith('sicaklik_') and son_komut == 'musteri':
             hedef = filtre.split('_')[1]
