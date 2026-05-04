@@ -2408,7 +2408,7 @@ _FUNCTIONS = [
                 'adres': {'type': 'string'},
                 'sehir': {'type': 'string'},
                 'ilce': {'type': 'string'},
-                'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis']},
+                'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis', 'bina', 'depo']},
                 'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
                 'fiyat': {'type': 'number'},
                 'metrekare': {'type': 'number', 'description': 'Net m²'},
@@ -2429,6 +2429,21 @@ _FUNCTIONS = [
                 'tapu_durumu': {'type': 'string', 'description': 'Kat mülkiyeti, kat irtifakı, hisseli...'},
                 'kullanim_durumu': {'type': 'string', 'description': 'Boş, kiracılı, sahibi oturuyor'},
                 'cephe': {'type': 'string', 'description': 'Güney, kuzey, doğu, batı...'},
+                # İş yeri / Bina
+                'bina_tipi': {'type': 'string', 'description': 'Müstakil, apartman dairesi, plaza katı...'},
+                'yapinin_durumu': {'type': 'string', 'description': 'Sıfır, ikinci el'},
+                'zemin_etudu': {'type': 'boolean'},
+                'kiracili': {'type': 'boolean', 'description': 'Kiracısı var mı'},
+                'krediye_uygun': {'type': 'boolean'},
+                # Arsa
+                'imar_durumu': {'type': 'string', 'description': 'Konut, ticari, tarla, bağ, sanayi...'},
+                'm2_fiyati': {'type': 'number', 'description': 'TL/m²'},
+                'ada_no': {'type': 'string'},
+                'parsel_no': {'type': 'string'},
+                'pafta_no': {'type': 'string'},
+                'kaks': {'type': 'string', 'description': 'Emsal / KAKS değeri'},
+                'gabari': {'type': 'string'},
+                'takas': {'type': 'boolean', 'description': 'Takas kabul eder mi'},
             },
             'required': ['baslik'],
         },
@@ -3580,7 +3595,9 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         # Detay alanlarını JSON'a yaz
         detay_alanlar = ('bulundugu_kat', 'kat_sayisi', 'bina_yasi', 'isitma', 'mutfak',
                          'banyo_sayisi', 'balkon', 'asansor', 'otopark', 'esyali', 'site_ici',
-                         'aidat', 'tapu_durumu', 'kullanim_durumu', 'cephe', 'brut_metrekare')
+                         'aidat', 'tapu_durumu', 'kullanim_durumu', 'cephe', 'brut_metrekare',
+                         'bina_tipi', 'yapinin_durumu', 'zemin_etudu', 'kiracili', 'krediye_uygun',
+                         'imar_durumu', 'm2_fiyati', 'ada_no', 'parsel_no', 'pafta_no', 'kaks', 'gabari', 'takas')
         detaylar = {}
         for alan in detay_alanlar:
             if args.get(alan) is not None:
@@ -3612,6 +3629,19 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if det.get('tapu_durumu'): detay_satirlar.append(f'📜 Tapu: {det["tapu_durumu"]}')
         if det.get('kullanim_durumu'): detay_satirlar.append(f'🏠 Durum: {det["kullanim_durumu"]}')
         if det.get('cephe'): detay_satirlar.append(f'🧭 Cephe: {det["cephe"]}')
+        # İş yeri / Bina
+        if det.get('bina_tipi'): detay_satirlar.append(f'🏗 Bina tipi: {det["bina_tipi"]}')
+        if det.get('yapinin_durumu'): detay_satirlar.append(f'🔧 Yapı: {det["yapinin_durumu"]}')
+        if det.get('zemin_etudu'): detay_satirlar.append('📋 Zemin etüdü: Var')
+        if det.get('kiracili'): detay_satirlar.append('👤 Kiracılı: Evet')
+        if det.get('krediye_uygun'): detay_satirlar.append('🏦 Krediye uygun: Evet')
+        # Arsa
+        if det.get('imar_durumu'): detay_satirlar.append(f'📐 İmar: {det["imar_durumu"]}')
+        if det.get('m2_fiyati'): detay_satirlar.append(f'💰 m² fiyatı: {f_tl(det["m2_fiyati"])} TL/m²')
+        if det.get('ada_no') or det.get('parsel_no'): detay_satirlar.append(f'📍 Ada/Parsel: {det.get("ada_no", "—")}/{det.get("parsel_no", "—")}')
+        if det.get('kaks'): detay_satirlar.append(f'📊 KAKS: {det["kaks"]}')
+        if det.get('gabari'): detay_satirlar.append(f'📏 Gabari: {det["gabari"]}')
+        if det.get('takas'): detay_satirlar.append('🔄 Takas: Kabul edilir')
         detay_str = '\n'.join(detay_satirlar)
         return (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
                 f'📍 {m.adres or "—"}{", " + m.ilce if m.ilce else ""}{", " + m.sehir if m.sehir else ""}\n'
