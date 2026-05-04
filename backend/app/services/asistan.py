@@ -233,7 +233,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
             sonuclar = Musteri.query.filter(Musteri.id.in_(ids), Musteri.sicaklik == hedef).all()
             if not sonuclar:
                 return f'📭 Listede {hedef} müşteri yok.'
-            satirlar = [f'*{i+1}.* {"🔥" if hedef == "sicak" else "🟡" if hedef == "ilgili" else "❄️"} {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+            satirlar = [f'*{i+1}.* (#{m.id}) {"🔥" if hedef == "sicak" else "🟡" if hedef == "ilgili" else "❄️"} {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
             session['son_liste'] = [{'id': m.id} for m in sonuclar]
             return f'👥 *{hedef.capitalize()} müşteriler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
 
@@ -244,7 +244,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 sonuclar = Musteri.query.filter(Musteri.id.in_(ids), Musteri.islem_turu == hedef_islem).all()
                 if not sonuclar:
                     return f'📭 Listede {hedef_label.lower()} arayan müşteri yok.'
-                satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "—"}' for i, m in enumerate(sonuclar)]
+                satirlar = [f'*{i+1}.* (#{m.id}) {m.ad_soyad} — {m.telefon or "—"}' for i, m in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': m.id} for m in sonuclar]
                 return f'👥 *{hedef_label} arayan müşteriler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
             elif son_komut == 'mulk':
@@ -252,7 +252,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 if not sonuclar:
                     return f'📭 Listede {hedef_label.lower()} mülk yok.'
                 f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
-                satirlar = [f'*{i+1}.* {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
+                satirlar = [f'*{i+1}.* (#{m.id}) {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': m.id} for m in sonuclar]
                 return f'🏢 *{hedef_label} mülkler ({len(sonuclar)}):*\n\n' + '\n'.join(satirlar)
 
@@ -262,7 +262,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 sonuclar = Musteri.query.filter_by(emlakci_id=emlakci.id).order_by(Musteri.olusturma.desc()).offset(offset).limit(10).all()
                 if not sonuclar:
                     return '📭 Daha fazla müşteri yok.'
-                satirlar = [f'*{offset+i+1}.* {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
+                satirlar = [f'*{offset+i+1}.* (#{m.id}) {m.ad_soyad} — {m.telefon or "—"} ({m.islem_turu or "?"})' for i, m in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': m.id} for m in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'👥 *Müşteriler (devam):*\n\n' + '\n'.join(satirlar)
@@ -271,7 +271,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 if not sonuclar:
                     return '📭 Daha fazla mülk yok.'
                 f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
-                satirlar = [f'*{offset+i+1}.* {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
+                satirlar = [f'*{offset+i+1}.* (#{m.id}) {m.baslik or "—"} — {f_tl(m.fiyat)}' for i, m in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': m.id} for m in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'🏢 *Portföy (devam):*\n\n' + '\n'.join(satirlar)
@@ -280,7 +280,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 sonuclar = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').offset(offset).limit(10).all()
                 if not sonuclar:
                     return '📭 Daha fazla görev yok.'
-                satirlar = [f'*{offset+i+1}.* {"📌"} {g.baslik}' for i, g in enumerate(sonuclar)]
+                satirlar = [f'*{offset+i+1}.* (#{g.id}) {"📌"} {g.baslik}' for i, g in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': g.id, 'tip': 'gorev'} for g in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'📅 *Görevler (devam):*\n\n' + '\n'.join(satirlar)
@@ -289,7 +289,7 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 sonuclar = Fatura.query.filter_by(emlakci_id=emlakci.id).order_by(Fatura.olusturma.desc()).offset(offset).limit(10).all()
                 if not sonuclar:
                     return '📭 Daha fazla fatura yok.'
-                satirlar = [f'*{offset+i+1}.* {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL'.replace(',', '.') for i, f in enumerate(sonuclar)]
+                satirlar = [f'*{offset+i+1}.* (#{f.id}) {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL'.replace(',', '.') for i, f in enumerate(sonuclar)]
                 session['son_liste'] = [{'id': f.id, 'tip': 'fatura'} for f in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'🧾 *Faturalar (devam):*\n\n' + '\n'.join(satirlar)
@@ -606,7 +606,7 @@ def _musteri_listele(emlakci, session=None):
         return '📭 Henüz müşteriniz yok.\n\n_"Müşteri ekle" yazarak yeni müşteri ekleyebilirsiniz._', []
     if session is not None:
         session['son_liste'] = [{'id': m.id} for m in musteriler]
-    satirlar = [f'*{i+1}.* {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(musteriler)]
+    satirlar = [f'*{i+1}.* (#{m.id}) {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})' for i, m in enumerate(musteriler)]
     toplam = Musteri.query.filter_by(emlakci_id=emlakci.id).count()
     ek = f'\n\n_Toplam {toplam} müşteri. "devam" yazarak daha fazla görebilirsiniz._' if toplam > 10 else ''
     return f'👥 *Müşterileriniz* ({toplam})\n\n' + '\n'.join(satirlar) + ek, musteriler
@@ -678,7 +678,7 @@ def _musteri_ara(emlakci, metin):
     satirlar = []
     for i, m in enumerate(sonuclar):
         sicaklik_ikon = {'sicak': '🔥', 'ilgili': '🟡', 'soguk': '❄️'}.get(m.sicaklik, '⚪')
-        satirlar.append(f'*{i+1}.* {sicaklik_ikon} {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})')
+        satirlar.append(f'*{i+1}.* (#{m.id}) {sicaklik_ikon} {m.ad_soyad} — {m.telefon or "tel yok"} ({m.islem_turu or "?"})')
     return f'🔍 *"{sorgu}" arama sonuçları:* ({len(sonuclar)})\n\n' + '\n'.join(satirlar)
 
 
@@ -705,7 +705,7 @@ def _mulk_ara(emlakci, metin):
     f_tl = lambda v: f'{int(v):,}'.replace(',', '.') + ' TL' if v else '?'
     satirlar = []
     for i, m in enumerate(sonuclar):
-        satirlar.append(f'*{i+1}.* {m.baslik or m.adres or "—"} — {f_tl(m.fiyat)} ({m.islem_turu or "?"})')
+        satirlar.append(f'*{i+1}.* (#{m.id}) {m.baslik or m.adres or "—"} — {f_tl(m.fiyat)} ({m.islem_turu or "?"})')
     return f'🔍 *"{sorgu}" arama sonuçları:* ({len(sonuclar)})\n\n' + '\n'.join(satirlar)
 
 
@@ -718,7 +718,7 @@ def _mulk_listele(emlakci, session=None):
     satirlar = []
     for i, m in enumerate(mulkler):
         fiyat = f'{int(m.fiyat):,}'.replace(',', '.') + ' TL' if m.fiyat else '?'
-        satirlar.append(f'*{i+1}.* {m.baslik or m.adres or "—"} — {fiyat} ({m.islem_turu or "?"})')
+        satirlar.append(f'*{i+1}.* (#{m.id}) {m.baslik or m.adres or "—"} — {fiyat} ({m.islem_turu or "?"})')
     toplam = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).count()
     ek = f'\n\n_Toplam {toplam} mülk._' if toplam > 10 else ''
     # Public link
@@ -1084,7 +1084,7 @@ def _gorev_listele(emlakci, session=None):
         return '📅 Aktif görev yok.\n\n_"Görev ekle" yazarak yeni görev ekleyebilirsiniz._'
     if session is not None:
         session['son_liste'] = [{'id': g.id, 'tip': 'gorev'} for g in gorevler]
-    satirlar = [f'*{i+1}.* {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik}' for i, g in enumerate(gorevler)]
+    satirlar = [f'*{i+1}.* (#{g.id}) {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik}' for i, g in enumerate(gorevler)]
     return f'📅 *Görevleriniz* ({len(gorevler)})\n\n' + '\n'.join(satirlar)
 
 
@@ -1205,7 +1205,7 @@ def _fatura_listele(emlakci, session=None):
         return '🧾 Henüz fatura yok.'
     if session is not None:
         session['son_liste'] = [{'id': f.id, 'tip': 'fatura'} for f in faturalar]
-    satirlar = [f'*{i+1}.* {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for i, f in enumerate(faturalar)]
+    satirlar = [f'*{i+1}.* (#{f.id}) {f.fatura_no} — {f.alici_ad or "?"} — {int(f.toplam):,} TL — {f.durum}'.replace(',', '.') for i, f in enumerate(faturalar)]
     return f'🧾 *Son Faturalar ({len(faturalar)})*\n\n' + '\n'.join(satirlar)
 
 
@@ -1225,7 +1225,7 @@ def _hatirlatma_listele(emlakci, session=None):
         return '📭 Henüz hatırlatma yok.\n\n_"Unutma: ..." yazarak hatırlatma ekleyebilirsiniz._'
     if session is not None:
         session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar]
-    satirlar = [f'*{i+1}.* {n.icerik[:80]}' for i, n in enumerate(notlar)]
+    satirlar = [f'*{i+1}.* (#{n.id}) {n.icerik[:80]}' for i, n in enumerate(notlar)]
     return f'🧠 *Hatırlatmalarınız* ({len(notlar)})\n\n' + '\n'.join(satirlar)
 
 
@@ -2141,7 +2141,7 @@ def _teklif_listele(emlakci, args):
         mus_ad = Musteri.query.get(t.musteri_id).ad_soyad if t.musteri_id and Musteri.query.get(t.musteri_id) else '—'
         durum_ikon = {'bekliyor': '⏳', 'kabul': '✅', 'red': '❌', 'karsi_teklif': '🔄'}.get(t.durum, '⏳')
         tarih = t.olusturma.strftime('%d.%m') if t.olusturma else ''
-        satirlar.append(f'*{i+1}.* {durum_ikon} {f_tl(t.teklif_tutar)} TL — {mus_ad} → {mulk_ad} _{tarih}_')
+        satirlar.append(f'*{i+1}.* (#{t.id}) {durum_ikon} {f_tl(t.teklif_tutar)} TL — {mus_ad} → {mulk_ad} _{tarih}_')
 
     return f'💰 *Teklif Geçmişi ({len(teklifler)}):*\n\n' + '\n'.join(satirlar)
 
@@ -2298,7 +2298,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'musteri_adi': {'type': 'string', 'description': 'Güncellenecek müşterinin adı'},
-                'musteri_id': {'type': 'integer', 'description': 'Müşteri ID (biliniyorsa)'},
+                'musteri_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'kunye': {'type': 'string', 'description': 'Yeni künye/rumuz ekle'},
                 'telefon': {'type': 'string', 'description': 'Yeni telefon'},
                 'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk']},
@@ -2338,7 +2338,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı ile bul (veya bağlamdan son mülk)'},
-                'mulk_id': {'type': 'integer', 'description': 'Mülk ID'},
+                'mulk_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
@@ -2371,33 +2371,33 @@ _FUNCTIONS = [
     },
     {
         'name': 'mulk_sil',
-        'description': 'Mülkü portföyden siler (pasife alır).',
+        'description': 'Mülkü portföyden siler. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'mulk_baslik': {'type': 'string', 'description': 'Mülkün başlığı'},
-                'mulk_id': {'type': 'integer'},
+                'mulk_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri'},
             },
         },
     },
     {
         'name': 'musteri_sil',
-        'description': 'Müşteriyi siler.',
+        'description': 'Müşteriyi siler. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'musteri_adi': {'type': 'string'},
-                'musteri_id': {'type': 'integer'},
+                'musteri_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri'},
             },
         },
     },
     {
         'name': 'not_guncelle',
-        'description': 'Mevcut notu günceller — içerik değiştir, tamamla, etiket değiştir.',
+        'description': 'Mevcut notu günceller — içerik değiştir, tamamla, etiket değiştir. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'not_icerik_ara': {'type': 'string', 'description': 'Not içeriğinden ara (ID bilinmiyorsa)'},
                 'yeni_icerik': {'type': 'string'},
                 'tamamlandi': {'type': 'boolean'},
@@ -2407,11 +2407,11 @@ _FUNCTIONS = [
     },
     {
         'name': 'not_sil',
-        'description': 'Notu siler.',
+        'description': 'Notu siler. Kullanıcı "2 numarayı sil" derse listedeki (#ID) değerini kullan, sıra numarasını değil. Örn: listede "2. (#47) ..." varsa not_id=47 gönder.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'not_icerik_ara': {'type': 'string'},
             },
         },
@@ -2477,11 +2477,11 @@ _FUNCTIONS = [
     },
     {
         'name': 'not_goreve_donustur',
-        'description': 'Bir notu göreve dönüştürür. "Bu notu göreve çevir", "1. notu göreve dönüştür" gibi.',
+        'description': 'Bir notu göreve dönüştürür. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'not_id': {'type': 'integer', 'description': 'Not ID'},
+                'not_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'not_icerik': {'type': 'string', 'description': 'Not içeriğinden arama (ID bilinmiyorsa)'},
             },
         },
@@ -2542,22 +2542,22 @@ _FUNCTIONS = [
     },
     {
         'name': 'gorev_sil',
-        'description': 'Görevi siler.',
+        'description': 'Görevi siler. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'gorev_id': {'type': 'integer'},
+                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara'},
             },
         },
     },
     {
         'name': 'fatura_sil',
-        'description': 'Faturayı siler.',
+        'description': 'Faturayı siler. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'fatura_id': {'type': 'integer'},
+                'fatura_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri'},
                 'fatura_no': {'type': 'string'},
             },
         },
@@ -2705,11 +2705,11 @@ _FUNCTIONS = [
     },
     {
         'name': 'gorev_guncelle',
-        'description': 'Mevcut görevi günceller — durum, tarih, saat, başlık, açıklama, öncelik. "görevi yarına ertele", "3. görevi tamamla", "toplantıyı iptal et".',
+        'description': 'Mevcut görevi günceller — durum, tarih, saat, başlık, açıklama, öncelik. Kullanıcı numara verirse listedeki (#ID) değerini kullan.',
         'parameters': {
             'type': 'object',
             'properties': {
-                'gorev_id': {'type': 'integer', 'description': 'Görev ID'},
+                'gorev_id': {'type': 'integer', 'description': 'Listedeki (#ID) değeri — sıra numarası DEĞİL'},
                 'gorev_baslik': {'type': 'string', 'description': 'Başlıktan ara (ID bilinmiyorsa)'},
                 'durum': {'type': 'string', 'enum': ['bekliyor', 'devam', 'tamamlandi', 'iptal']},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
@@ -3217,7 +3217,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             if t.musteri_id:
                 m = Musteri.query.get(t.musteri_id)
                 if m: musteri_str = f' — {m.ad_soyad}'
-            satirlar.append(f'*{i+1}.* {yon_ikon} {islem_l}{musteri_str} · {f_tl(t.butce_max)} TL' + (f' · {t.tercih_oda}' if t.tercih_oda else ''))
+            satirlar.append(f'*{i+1}.* (#{t.id}) {yon_ikon} {islem_l}{musteri_str} · {f_tl(t.butce_max)} TL' + (f' · {t.tercih_oda}' if t.tercih_oda else ''))
         return f'📋 *Talepler ({len(talepler)}):*\n\n' + '\n'.join(satirlar)
 
     if fonksiyon_adi == 'son_islemler_getir':
@@ -3449,7 +3449,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if not notlar:
             return '📝 Not bulunamadı.'
         etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
-        satirlar = [f'*{i+1}.* {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar)]
+        satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar)]
         return f'📝 *Notlar ({len(notlar)}):*\n\n' + '\n'.join(satirlar)
 
     if fonksiyon_adi == 'not_goreve_donustur':
@@ -3550,7 +3550,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         gorevler = sorgu.order_by(Gorev.olusturma.desc()).limit(15).all()
         if not gorevler:
             return '📅 Görev bulunamadı.'
-        satirlar = [f'*{i+1}.* {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik} — {g.durum or "bekliyor"}' for i, g in enumerate(gorevler)]
+        satirlar = [f'*{i+1}.* (#{g.id}) {"✅" if g.durum == "tamamlandi" else "📌"} {g.baslik} — {g.durum or "bekliyor"}' for i, g in enumerate(gorevler)]
         return f'📅 *Görevler ({len(gorevler)}):*\n\n' + '\n'.join(satirlar)
 
     if fonksiyon_adi == 'gorev_guncelle':

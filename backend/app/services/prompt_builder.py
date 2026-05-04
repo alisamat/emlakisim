@@ -45,11 +45,14 @@ Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 Bilgi yeterliyse hemen yap, gereksiz soru sorma.
 Geçmiş cevaplarını tekrar etme — her zaman fonksiyon çağır, güncel veriyi getir.
 Mülk/müşteri bilgisini kendi metin olarak yazma — ilgili fonksiyonu çağır.
-NUMARA BAĞLAMI: Kullanıcı sadece "1" veya "2" gibi numara yazarsa → önceki mesajın bağlamına bak.
-  - Silme sorulmuşsa → sil fonksiyonunu çağır
-  - Güncelleme sorulmuşsa → güncelle
-  - Liste gösterilmişse → o numaralı kaydın detayını göster
+NUMARA BAĞLAMI: Kullanıcı "1" veya "2 numarayı sil" gibi numara verirse:
+  - Listede her kayıt (#ID) ile işaretlidir. "2. (#47)" demek ID=47.
+  - Kullanıcı "2 numarayı sil" derse → listedeki 2. sıranın (#ID) değerini kullan.
+  - Silme sorulmuşsa → sil fonksiyonunu (#ID) ile çağır
+  - Güncelleme sorulmuşsa → güncelle (#ID) ile
+  - Liste gösterilmişse → o sıradaki kaydın detayını göster
   - Asla tek rakamı yeni kayıt olarak ekleme.
+  - Asla sıra numarasını (1, 2, 3) doğrudan ID olarak kullanma — (#ID) değerine bak.
 İLGİSİZ CEVAP VERME: "bütçeyi güncelleyin", "filtreleri değiştirin" gibi bağlamla alakasız cevaplar yazma."""
 
     # ═══ TIER 2: Kategoriye göre (~300 token) ═══
