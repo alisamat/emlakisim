@@ -477,7 +477,7 @@ function FotoGaleriEkle({ mulkId, resimSayisi, onGuncelle }) {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const r = await api.post(`/api/panel/mulkler/${mulkId}/resim`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const r = await api.post(`/api/panel/mulkler/${mulkId}/resim`, formData);
         if (onGuncelle) onGuncelle(r.data.resimler);
       } catch (err) { alert(err.response?.data?.message || 'Yükleme hatası'); }
       finally { setYuk(false); }
