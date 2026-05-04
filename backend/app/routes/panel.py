@@ -838,11 +838,18 @@ def sesli_not_endpoint():
 
 # ════════ MÜLK RESİM YÖNETİMİ ════════
 
-@bp.route('/mulkler/<int:mid>/resim', methods=['POST'])
+@bp.route('/mulkler/<int:mid>/resim', methods=['POST', 'OPTIONS'])
 @jwt_required()
 def mulk_resim_ekle(mid):
     """Mülke fotoğraf ekle (multipart veya base64)."""
-    mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        mulk = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'[RESIM] Mülk bulunamadı: {e}')
+        return jsonify({'message': 'Mülk bulunamadı'}), 404
 
     import os
     storage = os.environ.get('STORAGE_TYPE', 'local')
@@ -882,7 +889,7 @@ def mulk_resim_ekle(mid):
         else:
             return jsonify({'message': 'Fotoğraf gerekli (multipart image veya base64)'}), 400
 
-    aciklama = (request.form or request.json or {}).get('aciklama', '')
+    aciklama = (request.form or request.get_json(silent=True) or {}).get('aciklama', '')
     ana = len(resimler) == 0  # İlk resim = kapak
 
     resimler.append({'url': url, 'aciklama': aciklama, 'ana': ana})
