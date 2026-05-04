@@ -2444,6 +2444,7 @@ _FUNCTIONS = [
                 'kaks': {'type': 'string', 'description': 'Emsal / KAKS değeri'},
                 'gabari': {'type': 'string'},
                 'takas': {'type': 'boolean', 'description': 'Takas kabul eder mi'},
+                'aciklama': {'type': 'string', 'description': 'Mülk açıklaması/tanıtım yazısı'},
             },
             'required': ['baslik'],
         },
@@ -2459,7 +2460,8 @@ _FUNCTIONS = [
                 'fiyat': {'type': 'number', 'description': 'Yeni fiyat TL'},
                 'baslik': {'type': 'string', 'description': 'Yeni başlık'},
                 'aktif': {'type': 'boolean', 'description': 'true=aktif, false=pasif'},
-                'notlar': {'type': 'string', 'description': 'Not ekle/güncelle'},
+                'aciklama': {'type': 'string', 'description': 'Mülk açıklaması/tanıtım yazısı (public sayfada görünür)'},
+                'notlar': {'type': 'string', 'description': 'Emlakçının kendi özel notu (sadece kendisi görür)'},
                 'metrekare': {'type': 'number'},
                 'brut_metrekare': {'type': 'number'},
                 'oda_sayisi': {'type': 'string', 'description': '2+1, 3+1 vb.'},
@@ -3430,6 +3432,11 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if args.get('aktif') is not None:
             mulk.aktif = args['aktif']
             degisiklikler.append('Aktif yapıldı' if args['aktif'] else 'Pasife alındı')
+        if args.get('aciklama'):
+            det = mulk.detaylar or {}
+            det['aciklama'] = args['aciklama']
+            mulk.detaylar = det
+            degisiklikler.append(f'Açıklama: {args["aciklama"][:80]}')
         if args.get('notlar'):
             mulk.notlar = (mulk.notlar or '') + '\n' + args['notlar']
             degisiklikler.append('Not eklendi')
@@ -3631,7 +3638,8 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                          'banyo_sayisi', 'balkon', 'asansor', 'otopark', 'esyali', 'site_ici',
                          'aidat', 'tapu_durumu', 'kullanim_durumu', 'cephe', 'brut_metrekare',
                          'bina_tipi', 'yapinin_durumu', 'zemin_etudu', 'kiracili', 'krediye_uygun',
-                         'imar_durumu', 'm2_fiyati', 'ada_no', 'parsel_no', 'pafta_no', 'kaks', 'gabari', 'takas')
+                         'imar_durumu', 'm2_fiyati', 'ada_no', 'parsel_no', 'pafta_no', 'kaks', 'gabari', 'takas',
+                         'aciklama')
         detaylar = {}
         for alan in detay_alanlar:
             if args.get(alan) is not None:
