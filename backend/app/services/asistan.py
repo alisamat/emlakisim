@@ -2641,9 +2641,35 @@ _FUNCTIONS = [
                 'tercih_tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis']},
                 'istenen': {'type': 'array', 'items': {'type': 'string'}, 'description': '["asansör", "balkon"]'},
                 'istenmeyen': {'type': 'array', 'items': {'type': 'string'}, 'description': '["açık mutfak"]'},
+                'mulk_baslik': {'type': 'string', 'description': 'Veren tarafında: hangi mülk kiraya/satışa veriliyor'},
                 'notlar': {'type': 'string'},
             },
             'required': ['islem_turu'],
+        },
+    },
+    {
+        'name': 'talep_guncelle',
+        'description': 'Mevcut talebi günceller. Bütçe, tercih, durum, müşteri bağlama.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'talep_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
+                'musteri_adi': {'type': 'string', 'description': 'Yeni müşteri bağla'},
+                'butce_min': {'type': 'number'}, 'butce_max': {'type': 'number'},
+                'tercih_oda': {'type': 'string'}, 'tercih_ilce': {'type': 'string'},
+                'durum': {'type': 'string', 'enum': ['aktif', 'pasif', 'tamamlandi']},
+                'notlar': {'type': 'string'},
+            },
+        },
+    },
+    {
+        'name': 'talep_sil',
+        'description': 'Talebi siler. Listedeki (#ID) değerini kullan.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'talep_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
+            },
         },
     },
     {
@@ -3223,7 +3249,7 @@ def _ai_function_call(fonksiyon_adi, args, emlakci):
         'fatura_olustur': 'fatura', 'fatura_guncelle': 'fatura', 'fatura_sil': 'fatura',
         'teklif_kaydet': 'teklif', 'teklif_guncelle': 'teklif', 'teklif_sil': 'teklif',
         'satis_kapandi': 'mulk', 'dogum_gunu_kaydet': 'musteri',
-        'talep_ekle': 'talep', 'talep_listele': 'talep',
+        'talep_ekle': 'talep', 'talep_guncelle': 'talep', 'talep_sil': 'talep', 'talep_listele': 'talep',
         'not_goreve_donustur': 'not', 'gosterim_geri_bildirim': 'not',
         'whatsapp_mesaj_gonder': 'iletisim', 'toplu_mesaj_gonder': 'iletisim',
         'asistan_ismi_degistir': 'ayar',
@@ -3352,8 +3378,19 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             else:
                 return f'⚠️ "{args["musteri_adi"]}" adında müşteri bulunamadı. Önce müşteriyi ekleyin veya "isimsiz kaydet" deyin.'
 
+        # Veren tarafı — mülk bağla
+        mulk_id = None
+        mulk_str = ''
+        if args.get('mulk_baslik'):
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+                Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')
+            ).first()
+            if mulk:
+                mulk_id = mulk.id
+                mulk_str = f'\n🏢 {mulk.baslik}'
+
         t = Talep(
-            emlakci_id=emlakci.id, musteri_id=musteri_id,
+            emlakci_id=emlakci.id, musteri_id=musteri_id, mulk_id=mulk_id,
             yonu=args.get('yonu', 'arayan'), islem_turu=args.get('islem_turu'),
             butce_min=args.get('butce_min'), butce_max=args.get('butce_max'),
             tercih_oda=args.get('tercih_oda'), tercih_sehir=args.get('tercih_sehir'),
@@ -3373,7 +3410,71 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 + (f'🛏 {t.tercih_oda}\n' if t.tercih_oda else '')
                 + (f'📍 {t.tercih_ilce or ""} {t.tercih_sehir or ""}\n' if t.tercih_ilce or t.tercih_sehir else '')
                 + (f'✅ İstenen: {", ".join(t.istenen)}\n' if t.istenen else '')
-                + (f'❌ İstenmeyen: {", ".join(t.istenmeyen)}' if t.istenmeyen else ''))
+                + (f'❌ İstenmeyen: {", ".join(t.istenmeyen)}\n' if t.istenmeyen else '')
+                + mulk_str)
+
+    if fonksiyon_adi == 'talep_guncelle':
+        from app.models.talep import Talep
+        t = None
+        if args.get('talep_id'):
+            t = Talep.query.filter_by(id=args['talep_id'], emlakci_id=emlakci.id).first()
+        if not t and not args.get('talep_id'):
+            talepler = Talep.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+            if len(talepler) == 1:
+                t = talepler[0]
+        if not t:
+            return '⚠️ Talep bulunamadı.'
+        degisiklikler = []
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+            if mus:
+                t.musteri_id = mus.id
+                degisiklikler.append(f'Müşteri: {mus.ad_soyad}')
+            else:
+                degisiklikler.append(f'⚠️ "{args["musteri_adi"]}" bulunamadı')
+        if args.get('butce_min') is not None:
+            t.butce_min = args['butce_min']
+            degisiklikler.append(f'Bütçe min: {int(args["butce_min"]):,}'.replace(',', '.'))
+        if args.get('butce_max') is not None:
+            t.butce_max = args['butce_max']
+            degisiklikler.append(f'Bütçe max: {int(args["butce_max"]):,}'.replace(',', '.'))
+        if args.get('tercih_oda'):
+            t.tercih_oda = args['tercih_oda']
+            degisiklikler.append(f'Oda: {args["tercih_oda"]}')
+        if args.get('tercih_ilce'):
+            t.tercih_ilce = args['tercih_ilce']
+            degisiklikler.append(f'İlçe: {args["tercih_ilce"]}')
+        if args.get('durum') and args['durum'] != t.durum:
+            t.durum = args['durum']
+            degisiklikler.append(f'Durum: {args["durum"]}')
+        if args.get('notlar'):
+            t.notlar = (t.notlar or '') + '\n' + args['notlar']
+            degisiklikler.append('Not eklendi')
+        db.session.commit()
+        if not degisiklikler:
+            return '⚠️ Güncellenecek bilgi belirtilmedi.'
+        return f'✅ *Talep güncellendi:*\n\n' + '\n'.join([f'• {d}' for d in degisiklikler])
+
+    if fonksiyon_adi == 'talep_sil':
+        from app.models.talep import Talep
+        t = None
+        if args.get('talep_id'):
+            t = Talep.query.filter_by(id=args['talep_id'], emlakci_id=emlakci.id).first()
+        if not t and not args.get('talep_id'):
+            talepler = Talep.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+            if len(talepler) == 1:
+                t = talepler[0]
+        if not t:
+            return '⚠️ Talep bulunamadı.'
+        if args.get('onay') == True:
+            db.session.delete(t)
+            db.session.commit()
+            return '✅ Talep silindi.'
+        yon = '🔍 Arıyor' if t.yonu == 'arayan' else '🏠 Veriyor'
+        islem_l = {'kira': 'Kiralık', 'satis': 'Satılık'}.get(t.islem_turu, '—')
+        return f'⚠️ Bu talep silinecek:\n{yon} · {islem_l}\n\n[✅ Evet, Sil](/api/panel/talepler/{t.id}/sil-onayla)'
 
     if fonksiyon_adi == 'talep_listele':
         from app.models.talep import Talep

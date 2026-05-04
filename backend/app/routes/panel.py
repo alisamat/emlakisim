@@ -1128,6 +1128,15 @@ def fatura_sil_onayla(fid):
     return jsonify({'ok': True, 'mesaj': f'✅ Fatura {no} silindi.'})
 
 
+@bp.route('/talepler/<int:tid>/sil-onayla', methods=['DELETE', 'GET'])
+@jwt_required()
+def talep_sil_onayla(tid):
+    from app.models.talep import Talep
+    t = Talep.query.filter_by(id=tid, emlakci_id=_eid()).first_or_404()
+    db.session.delete(t); db.session.commit()
+    return jsonify({'ok': True, 'mesaj': '✅ Talep silindi.'})
+
+
 @bp.route('/haberler', methods=['GET'])
 @jwt_required()
 def haberler_endpoint():
