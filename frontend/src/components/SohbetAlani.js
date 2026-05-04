@@ -209,6 +209,14 @@ function satirIciBicimle(text) {
 export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajlar, onKrediGuncelle, onTabAc }) {
   const { user } = useAuth();
   const [girdi, setGirdi] = useState('');
+  const [asistanIsmi, setAsistanIsmi] = useState('');
+
+  useEffect(() => {
+    api.get('/api/panel/ayarlar').then(r => {
+      const ayar = r.data.ayarlar || {};
+      setAsistanIsmi(ayar.asistan_ismi || '');
+    }).catch(() => {});
+  }, []);
   const [yukleniyor, setYuk] = useState(false);
   const mesajlarRef = useRef(null);
   const inputRef = useRef(null);
@@ -288,7 +296,9 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
             )}
             <div className="sohbet-hosgeldin-baslik">Merhaba, {user?.ad_soyad?.split(' ')[0]}!</div>
             <div className="sohbet-hosgeldin-aciklama">
-              Emlakisim AI Asistanınız hazır. Müşteri ekle, portföy yönet, belge oluştur — her şeyi buradan yapabilirsiniz.
+              {asistanIsmi
+                ? `Ben Emlakisim AI Asistanınız ${asistanIsmi}. Bana Müşteri ekle, portföy yönet, belge oluştur gibi talimatlar verebilir, her şeyi buradan yapabilirsiniz.`
+                : 'Emlakisim AI Asistanınız hazır. Müşteri ekle, portföy yönet, belge oluştur — her şeyi buradan yapabilirsiniz.'}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
               {['müşteri ekle', 'portföy listele', 'bugün özet', 'rapor', 'yardım'].map(cmd => (

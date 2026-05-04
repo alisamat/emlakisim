@@ -214,6 +214,7 @@ export default function SohbetArayuz() {
         onOpenTab={openTab}
         onMesajGonder={mesajGonder}
         acik={sagAcik}
+        user={user}
       />
     </div>
   );

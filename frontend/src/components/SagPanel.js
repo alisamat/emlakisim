@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 
-const MENU = [
+const ADMIN_EMAIL = 'alisamat@gmail.com';
+const ADMIN_TEL   = '05323769426';
+
+const MENU = (isAdmin) => [
   {
     baslik: '🏆 Performans',
     items: [
@@ -38,6 +41,23 @@ const MENU = [
     ],
   },
   {
+    baslik: '📅 Planlama & Takip',
+    items: [
+      { ikon: '📝', ad: 'Notlar', tab: 'notlar', aciklama: 'Notlar, hatırlatmalar, gösterim notları, sesli notlar' },
+      { ikon: '📋', ad: 'Görevler', tab: 'planlama', aciklama: 'Görev yönetimi, öncelik, durum takibi' },
+      { ikon: '📅', ad: 'Takvim', tab: 'takvim', aciklama: 'Aylık takvim görünümü' },
+      { ikon: '📋', ad: 'Süreç Takip', tab: 'surec', aciklama: 'Tapu devri, kredi süreci adım takibi' },
+      { ikon: '🕐', ad: 'İşlem Geçmişi', tab: 'islem_gecmisi', aciklama: 'Yapılan tüm işlemler, geri alma' },
+    ],
+  },
+  {
+    baslik: '📒 Emlakçılar & Gruplar',
+    items: [
+      { ikon: '📒', ad: 'Emlakçı Dizini', tab: 'emlakcilar', aciklama: 'Dış emlakçı rehberi, iletişim bilgileri' },
+      { ikon: '👥', ad: 'Gruplar', tab: 'gruplar', aciklama: 'İşbirliği grupları, portföy/talep paylaşımı, eşleştirme' },
+    ],
+  },
+  {
     baslik: '💰 Muhasebe & Finans',
     items: [
       { ikon: '📊', ad: 'Gelir/Gider', tab: 'muhasebe', aciklama: 'Gelir ve gider kayıtları, fiş OCR' },
@@ -62,16 +82,6 @@ const MENU = [
     ],
   },
   {
-    baslik: '📅 Planlama & Takip',
-    items: [
-      { ikon: '📝', ad: 'Notlar', tab: 'notlar', aciklama: 'Notlar, hatırlatmalar, gösterim notları, sesli notlar' },
-      { ikon: '📋', ad: 'Görevler', tab: 'planlama', aciklama: 'Görev yönetimi, öncelik, durum takibi' },
-      { ikon: '📅', ad: 'Takvim', tab: 'takvim', aciklama: 'Aylık takvim görünümü' },
-      { ikon: '📋', ad: 'Süreç Takip', tab: 'surec', aciklama: 'Tapu devri, kredi süreci adım takibi' },
-      { ikon: '🕐', ad: 'İşlem Geçmişi', tab: 'islem_gecmisi', aciklama: 'Yapılan tüm işlemler, geri alma' },
-    ],
-  },
-  {
     baslik: '✉️ İletişim & Lead',
     items: [
       { ikon: '📞', ad: 'İletişim Geçmişi', tab: 'iletisim', aciklama: 'Müşteri bazlı tüm iletişim kayıtları' },
@@ -93,13 +103,6 @@ const MENU = [
     ],
   },
   {
-    baslik: '📒 Emlakçılar & Gruplar',
-    items: [
-      { ikon: '📒', ad: 'Emlakçı Dizini', tab: 'emlakcilar', aciklama: 'Dış emlakçı rehberi, iletişim bilgileri' },
-      { ikon: '👥', ad: 'Gruplar', tab: 'gruplar', aciklama: 'İşbirliği grupları, portföy/talep paylaşımı, eşleştirme' },
-    ],
-  },
-  {
     baslik: '🏢 Ofis & Ekip',
     items: [
       { ikon: '👔', ad: 'Danışman Yönetimi', tab: 'ekip', aciklama: 'Ofis danışmanları ve müşteri ataması' },
@@ -110,32 +113,36 @@ const MENU = [
     baslik: '⚙️ Yönetim',
     items: [
       { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar', aciklama: 'Profil, logo, tema, şifre değiştirme' },
-      { ikon: '🛡', ad: 'Platform Admin', tab: 'admin_dash', aciklama: 'Kullanıcılar, gelir, fiyatlandırma, kredi yönetimi' },
-      { ikon: '🛠', ad: 'AI & Pattern', tab: 'admin', aciklama: 'AI eğitim, pattern yönetimi, maliyet raporu' },
+      ...(isAdmin ? [
+        { ikon: '🛡', ad: 'Platform Admin', tab: 'admin_dash', aciklama: 'Kullanıcılar, gelir, fiyatlandırma, kredi yönetimi' },
+        { ikon: '🛠', ad: 'AI & Pattern', tab: 'admin', aciklama: 'AI eğitim, pattern yönetimi, maliyet raporu' },
+      ] : []),
       { ikon: '👤', ad: 'Profil', tab: 'profil', aciklama: 'Kişisel bilgiler' },
     ],
   },
 ];
 
-export default function SagPanel({ onOpenTab, onMesajGonder, acik }) {
+export default function SagPanel({ onOpenTab, onMesajGonder, acik, user }) {
+  const isAdmin = user?.email === ADMIN_EMAIL || user?.telefon === ADMIN_TEL;
+  const menuItems = MENU(isAdmin);
   const [arama, setArama] = useState('');
   const [acikKategoriler, setAcikKategoriler] = useState(() => {
     const init = {};
-    MENU.forEach((k, i) => { init[i] = !!k.acik; });
+    menuItems.forEach((k, i) => { init[i] = !!k.acik; });
     return init;
   });
 
   const toggle = i => setAcikKategoriler(p => ({ ...p, [i]: !p[i] }));
 
   const filtrelenmis = arama.trim()
-    ? MENU.map(k => ({
+    ? menuItems.map(k => ({
         ...k,
         items: k.items.filter(it =>
           it.ad.toLowerCase().includes(arama.toLowerCase()) ||
           (it.aciklama || '').toLowerCase().includes(arama.toLowerCase())
         ),
       })).filter(k => k.items.length > 0)
-    : MENU;
+    : menuItems;
 
   return (
     <div className={`sag-panel${acik ? ' acik' : ''}`}>
