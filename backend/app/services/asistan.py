@@ -2852,6 +2852,38 @@ _FUNCTIONS = [
             'required': ['sorgu'],
         },
     },
+    {
+        'name': 'emlakci_ekle',
+        'description': 'Emlakçı dizinine yeni emlakçı ekler. Ad zorunlu, diğerleri opsiyonel.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'ad_soyad': {'type': 'string', 'description': 'Emlakçının adı soyadı'},
+                'telefon': {'type': 'string'},
+                'bolge': {'type': 'string', 'description': 'Çalıştığı bölge (Kadıköy, Beşiktaş...)'},
+                'uzmanlik': {'type': 'string', 'description': 'Uzmanlık alanı (kiralık, satılık, ticari...)'},
+                'acente': {'type': 'string', 'description': 'Acente/ofis adı'},
+                'notlar': {'type': 'string'},
+            },
+            'required': ['ad_soyad'],
+        },
+    },
+    {
+        'name': 'emlakci_listele',
+        'description': 'Emlakçı dizinindeki tüm emlakçıları listeler.',
+        'parameters': {'type': 'object', 'properties': {}},
+    },
+    {
+        'name': 'emlakci_sil',
+        'description': 'Emlakçı dizininden emlakçı siler.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'emlakci_id': {'type': 'integer', 'description': 'Listedeki (#ID) değerini gönder'},
+                'ad_soyad': {'type': 'string', 'description': 'İsimle ara'},
+            },
+        },
+    },
     # ── Grup ──
     {
         'name': 'grup_bilgi',
@@ -3832,8 +3864,67 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         ).limit(10).all()
         if not kayitlar:
             return f'📒 "{s}" ile eşleşen emlakçı bulunamadı.'
-        satirlar = [f'*{i+1}.* {e.ad_soyad} — {e.telefon or "?"} · {e.bolge or "?"}' for i, e in enumerate(kayitlar)]
+        satirlar = [f'*{i+1}.* (#{e.id}) {e.ad_soyad} — {e.telefon or "?"} · {e.bolge or "?"}' for i, e in enumerate(kayitlar)]
         return f'📒 *Emlakçı Dizini — "{s}":*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'emlakci_ekle':
+        from app.models.grup import EmlakciDizin
+        ad = args.get('ad_soyad', '').strip()
+        if not ad or len(ad) < 2:
+            return '⚠️ Emlakçının adını belirtir misiniz?'
+        e = EmlakciDizin(
+            ekleyen_id=emlakci.id, ad_soyad=ad,
+            telefon=args.get('telefon'), bolge=args.get('bolge'),
+            uzmanlik=args.get('uzmanlik'), acente=args.get('acente'),
+            notlar=args.get('notlar'),
+        )
+        db.session.add(e)
+        db.session.commit()
+        detaylar = []
+        if e.telefon: detaylar.append(f'📞 {e.telefon}')
+        if e.bolge: detaylar.append(f'📍 {e.bolge}')
+        if e.uzmanlik: detaylar.append(f'🏷 {e.uzmanlik}')
+        if e.acente: detaylar.append(f'🏢 {e.acente}')
+        return (f'✅ *Emlakçı kaydedildi:*\n\n'
+                f'👤 {e.ad_soyad}\n'
+                + ('\n'.join(detaylar) + '\n' if detaylar else '')
+                + f'📅 {e.olusturma.strftime("%d.%m.%Y %H:%M") if e.olusturma else ""}')
+
+    if fonksiyon_adi == 'emlakci_listele':
+        from app.models.grup import EmlakciDizin
+        kayitlar = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).order_by(EmlakciDizin.ad_soyad).limit(15).all()
+        if not kayitlar:
+            return '📒 Emlakçı dizininiz henüz boş.\n\n_"Emlakçı ekle" yazarak yeni emlakçı kaydedebilirsiniz._'
+        satirlar = []
+        for i, e in enumerate(kayitlar):
+            detay = []
+            if e.telefon: detay.append(f'📞 {e.telefon}')
+            if e.bolge: detay.append(f'📍 {e.bolge}')
+            if e.uzmanlik: detay.append(f'🏷 {e.uzmanlik}')
+            if e.acente: detay.append(f'🏢 {e.acente}')
+            satirlar.append(f'*{i+1}.* (#{e.id}) {e.ad_soyad}' + (f'\n   {" · ".join(detay)}' if detay else ''))
+        toplam = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).count()
+        return f'📒 *Emlakçı Dizini ({toplam} kayıt):*\n\n' + '\n'.join(satirlar)
+
+    if fonksiyon_adi == 'emlakci_sil':
+        from app.models.grup import EmlakciDizin
+        e = None
+        if args.get('emlakci_id'):
+            e = EmlakciDizin.query.filter_by(id=args['emlakci_id'], ekleyen_id=emlakci.id).first()
+        elif args.get('ad_soyad'):
+            e = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).filter(EmlakciDizin.ad_soyad.ilike(f'%{args["ad_soyad"]}%')).first()
+        if not e and not args.get('emlakci_id') and not args.get('ad_soyad'):
+            kayitlar = EmlakciDizin.query.filter_by(ekleyen_id=emlakci.id).all()
+            if len(kayitlar) == 1:
+                e = kayitlar[0]
+        if not e:
+            return '⚠️ Emlakçı bulunamadı.'
+        if args.get('onay') == True:
+            ad = e.ad_soyad
+            db.session.delete(e)
+            db.session.commit()
+            return f'✅ *{ad}* emlakçı dizininden silindi.'
+        return f'⚠️ *{e.ad_soyad}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/emlakcilar/{e.id}/sil-onayla)'
 
     if fonksiyon_adi == 'grup_bilgi':
         islem = args.get('islem', 'liste')

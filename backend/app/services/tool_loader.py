@@ -47,6 +47,9 @@ KATEGORI_TOOLS = {
         'qr_kod_olustur', 'cevir', 'web_sayfa_bilgi', 'veri_indir',
         'yedek_durumu_sorgula', 'asistan_ismi_degistir',
     ],
+    'emlakci': [
+        'emlakci_ekle', 'emlakci_listele', 'emlakci_sil', 'emlakci_dizin_ara',
+    ],
     'navigasyon': [
         'sayfa_ac',
     ],

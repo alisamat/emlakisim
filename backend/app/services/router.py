@@ -151,6 +151,20 @@ KATEGORILER = {
             'notu güncelle değiştir',
         ],
     },
+    'emlakci': {
+        'ornekler': [
+            'emlakçı ekle',
+            'yeni emlakçı kaydet',
+            'emlakçı ekle Ersin Gök 05321112233',
+            'emlakçı dizinine ekle',
+            'emlakçıları listele göster',
+            'emlakçı dizini',
+            'emlakçı ara Mehmet',
+            'Kadıköy bölgesinde emlakçı var mı',
+            'emlakçıyı sil kaldır',
+            'kaç emlakçım var',
+        ],
+    },
     'iletisim': {
         'ornekler': [
             'Ahmet Beye WhatsApp tan yaz fiyat düştü',

@@ -192,6 +192,13 @@ ANALİZ: Mahalle puanlama, hava durumu, emlak haberleri, satıcı tahmin, ısı 
 ARAÇLAR: QR kod, çeviri (9 dil), web sayfa linki, Excel/ZIP export, yedek durumu, döviz kuru.
 """,
 
+    'emlakci': """
+EMLAKÇI DİZİNİ: Dış emlakçıları kaydet/listele/ara/sil.
+Kullanıcı "emlakçı ekle" derse → emlakci_ekle fonksiyonunu çağır.
+Bilgileri doğal dilden çıkar: ad_soyad (zorunlu), telefon, bolge, uzmanlik, acente.
+"Müşteri ekle" ile karıştırma — "emlakçı" diyorsa emlakci_ekle, "müşteri" diyorsa musteri_ekle.
+""",
+
     'navigasyon': """
 NAVİGASYON: sayfa_ac(sayfa) — musteriler, mulkler, muhasebe, planlama, takvim, ayarlar, notlar, faturalar, cariler, leadler, eslestirme, gruplar, emlakcilar, hesaplamalar, isi_haritasi, gorsel_analiz, sanal_staging, belgeler, yedekleme, performans, kredi.
 """,
