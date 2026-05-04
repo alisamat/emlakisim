@@ -156,6 +156,25 @@ _BAGLAM_PATTERNS = [
 
 def _baglam_filtre(metin_norm, emlakci, session):
     """Bağlamsal takip filtresi — önceki listeyi filtrele."""
+    # Etiket filtreleri — son_liste olmasa da çalışır (kısa takip mesajları)
+    etiket_patterns = {
+        'onemli': r'(?:onemli|önemli)\s*(?:olan|olanlari|olanları|notlar)?',
+        'acil': r'(?:acil)\s*(?:olan|olanlari|olanları|notlar)?',
+        'hatirlatici': r'(?:hatirlatma|hatırlatma)(?:lar|lari|ları)?',
+        'gosterim': r'(?:gosterim|gösterim)\s*(?:not|olanlari|olanları)?',
+    }
+    etiket_label = {'onemli': 'Önemli', 'acil': 'Acil', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim'}
+    etiket_ikon = {'onemli': '⭐', 'acil': '🔴', 'hatirlatici': '🧠', 'gosterim': '🏠'}
+    for etiket, pattern in etiket_patterns.items():
+        if re.search(pattern, metin_norm) and len(metin_norm.split()) <= 4:
+            notlar = Not.query.filter_by(emlakci_id=emlakci.id, etiket=etiket, tamamlandi=False).order_by(Not.olusturma.desc()).limit(10).all()
+            if not notlar:
+                return f'📭 {etiket_label[etiket]} not bulunamadı.'
+            satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon[etiket]} {n.icerik[:80]}' for i, n in enumerate(notlar)]
+            session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar]
+            session['son_komut'] = 'not'
+            return f'{etiket_ikon[etiket]} *{etiket_label[etiket]} Notlar ({len(notlar)}):*\n\n' + '\n'.join(satirlar)
+
     son_liste = session.get('son_liste')  # [{id, tip, ...}]
     son_komut = session.get('son_komut')  # 'musteri' veya 'mulk'
     if not son_liste:
