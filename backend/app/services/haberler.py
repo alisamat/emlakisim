@@ -42,26 +42,22 @@ def emlak_haberleri(konu='emlak piyasası türkiye'):
         except Exception as e:
             logger.error(f'[Haberler] NewsAPI hata: {e}')
 
-    # 2. Gemini ile haber özeti (yedek — ama halüsinasyon riski var)
+    # 2. Gemini ile haber özeti
     gemini_key = os.environ.get('GEMINI_API_KEY', '')
     if gemini_key:
         try:
-            prompt = f"""Türkiye emlak sektöründe {konu} konusundaki son gelişmeleri listele.
-Her haber için JSON formatında:
-[{{"baslik": "haber başlığı", "ozet": "kısa özet", "kaynak": "muhtemel kaynak", "tarih": "tahmini tarih"}}]
-
-NOT: Bunlar gerçek haberler olmalı, uydurma olmamalı. Emin olmadığın haberleri yazma.
-Sadece JSON array döndür."""
+            prompt = f"""Türkiye emlak sektöründe {konu} hakkında güncel bilgi ver.
+5-6 madde halinde kısa özet yaz. Her madde için başlık ve 1-2 cümle açıklama.
+Türkçe yaz, JSON formatı kullanma, düz metin olarak yaz."""
 
             r = requests.post(
                 f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}',
-                json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 1024}},
+                json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1024}},
                 timeout=15,
             )
             metin = r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
-            metin = metin.removeprefix('```json').removeprefix('```').removesuffix('```').strip()
-            haberler = json.loads(metin)
-            return {'basarili': True, 'haberler': haberler[:8], 'motor': 'gemini', 'uyari': 'AI tahmini — doğruluğu garanti değil'}
+            # Düz metin olarak döndür — JSON parse gerekmez
+            return {'basarili': True, 'metin': metin, 'motor': 'gemini', 'uyari': 'AI bilgisi — güncelliği garanti değil'}
         except Exception as e:
             logger.error(f'[Haberler] Gemini hata: {e}')
 
@@ -71,7 +67,12 @@ Sadece JSON array döndür."""
 def haber_formatla(sonuc):
     """Haberleri sohbet mesajına çevir."""
     if not sonuc.get('basarili'):
-        return '⚠️ Haberler alınamadı.'
+        return '⚠️ Haberler alınamadı.  Lütfen tekrar deneyin.'
+
+    # Düz metin (Gemini)
+    if sonuc.get('metin'):
+        uyari = f'\n\n_⚠️ {sonuc["uyari"]}_' if sonuc.get('uyari') else ''
+        return f'📰 *Emlak Sektörü*\n\n{sonuc["metin"]}{uyari}'
 
     satirlar = ['📰 *Emlak Sektörü Haberleri*\n']
     if sonuc.get('uyari'):
