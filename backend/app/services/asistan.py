@@ -3432,11 +3432,6 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if args.get('aktif') is not None:
             mulk.aktif = args['aktif']
             degisiklikler.append('Aktif yapıldı' if args['aktif'] else 'Pasife alındı')
-        if args.get('aciklama'):
-            det = mulk.detaylar or {}
-            det['aciklama'] = args['aciklama']
-            mulk.detaylar = det
-            degisiklikler.append(f'Açıklama: {args["aciklama"][:80]}')
         if args.get('notlar'):
             mulk.notlar = (mulk.notlar or '') + '\n' + args['notlar']
             degisiklikler.append('Not eklendi')
@@ -3453,7 +3448,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             'balkon', 'site_icerisinde', 'aidat', 'banyo_sayisi', 'cephe', 'brut_metrekare',
             'kat_sayisi', 'tapu_durumu', 'kullanim_durumu', 'bina_tipi', 'yapinin_durumu',
             'kiracili', 'krediye_uygun', 'imar_durumu', 'm2_fiyati', 'ada_no', 'parsel_no',
-            'kaks', 'gabari', 'takas', 'zemin_etudu',
+            'kaks', 'gabari', 'takas', 'zemin_etudu', 'aciklama',
         ]
         # Alan ismi mapping (API parametresi → DB alanı)
         alan_map = {'isitma': 'isinma', 'kat': 'bulundugu_kat', 'site_icerisinde': 'site_ici'}
@@ -3476,6 +3471,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                     'yapinin_durumu': 'Yapı durumu', 'kiracili': 'Kiracılı', 'krediye_uygun': 'Krediye uygun',
                     'imar_durumu': 'İmar', 'm2_fiyati': 'm² fiyatı', 'ada_no': 'Ada', 'parsel_no': 'Parsel',
                     'kaks': 'KAKS', 'gabari': 'Gabari', 'takas': 'Takas', 'zemin_etudu': 'Zemin etüdü',
+                    'aciklama': 'Açıklama',
                 }.get(alan, alan)
                 degisiklikler.append(f'{alan_label}: {gosterim}')
         mulk.detaylar = det
