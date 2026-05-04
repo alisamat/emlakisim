@@ -182,9 +182,8 @@ function SilButonu({ label, url }) {
     if (sureDoldu || silindi) return;
     if (!window.confirm('Bu kayıt kalıcı olarak silinecek. Emin misiniz?')) return;
     try {
-      const r = await api.get(url);
+      await api.get(url);
       setSilindi(true);
-      alert(r.data.mesaj || 'Silindi');
     } catch { alert('Silme hatası'); }
   };
   if (silindi) return <span style={{ color: '#16a34a', fontWeight: 600, fontSize: 13 }}>Silindi</span>;

@@ -53,6 +53,7 @@ NUMARA BAĞLAMI: Kullanıcı "1" veya "2 numarayı sil" gibi numara verirse:
   - Liste gösterilmişse → o sıradaki kaydın detayını göster
   - Asla tek rakamı yeni kayıt olarak ekleme.
   - Asla sıra numarasını (1, 2, 3) doğrudan ID olarak kullanma — (#ID) değerine bak.
+SİLME İSTEĞİ: Kullanıcı "sil" dediğinde SADECE sil fonksiyonunu çağır. Ek işlem yapma (güncelleme, öncelik değiştirme, acil işaretleme vb. YAPMA). Silme onay butonu döndükten sonra kendi metin ekleme.
 İLGİSİZ CEVAP VERME: "bütçeyi güncelleyin", "filtreleri değiştirin" gibi bağlamla alakasız cevaplar yazma."""
 
     # ═══ TIER 2: Kategoriye göre (~300 token) ═══

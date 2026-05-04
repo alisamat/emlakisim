@@ -3323,7 +3323,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.delete(mulk)
             db.session.commit()
             return f'✅ *{baslik}* kalıcı olarak silindi.'
-        return f'⚠️ *{mulk.baslik}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/mulkler/{mulk.id}/sil-onayla)\n\n_Silmek istemiyorsanız "iptal" yazın._'
+        return f'⚠️ *{mulk.baslik}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/mulkler/{mulk.id}/sil-onayla)'
 
     if fonksiyon_adi == 'musteri_sil':
         mus = None
@@ -3342,7 +3342,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.delete(mus)
             db.session.commit()
             return f'✅ *{ad}* müşteri listesinden silindi.'
-        return f'⚠️ *{mus.ad_soyad}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/musteriler/{mus.id}/sil-onayla)\n\n_Silmek istemiyorsanız "iptal" yazın._'
+        return f'⚠️ *{mus.ad_soyad}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/musteriler/{mus.id}/sil-onayla)'
 
     if fonksiyon_adi == 'not_guncelle':
         not_obj = None
@@ -3382,7 +3382,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.delete(not_obj)
             db.session.commit()
             return '✅ Not silindi.'
-        return f'⚠️ Bu not silinecek:\n📝 _{not_obj.icerik[:80]}_\n\n[✅ Evet, Sil](/api/panel/notlar/{not_obj.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
+        return f'⚠️ Bu not silinecek:\n📝 _{not_obj.icerik[:80]}_\n\n[✅ Evet, Sil](/api/panel/notlar/{not_obj.id}/sil-onayla)'
 
     if fonksiyon_adi == 'fatura_guncelle':
         from app.models.fatura import Fatura
@@ -3637,7 +3637,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.delete(g)
             db.session.commit()
             return f'✅ *{baslik}* silindi.'
-        return f'⚠️ Bu görev silinecek:\n📌 _{g.baslik}_\n\n[✅ Evet, Sil](/api/panel/planlama/gorevler/{g.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
+        return f'⚠️ Bu görev silinecek:\n📌 _{g.baslik}_\n\n[✅ Evet, Sil](/api/panel/planlama/gorevler/{g.id}/sil-onayla)'
 
     if fonksiyon_adi == 'fatura_sil':
         from app.models.fatura import Fatura
@@ -3657,7 +3657,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.delete(f)
             db.session.commit()
             return f'✅ Fatura *{no}* silindi.'
-        return f'⚠️ Bu fatura silinecek:\n🧾 _{f.fatura_no} — {f.alici_ad}_\n\n[✅ Evet, Sil](/api/panel/faturalar/{f.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
+        return f'⚠️ Bu fatura silinecek:\n🧾 _{f.fatura_no} — {f.alici_ad}_\n\n[✅ Evet, Sil](/api/panel/faturalar/{f.id}/sil-onayla)'
 
     if fonksiyon_adi == 'teklif_sil':
         from app.models import Teklif
@@ -3675,7 +3675,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             db.session.commit()
             return '✅ Teklif silindi.'
         f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
-        return f'⚠️ Bu teklif silinecek:\n💰 _{f_tl(t.teklif_tutar)} TL_\n\n[✅ Evet, Sil](/api/panel/teklif/{t.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
+        return f'⚠️ Bu teklif silinecek:\n💰 _{f_tl(t.teklif_tutar)} TL_\n\n[✅ Evet, Sil](/api/panel/teklif/{t.id}/sil-onayla)'
 
     if fonksiyon_adi == 'fatura_listele':
         from app.models.fatura import Fatura
