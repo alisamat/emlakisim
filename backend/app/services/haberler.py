@@ -61,6 +61,22 @@ Türkçe yaz, JSON formatı kullanma, düz metin olarak yaz."""
         except Exception as e:
             logger.error(f'[Haberler] Gemini hata: {e}')
 
+    # 3. OpenAI fallback
+    openai_key = os.environ.get('OPENAI_API_KEY', '')
+    if openai_key:
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=openai_key)
+            r = client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[{'role': 'user', 'content': f'Türkiye emlak sektöründe {konu} hakkında güncel bilgi ver. 5-6 madde halinde kısa özet yaz. Türkçe.'}],
+                max_tokens=500,
+            )
+            metin = r.choices[0].message.content.strip()
+            return {'basarili': True, 'metin': metin, 'motor': 'openai', 'uyari': 'AI bilgisi — güncelliği garanti değil'}
+        except Exception as e:
+            logger.error(f'[Haberler] OpenAI hata: {e}')
+
     return {'basarili': False, 'hata': 'Haber servisi kullanılamıyor'}
 
 
