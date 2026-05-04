@@ -1,3 +1,5 @@
+import logging
+import sys
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -16,6 +18,14 @@ _limiter = None
 def create_app(env='production'):
     app = Flask(__name__)
     app.config.from_object(config[env])
+
+    # Logging — gunicorn + Railway'de INFO seviyesi
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s: %(message)s',
+        datefmt='%H:%M:%S',
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)
