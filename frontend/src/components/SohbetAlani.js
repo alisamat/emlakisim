@@ -300,11 +300,39 @@ export default function SohbetAlani({ sohbetId, setSohbetId, mesajlar, setMesajl
                 ? `Ben Emlakisim AI Asistanınız ${asistanIsmi}. Bana Müşteri ekle, portföy yönet, belge oluştur gibi talimatlar verebilir, her şeyi buradan yapabilirsiniz.`
                 : 'Emlakisim AI Asistanınız hazır. Müşteri ekle, portföy yönet, belge oluştur — her şeyi buradan yapabilirsiniz.'}
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-              {['müşteri ekle', 'portföy listele', 'bugün özet', 'rapor', 'yardım'].map(cmd => (
-                <button key={cmd} onClick={() => { setGirdi(cmd); }}
-                  style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '6px 14px', fontSize: 12, color: '#16a34a', cursor: 'pointer', fontWeight: 600 }}>
-                  {cmd}
+            {/* Hızlı Sohbet Komutları */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+              {[
+                { ikon: '👥', cmd: 'müşteri ekle' },
+                { ikon: '🏢', cmd: 'mülk ekle' },
+                { ikon: '📋', cmd: 'talep ekle' },
+                { ikon: '☀️', cmd: 'bugün özet' },
+                { ikon: '📊', cmd: 'rapor' },
+                { ikon: '🔗', cmd: 'eşleştirme tablosu' },
+                { ikon: '🌤', cmd: 'hava durumu' },
+                { ikon: '❓', cmd: 'ne yapabilirsin' },
+              ].map(b => (
+                <button key={b.cmd} onClick={() => { setGirdi(b.cmd); }}
+                  style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '5px 12px', fontSize: 11, color: '#16a34a', cursor: 'pointer', fontWeight: 600 }}>
+                  {b.ikon} {b.cmd}
+                </button>
+              ))}
+            </div>
+            {/* Hızlı Sayfa Butonları */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {[
+                { ikon: '👥', ad: 'Müşteriler', tab: 'musteriler' },
+                { ikon: '🏢', ad: 'Portföy', tab: 'mulkler' },
+                { ikon: '📋', ad: 'Talepler', tab: 'talepler' },
+                { ikon: '📝', ad: 'Notlar', tab: 'notlar' },
+                { ikon: '📅', ad: 'Görevler', tab: 'planlama' },
+                { ikon: '📰', ad: 'Haberler', tab: 'haberler' },
+                { ikon: '🗺', ad: 'Isı Haritası', tab: 'isi_haritasi' },
+                { ikon: '⚙️', ad: 'Ayarlar', tab: 'ayarlar' },
+              ].map(b => (
+                <button key={b.tab} onClick={() => onTabAc && onTabAc(b.tab)}
+                  style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '5px 12px', fontSize: 11, color: '#2563eb', cursor: 'pointer', fontWeight: 600 }}>
+                  {b.ikon} {b.ad}
                 </button>
               ))}
             </div>
