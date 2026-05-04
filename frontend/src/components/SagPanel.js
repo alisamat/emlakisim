@@ -19,6 +19,8 @@ const MENU = (isAdmin) => [
       { ikon: '🏢', ad: 'Mülk Ekle', tab: 'mulkler', aciklama: 'Portföye yeni mülk ekle' },
       { ikon: '📋', ad: 'Yer Gösterme', tab: 'kayitlar', aciklama: 'Yer gösterme kayıtları' },
       { ikon: '📌', ad: 'Görev Ekle', tab: 'planlama', aciklama: 'Görev oluştur, randevu planla' },
+      { ikon: '📝', ad: 'Not Ekle', tab: 'notlar', aciklama: 'Hızlı not oluştur' },
+      { ikon: '📩', ad: 'Talep Ekle', tab: 'talepler', aciklama: 'Müşteri talebi ekle' },
     ],
   },
   {
