@@ -3137,6 +3137,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
                 Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
             ).first()
+        if not mus and not args.get('musteri_id') and not args.get('musteri_adi'):
+            musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(musteriler) == 1:
+                mus = musteriler[0]
         if not mus:
             return f'⚠️ Müşteri bulunamadı.'
 
@@ -3308,6 +3312,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
         elif args.get('mulk_baslik'):
             mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
+        if not mulk and not args.get('mulk_id') and not args.get('mulk_baslik'):
+            mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
+            if len(mulkler) == 1:
+                mulk = mulkler[0]
         if not mulk:
             return '⚠️ Mülk bulunamadı.'
         if args.get('onay') == True:
@@ -3323,6 +3331,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             mus = Musteri.query.filter_by(id=args['musteri_id'], emlakci_id=emlakci.id).first()
         elif args.get('musteri_adi'):
             mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')).first()
+        if not mus and not args.get('musteri_id') and not args.get('musteri_adi'):
+            musteriler = Musteri.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(musteriler) == 1:
+                mus = musteriler[0]
         if not mus:
             return '⚠️ Müşteri bulunamadı.'
         if args.get('onay') == True:
@@ -3338,6 +3350,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             not_obj = Not.query.filter_by(id=args['not_id'], emlakci_id=emlakci.id).first()
         elif args.get('not_icerik_ara'):
             not_obj = Not.query.filter_by(emlakci_id=emlakci.id).filter(Not.icerik.ilike(f'%{args["not_icerik_ara"]}%')).first()
+        if not not_obj and not args.get('not_id') and not args.get('not_icerik_ara'):
+            notlar = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).all()
+            if len(notlar) == 1:
+                not_obj = notlar[0]
         if not not_obj:
             return '⚠️ Not bulunamadı.'
         if args.get('yeni_icerik'):
@@ -3375,6 +3391,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             fat = Fatura.query.filter_by(id=args['fatura_id'], emlakci_id=emlakci.id).first()
         elif args.get('fatura_no'):
             fat = Fatura.query.filter_by(fatura_no=args['fatura_no'], emlakci_id=emlakci.id).first()
+        if not fat and not args.get('fatura_id') and not args.get('fatura_no'):
+            faturalar = Fatura.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(faturalar) == 1:
+                fat = faturalar[0]
         if not fat:
             return '⚠️ Fatura bulunamadı.'
         if args.get('durum'):
@@ -3388,6 +3408,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         t = None
         if args.get('teklif_id'):
             t = Teklif.query.filter_by(id=args['teklif_id'], emlakci_id=emlakci.id).first()
+        if not t and not args.get('teklif_id'):
+            teklifler = Teklif.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(teklifler) == 1:
+                t = teklifler[0]
         if not t:
             return '⚠️ Teklif bulunamadı.'
         if args.get('durum'):
@@ -3465,6 +3489,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             not_obj = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).filter(
                 Not.icerik.ilike(f'%{args["not_icerik"]}%')
             ).first()
+        if not not_obj and not args.get('not_id') and not args.get('not_icerik'):
+            notlar = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).all()
+            if len(notlar) == 1:
+                not_obj = notlar[0]
         if not not_obj:
             return '⚠️ Not bulunamadı.'
         from app.models.planlama import Gorev
@@ -3565,6 +3593,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             g = Gorev.query.filter_by(id=args['gorev_id'], emlakci_id=emlakci.id).first()
         elif args.get('gorev_baslik'):
             g = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.baslik.ilike(f'%{args["gorev_baslik"]}%')).first()
+        if not g and not args.get('gorev_id') and not args.get('gorev_baslik'):
+            gorevler = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.durum != 'tamamlandi').all()
+            if len(gorevler) == 1:
+                g = gorevler[0]
         if not g:
             return '⚠️ Görev bulunamadı.'
         degisiklikler = []
@@ -3614,6 +3646,10 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             f = Fatura.query.filter_by(id=args['fatura_id'], emlakci_id=emlakci.id).first()
         elif args.get('fatura_no'):
             f = Fatura.query.filter_by(fatura_no=args['fatura_no'], emlakci_id=emlakci.id).first()
+        if not f and not args.get('fatura_id') and not args.get('fatura_no'):
+            faturalar = Fatura.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(faturalar) == 1:
+                f = faturalar[0]
         if not f:
             return '⚠️ Fatura bulunamadı.'
         if args.get('onay') == True:
@@ -3625,7 +3661,13 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
 
     if fonksiyon_adi == 'teklif_sil':
         from app.models import Teklif
-        t = Teklif.query.filter_by(id=args.get('teklif_id'), emlakci_id=emlakci.id).first()
+        t = None
+        if args.get('teklif_id'):
+            t = Teklif.query.filter_by(id=args['teklif_id'], emlakci_id=emlakci.id).first()
+        if not t and not args.get('teklif_id'):
+            teklifler = Teklif.query.filter_by(emlakci_id=emlakci.id).all()
+            if len(teklifler) == 1:
+                t = teklifler[0]
         if not t:
             return '⚠️ Teklif bulunamadı.'
         if args.get('onay') == True:
