@@ -227,6 +227,16 @@ def _baglam_filtre(metin_norm, emlakci, session):
                     return (f'🧠 *Hatırlatma*\n\n'
                             f'📝 {n.icerik}\n'
                             f'📅 {n.olusturma.strftime("%d.%m.%Y %H:%M") if n.olusturma else "—"}')
+            elif son_komut == 'not':
+                n = Not.query.get(secilen['id'])
+                if n:
+                    etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
+                    etiket_label = {'not': 'Not', 'hatirlatici': 'Hatırlatma', 'gosterim': 'Gösterim Notu', 'sesli_not': 'Sesli Not'}
+                    return (f'{etiket_ikon.get(n.etiket, "📝")} *{etiket_label.get(n.etiket, "Not")}*\n\n'
+                            f'📝 {n.icerik}\n'
+                            f'🏷 Etiket: {etiket_label.get(n.etiket, n.etiket)}\n'
+                            f'📅 {n.olusturma.strftime("%d.%m.%Y %H:%M") if n.olusturma else "—"}'
+                            + (f'\n👤 Müşteri: {Musteri.query.get(n.musteri_id).ad_soyad}' if n.musteri_id and Musteri.query.get(n.musteri_id) else ''))
 
         if filtre.startswith('sicaklik_') and son_komut == 'musteri':
             hedef = filtre.split('_')[1]
@@ -581,7 +591,7 @@ def _komut_calistir(komut, emlakci, metin, session):
             return ('📝 Henüz not yok.\n\n_"Not ekle" yazarak yeni not ekleyebilirsiniz._', 'notlar')
         etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤'}
         session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar_q]
-        satirlar = [f'*{i+1}.* {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar_q)]
+        satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar_q)]
         toplam = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).count()
         return f'📝 *Notlarınız ({toplam}):*\n\n' + '\n'.join(satirlar)
 
