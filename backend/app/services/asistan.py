@@ -151,6 +151,7 @@ _BAGLAM_PATTERNS = [
     (r'(\d+)\.\s*(?:si|sı|ci|cı|nu|nolu)',                                'numara_sec'),
     (r'(?:ilk|son|en\s*son)\s*(\d+)',                                      'limit_sec'),
     (r'(?:daha\s*fazla|devam|geri\s*kalan)',                               'devam'),
+    (r'^(?:tumunu|tümünü|hepsini|hepsi|tamamini|tamamını)$',               'tumunu'),
 ]
 
 
@@ -359,6 +360,25 @@ def _baglam_filtre(metin_norm, emlakci, session):
                 session['son_liste'] = [{'id': f.id, 'tip': 'fatura'} for f in sonuclar]
                 session['son_offset'] = offset + 10
                 return f'🧾 *Faturalar (devam):*\n\n' + '\n'.join(satirlar)
+
+        if filtre == 'tumunu':
+            # Son komuta göre tümünü listele
+            if son_komut == 'not':
+                etiket_ikon = {'not': '📝', 'hatirlatici': '🧠', 'gosterim': '🏠', 'sesli_not': '🎤', 'onemli': '⭐', 'acil': '🔴'}
+                notlar = Not.query.filter_by(emlakci_id=emlakci.id, tamamlandi=False).order_by(Not.olusturma.desc()).limit(15).all()
+                if not notlar:
+                    return '📭 Not bulunamadı.'
+                satirlar = [f'*{i+1}.* (#{n.id}) {etiket_ikon.get(n.etiket, "📝")} {n.icerik[:80]}' for i, n in enumerate(notlar)]
+                session['son_liste'] = [{'id': n.id, 'tip': 'not'} for n in notlar]
+                return f'📝 *Tüm Notlar ({len(notlar)}):*\n\n' + '\n'.join(satirlar)
+            elif son_komut == 'musteri':
+                sonuc, _ = _musteri_listele(emlakci, session)
+                return sonuc
+            elif son_komut == 'mulk':
+                sonuc, _ = _mulk_listele(emlakci, session)
+                return sonuc
+            elif son_komut == 'gorev':
+                return _gorev_listele(emlakci, session)
 
     return None
 
