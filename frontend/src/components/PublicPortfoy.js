@@ -4,11 +4,38 @@ import api from '../api';
 
 const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina' };
 
+// Detay key → Türkçe label
+const DETAY_LABEL = {
+  bulundugu_kat: 'Bulunduğu Kat', kat_sayisi: 'Kat Sayısı', bina_yasi: 'Bina Yaşı',
+  isinma: 'Isıtma', isitma: 'Isıtma', mutfak: 'Mutfak', banyo_sayisi: 'Banyo Sayısı',
+  balkon: 'Balkon', asansor: 'Asansör', otopark: 'Otopark', esyali: 'Eşyalı',
+  site_ici: 'Site İçi', site_icerisinde: 'Site İçi', aidat: 'Aidat (TL)',
+  cephe: 'Cephe', brut_metrekare: 'Brüt m²', tapu_durumu: 'Tapu Durumu',
+  kullanim_durumu: 'Kullanım Durumu', bina_tipi: 'Bina Tipi', yapinin_durumu: 'Yapının Durumu',
+  kiracili: 'Kiracılı', krediye_uygun: 'Krediye Uygun', imar_durumu: 'İmar Durumu',
+  m2_fiyati: 'm² Fiyatı', ada_no: 'Ada No', parsel_no: 'Parsel No', pafta_no: 'Pafta No',
+  kaks: 'KAKS (Emsal)', gabari: 'Gabari', takas: 'Takas', zemin_etudu: 'Zemin Etüdü',
+  manzara: 'Manzara', havuz: 'Havuz', bahce: 'Bahçe', guvenlik: 'Güvenlik',
+  konut_tipi: 'Konut Tipi', kimden: 'Kimden',
+};
+
+// Boolean/değer formatlama
+const formatDeger = (v) => {
+  if (v === true) return 'Evet';
+  if (v === false) return 'Hayır';
+  if (v === 'acik') return 'Açık (Amerikan)';
+  if (v === 'kapali') return 'Kapalı';
+  return v;
+};
+
+// Gizlenecek key'ler (açıklama ayrı gösterilir, array'ler özellikler bölümünde)
+const GIZLI_KEYLER = ['aciklama', 'ic_ozellikler', 'dis_ozellikler', 'muhit', 'ulasim', 'manzara_liste'];
+
 function PublicMulkDetay({ m, emlakci, onGeri }) {
   const [aktifResim, setAktifResim] = useState(0);
   const resimler = m.resimler || [];
   const det = m.detaylar || {};
-  const detaylar = Object.entries(det).filter(([, v]) => v);
+  const detaylar = Object.entries(det).filter(([k, v]) => v && !GIZLI_KEYLER.includes(k));
   const f = v => v ? Number(v).toLocaleString('tr-TR') : '—';
 
   return (
@@ -60,17 +87,78 @@ function PublicMulkDetay({ m, emlakci, onGeri }) {
           </div>
         </div>
         <div style={{ flex: '1 1 280px' }}>
+          {/* İlan Detayları */}
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📋 Özellikler</div>
-            {m.oda_sayisi && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span>Oda Sayısı</span><strong>{m.oda_sayisi}</strong></div>}
-            {m.metrekare && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span>m²</span><strong>{m.metrekare}</strong></div>}
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📋 İlan Detayları</div>
+            {m.oda_sayisi && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span style={{ color: '#64748b' }}>Oda Sayısı</span><strong>{m.oda_sayisi}</strong></div>}
+            {m.metrekare && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}><span style={{ color: '#64748b' }}>m²</span><strong>{m.metrekare}</strong></div>}
             {detaylar.map(([k, v]) => (
               <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}>
-                <span>{k.replace(/_/g, ' ')}</span><strong>{v}</strong>
+                <span style={{ color: '#64748b' }}>{DETAY_LABEL[k] || k.replace(/_/g, ' ')}</span><strong>{formatDeger(v)}</strong>
               </div>
             ))}
             {m.adres && <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>📍 {m.adres}</div>}
           </div>
+
+          {/* Açıklama */}
+          {det.aciklama && (
+            <div style={{ marginTop: 12, background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📝 Açıklama</div>
+              <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{det.aciklama}</div>
+            </div>
+          )}
+
+          {/* Özellikler — badge'ler */}
+          {(() => {
+            const ozellikler = [];
+            if (det.mutfak) ozellikler.push(det.mutfak === 'acik' ? 'Açık Mutfak' : det.mutfak === 'kapali' ? 'Kapalı Mutfak' : det.mutfak);
+            if (det.asansor === true || det.asansor === 'Var') ozellikler.push('Asansör');
+            if (det.balkon === true || det.balkon === 'Var') ozellikler.push('Balkon');
+            if (det.esyali === true || det.esyali === 'Evet') ozellikler.push('Eşyalı');
+            if (det.site_ici === true || det.site_icerisinde === 'Evet') ozellikler.push('Site İçi');
+            if (det.otopark && det.otopark !== 'Yok') ozellikler.push(`${det.otopark} Otopark`);
+            if (det.havuz === 'Var') ozellikler.push('Havuz');
+            if (det.bahce === 'Var') ozellikler.push('Bahçe');
+            if (det.guvenlik === 'Var') ozellikler.push('7/24 Güvenlik');
+            if (det.krediye_uygun === true) ozellikler.push('Krediye Uygun');
+            if (det.zemin_etudu === true) ozellikler.push('Zemin Etüdü Var');
+            if (det.takas === true) ozellikler.push('Takas Kabul');
+            if (Array.isArray(det.ic_ozellikler)) ozellikler.push(...det.ic_ozellikler);
+            if (Array.isArray(det.dis_ozellikler)) ozellikler.push(...det.dis_ozellikler);
+            if (ozellikler.length === 0) return null;
+            return (
+              <div style={{ marginTop: 12, background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>✨ Özellikler</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {ozellikler.map((o, i) => (
+                    <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>{o}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Konum bilgileri */}
+          {(det.muhit || det.ulasim) && (
+            <div style={{ marginTop: 12, background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
+              {Array.isArray(det.muhit) && det.muhit.length > 0 && (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>📍 Muhit</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: det.ulasim ? 12 : 0 }}>
+                    {det.muhit.map((o, i) => <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe' }}>{o}</span>)}
+                  </div>
+                </>
+              )}
+              {Array.isArray(det.ulasim) && det.ulasim.length > 0 && (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>🚇 Ulaşım</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {det.ulasim.map((o, i) => <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#fefce8', color: '#854d0e', border: '1px solid #fde68a' }}>{o}</span>)}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
