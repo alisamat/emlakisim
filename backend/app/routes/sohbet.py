@@ -117,7 +117,20 @@ def mesaj_gonder():
             logger.error(f'[SOHBET] Router hatası: {e}')
             kategoriler = []
         kat_isimleri = [k for k, _ in kategoriler] if kategoriler and isinstance(kategoriler[0], tuple) else kategoriler
-        logger.info(f'[SOHBET] ROUTER → kategoriler: {kategoriler}')
+
+        # Bağlam koruma: önceki turda AI hangi kategorideydi?
+        # Eğer önceki turda AI soru sorduysa, o kategorileri de dahil et
+        onceki_kat = session.get('son_ai_kategoriler', [])
+        if onceki_kat and onceki_kat != kat_isimleri:
+            # Önceki kategorileri mevcut kategorilere ekle (duplicate'siz, max 3)
+            birlesik = list(dict.fromkeys(kat_isimleri + onceki_kat))[:3]
+            logger.info(f'[SOHBET] ROUTER → yeni: {kat_isimleri} | önceki: {onceki_kat} → birleşik: {birlesik}')
+            kat_isimleri = birlesik
+        else:
+            logger.info(f'[SOHBET] ROUTER → kategoriler: {kat_isimleri}')
+
+        # Bu turun kategorilerini kaydet
+        session['son_ai_kategoriler'] = kat_isimleri
 
         # 3b. Dinamik Tool Yükleme
         secilen_tools = tools_yukle(kat_isimleri, _FUNCTIONS)
