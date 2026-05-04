@@ -101,6 +101,8 @@ function sesliOku(metin) {
 // Mesaj içindeki markdown linkleri tıklanabilir yap + bold
 function mesajRender(text) {
   if (!text) return text;
+  // (#ID) etiketlerini kullanıcıdan gizle (AI conversation history'de kalır)
+  text = text.replace(/\(#\d+\)\s*/g, '');
 
   // Satır satır işle
   const satirlar = text.split('\n');
