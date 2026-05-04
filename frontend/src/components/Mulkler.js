@@ -218,6 +218,124 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
 }
 
 // ═══════ MÜLK DETAY SAYFASI (sahibinden kalitesinde) ═══════
+// Sahibinden tarzı özellikler bölümü
+const OZELLIK_KATEGORILERI = [
+  {
+    baslik: 'Cephe',
+    ikon: '🧭',
+    alanlar: ['cephe'],
+    etiketler: { cephe: v => v?.split?.(',')?.map(s => s.trim()) || [v] },
+  },
+  {
+    baslik: 'İç Özellikler',
+    ikon: '🏠',
+    kontrol: (det) => {
+      const ozellikler = [];
+      if (det.mutfak === 'acik' || det.mutfak === 'Açık (Amerikan)') ozellikler.push('Amerikan Mutfak');
+      if (det.mutfak === 'kapali' || det.mutfak === 'Kapalı') ozellikler.push('Kapalı Mutfak');
+      if (det.esyali === true || det.esyali === 'Evet') ozellikler.push('Eşyalı');
+      if (det.asansor === true || det.asansor === 'Var') ozellikler.push('Asansör');
+      if (det.balkon === true || det.balkon === 'Var') ozellikler.push('Balkon');
+      if (det.isinma) ozellikler.push(`${det.isinma}`);
+      if (det.banyo_sayisi) ozellikler.push(`${det.banyo_sayisi} Banyo`);
+      if (det.aidat) ozellikler.push(`Aidat: ${Number(det.aidat).toLocaleString('tr-TR')} TL`);
+      if (Array.isArray(det.ic_ozellikler)) ozellikler.push(...det.ic_ozellikler);
+      return ozellikler;
+    },
+  },
+  {
+    baslik: 'Dış Özellikler',
+    ikon: '🏗',
+    kontrol: (det) => {
+      const ozellikler = [];
+      if (det.site_ici === true || det.site_icerisinde === 'Evet') ozellikler.push('Site İçerisinde');
+      if (det.otopark && det.otopark !== 'Yok') ozellikler.push(`${det.otopark} Otopark`);
+      if (det.havuz === 'Var') ozellikler.push('Yüzme Havuzu');
+      if (det.bahce === 'Var') ozellikler.push('Bahçe');
+      if (det.guvenlik === 'Var') ozellikler.push('24 Saat Güvenlik');
+      if (det.zemin_etudu === true) ozellikler.push('Zemin Etüdü Var');
+      if (Array.isArray(det.dis_ozellikler)) ozellikler.push(...det.dis_ozellikler);
+      return ozellikler;
+    },
+  },
+  {
+    baslik: 'Muhit',
+    ikon: '📍',
+    kontrol: (det) => Array.isArray(det.muhit) ? det.muhit : [],
+  },
+  {
+    baslik: 'Ulaşım',
+    ikon: '🚇',
+    kontrol: (det) => Array.isArray(det.ulasim) ? det.ulasim : [],
+  },
+  {
+    baslik: 'Manzara',
+    ikon: '🌅',
+    kontrol: (det) => {
+      const ozellikler = [];
+      if (det.manzara && det.manzara !== 'Yok') ozellikler.push(det.manzara);
+      if (Array.isArray(det.manzara_liste)) ozellikler.push(...det.manzara_liste);
+      return ozellikler;
+    },
+  },
+  {
+    baslik: 'Konut Tipi',
+    ikon: '🏢',
+    kontrol: (det) => {
+      const ozellikler = [];
+      if (det.bina_tipi) ozellikler.push(det.bina_tipi);
+      if (det.yapinin_durumu) ozellikler.push(det.yapinin_durumu);
+      if (det.konut_tipi) ozellikler.push(det.konut_tipi);
+      return ozellikler;
+    },
+  },
+];
+
+function OzelliklerBolumu({ det, tip }) {
+  if (!det || Object.keys(det).length === 0) return null;
+
+  const kategoriler = OZELLIK_KATEGORILERI.map(kat => {
+    let items = [];
+    if (kat.kontrol) {
+      items = kat.kontrol(det);
+    } else if (kat.alanlar) {
+      for (const alan of kat.alanlar) {
+        if (det[alan]) {
+          if (kat.etiketler?.[alan]) {
+            items.push(...kat.etiketler[alan](det[alan]));
+          } else {
+            items.push(det[alan]);
+          }
+        }
+      }
+    }
+    return { ...kat, items };
+  }).filter(k => k.items.length > 0);
+
+  if (kategoriler.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', marginBottom: 10 }}>📋 Özellikler</div>
+      {kategoriler.map((kat, ki) => (
+        <div key={ki} style={{ marginBottom: 10, background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ padding: '8px 14px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: 600, fontSize: 13, color: '#374151' }}>
+            {kat.ikon} {kat.baslik}
+          </div>
+          <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {kat.items.map((item, i) => (
+              <span key={i} style={{
+                padding: '4px 10px', borderRadius: 6, fontSize: 12,
+                background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0',
+              }}>{item}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
   const [aktifResim, setAktifResim] = useState(0);
   const det = m.detaylar || {};
@@ -321,6 +439,17 @@ function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
             {m.adres && <DetaySatir label="Adres" value={m.adres} />}
             {m.grup && <DetaySatir label="Grup" value={m.grup} />}
           </div>
+
+          {/* Açıklama */}
+          {det.aciklama && (
+            <div style={{ marginTop: 12, padding: 14, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', marginBottom: 8 }}>📝 Açıklama</div>
+              <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{det.aciklama}</div>
+            </div>
+          )}
+
+          {/* Özellikler — sahibinden gibi kategorize */}
+          <OzelliklerBolumu det={det} tip={m.tip} />
         </div>
       </div>
     </>
