@@ -3310,10 +3310,12 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             mulk = Mulk.query.filter_by(emlakci_id=emlakci.id).filter(Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')).first()
         if not mulk:
             return '⚠️ Mülk bulunamadı.'
-        baslik = mulk.baslik
-        db.session.delete(mulk)
-        db.session.commit()
-        return f'✅ *{baslik}* kalıcı olarak silindi.'
+        if args.get('onay') == True:
+            baslik = mulk.baslik
+            db.session.delete(mulk)
+            db.session.commit()
+            return f'✅ *{baslik}* kalıcı olarak silindi.'
+        return f'⚠️ *{mulk.baslik}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/mulkler/{mulk.id}/sil-onayla)\n\n_Silmek istemiyorsanız "iptal" yazın._'
 
     if fonksiyon_adi == 'musteri_sil':
         mus = None
@@ -3323,10 +3325,12 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')).first()
         if not mus:
             return '⚠️ Müşteri bulunamadı.'
-        ad = mus.ad_soyad
-        db.session.delete(mus)
-        db.session.commit()
-        return f'✅ *{ad}* müşteri listesinden silindi.'
+        if args.get('onay') == True:
+            ad = mus.ad_soyad
+            db.session.delete(mus)
+            db.session.commit()
+            return f'✅ *{ad}* müşteri listesinden silindi.'
+        return f'⚠️ *{mus.ad_soyad}* silinecek. Bu işlem geri alınamaz.\n\n[✅ Evet, Sil](/api/panel/musteriler/{mus.id}/sil-onayla)\n\n_Silmek istemiyorsanız "iptal" yazın._'
 
     if fonksiyon_adi == 'not_guncelle':
         not_obj = None
@@ -3353,9 +3357,11 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             not_obj = Not.query.filter_by(emlakci_id=emlakci.id).filter(Not.icerik.ilike(f'%{args["not_icerik_ara"]}%')).first()
         if not not_obj:
             return '⚠️ Not bulunamadı.'
-        db.session.delete(not_obj)
-        db.session.commit()
-        return '✅ Not silindi.'
+        if args.get('onay') == True:
+            db.session.delete(not_obj)
+            db.session.commit()
+            return '✅ Not silindi.'
+        return f'⚠️ Bu not silinecek:\n📝 _{not_obj.icerik[:80]}_\n\n[✅ Evet, Sil](/api/panel/notlar/{not_obj.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
 
     if fonksiyon_adi == 'fatura_guncelle':
         from app.models.fatura import Fatura
@@ -3585,10 +3591,12 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             g = Gorev.query.filter_by(emlakci_id=emlakci.id).filter(Gorev.baslik.ilike(f'%{args["gorev_baslik"]}%')).first()
         if not g:
             return '⚠️ Görev bulunamadı.'
-        baslik = g.baslik
-        db.session.delete(g)
-        db.session.commit()
-        return f'✅ *{baslik}* silindi.'
+        if args.get('onay') == True:
+            baslik = g.baslik
+            db.session.delete(g)
+            db.session.commit()
+            return f'✅ *{baslik}* silindi.'
+        return f'⚠️ Bu görev silinecek:\n📌 _{g.baslik}_\n\n[✅ Evet, Sil](/api/panel/planlama/gorevler/{g.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
 
     if fonksiyon_adi == 'fatura_sil':
         from app.models.fatura import Fatura
@@ -3599,19 +3607,24 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             f = Fatura.query.filter_by(fatura_no=args['fatura_no'], emlakci_id=emlakci.id).first()
         if not f:
             return '⚠️ Fatura bulunamadı.'
-        no = f.fatura_no
-        db.session.delete(f)
-        db.session.commit()
-        return f'✅ Fatura *{no}* silindi.'
+        if args.get('onay') == True:
+            no = f.fatura_no
+            db.session.delete(f)
+            db.session.commit()
+            return f'✅ Fatura *{no}* silindi.'
+        return f'⚠️ Bu fatura silinecek:\n🧾 _{f.fatura_no} — {f.alici_ad}_\n\n[✅ Evet, Sil](/api/panel/faturalar/{f.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
 
     if fonksiyon_adi == 'teklif_sil':
         from app.models import Teklif
         t = Teklif.query.filter_by(id=args.get('teklif_id'), emlakci_id=emlakci.id).first()
         if not t:
             return '⚠️ Teklif bulunamadı.'
-        db.session.delete(t)
-        db.session.commit()
-        return '✅ Teklif silindi.'
+        if args.get('onay') == True:
+            db.session.delete(t)
+            db.session.commit()
+            return '✅ Teklif silindi.'
+        f_tl = lambda v: f'{int(v):,}'.replace(',', '.') if v else '?'
+        return f'⚠️ Bu teklif silinecek:\n💰 _{f_tl(t.teklif_tutar)} TL_\n\n[✅ Evet, Sil](/api/panel/teklif/{t.id}/sil-onayla)\n\n_"iptal" yazarak vazgeçebilirsiniz._'
 
     if fonksiyon_adi == 'fatura_listele':
         from app.models.fatura import Fatura

@@ -174,6 +174,24 @@ function satirIciBicimle(text) {
     const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
     if (linkMatch) {
       const [, label, url] = linkMatch;
+      // Silme onay butonu
+      if (url.includes('sil-onayla')) {
+        const silOnay = async (e) => {
+          e.preventDefault();
+          if (!window.confirm('Bu kayıt kalıcı olarak silinecek. Emin misiniz?')) return;
+          try {
+            const r = await api.get(url);
+            alert(r.data.mesaj || 'Silindi');
+          } catch { alert('Silme hatası'); }
+        };
+        return (
+          <button key={i} onClick={silOnay}
+            style={{ display: 'inline-block', margin: '6px 0', padding: '10px 20px', background: '#dc2626', color: '#fff', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >{label}</button>
+        );
+      }
+
+      // İndirme butonu
       const indir = async (e) => {
         e.preventDefault();
         try {

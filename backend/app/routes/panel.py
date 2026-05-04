@@ -1080,6 +1080,45 @@ def eslestirme_endpoint():
         return jsonify({'eslesimler': sonuclar})
 
 
+# ════════ SİLME ONAY ENDPOINT'LERİ ════════
+
+@bp.route('/mulkler/<int:mid>/sil-onayla', methods=['DELETE', 'GET'])
+@jwt_required()
+def mulk_sil_onayla(mid):
+    m = Mulk.query.filter_by(id=mid, emlakci_id=_eid()).first_or_404()
+    baslik = m.baslik
+    db.session.delete(m); db.session.commit()
+    return jsonify({'ok': True, 'mesaj': f'✅ {baslik} silindi.'})
+
+
+@bp.route('/notlar/<int:nid>/sil-onayla', methods=['DELETE', 'GET'])
+@jwt_required()
+def not_sil_onayla(nid):
+    n = Not.query.filter_by(id=nid, emlakci_id=_eid()).first_or_404()
+    db.session.delete(n); db.session.commit()
+    return jsonify({'ok': True, 'mesaj': '✅ Not silindi.'})
+
+
+@bp.route('/planlama/gorevler/<int:gid>/sil-onayla', methods=['DELETE', 'GET'])
+@jwt_required()
+def gorev_sil_onayla(gid):
+    from app.models.planlama import Gorev
+    g = Gorev.query.filter_by(id=gid, emlakci_id=_eid()).first_or_404()
+    baslik = g.baslik
+    db.session.delete(g); db.session.commit()
+    return jsonify({'ok': True, 'mesaj': f'✅ {baslik} silindi.'})
+
+
+@bp.route('/faturalar/<int:fid>/sil-onayla', methods=['DELETE', 'GET'])
+@jwt_required()
+def fatura_sil_onayla(fid):
+    from app.models.fatura import Fatura
+    f = Fatura.query.filter_by(id=fid, emlakci_id=_eid()).first_or_404()
+    no = f.fatura_no
+    db.session.delete(f); db.session.commit()
+    return jsonify({'ok': True, 'mesaj': f'✅ Fatura {no} silindi.'})
+
+
 @bp.route('/haberler', methods=['GET'])
 @jwt_required()
 def haberler_endpoint():
