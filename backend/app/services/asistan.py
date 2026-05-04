@@ -3455,7 +3455,22 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
             if args.get(alan) is not None:
                 db_alan = alan_map.get(alan, alan)
                 det[db_alan] = args[alan]
-                degisiklikler.append(f'{alan}: {args[alan]}')
+                # Türkçe gösterim
+                gosterim = args[alan]
+                if isinstance(gosterim, bool):
+                    gosterim = 'Evet' if gosterim else 'Hayır'
+                # Alan ismi Türkçeleştir
+                alan_label = {
+                    'isitma': 'Isıtma', 'mutfak': 'Mutfak', 'kat': 'Kat', 'bina_yasi': 'Bina yaşı',
+                    'esyali': 'Eşyalı', 'asansor': 'Asansör', 'otopark': 'Otopark', 'balkon': 'Balkon',
+                    'site_icerisinde': 'Site içi', 'aidat': 'Aidat', 'banyo_sayisi': 'Banyo',
+                    'cephe': 'Cephe', 'brut_metrekare': 'Brüt m²', 'kat_sayisi': 'Kat sayısı',
+                    'tapu_durumu': 'Tapu', 'kullanim_durumu': 'Kullanım', 'bina_tipi': 'Bina tipi',
+                    'yapinin_durumu': 'Yapı durumu', 'kiracili': 'Kiracılı', 'krediye_uygun': 'Krediye uygun',
+                    'imar_durumu': 'İmar', 'm2_fiyati': 'm² fiyatı', 'ada_no': 'Ada', 'parsel_no': 'Parsel',
+                    'kaks': 'KAKS', 'gabari': 'Gabari', 'takas': 'Takas', 'zemin_etudu': 'Zemin etüdü',
+                }.get(alan, alan)
+                degisiklikler.append(f'{alan_label}: {gosterim}')
         mulk.detaylar = det
 
         db.session.commit()
