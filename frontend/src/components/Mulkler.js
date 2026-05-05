@@ -422,6 +422,13 @@ function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
               {m.ada && ` · Ada: ${m.ada}`}
               {m.parsel && ` · Parsel: ${m.parsel}`}
             </div>
+            {m.sahip_ad && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #bbf7d0', fontSize: 13 }}>
+                <span style={{ color: '#92400e', fontWeight: 600 }}>🔒 Mülk Sahibi:</span>{' '}
+                <span style={{ fontWeight: 600 }}>👤 {m.sahip_ad}</span>
+                {m.sahip_tel && <span style={{ marginLeft: 8 }}>📞 {m.sahip_tel}</span>}
+              </div>
+            )}
           </div>
 
           {/* Temel bilgiler */}
