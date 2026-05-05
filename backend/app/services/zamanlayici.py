@@ -9,6 +9,18 @@ logger = logging.getLogger(__name__)
 _scheduler = None
 
 
+def _bildirim_ayar(emlakci_id, ayar_adi):
+    """Kullanıcının bildirim ayarını kontrol et (varsayılan: True)."""
+    try:
+        from app.models.ayarlar import KullaniciAyar
+        k = KullaniciAyar.query.filter_by(emlakci_id=emlakci_id).first()
+        if k and k.ayarlar:
+            return k.ayarlar.get(ayar_adi, True)
+    except Exception:
+        pass
+    return True
+
+
 def zamanlayici_baslat(app):
     """Flask app context'inde scheduler başlat."""
     global _scheduler
@@ -85,8 +97,9 @@ def _hatirlatma_kontrol():
     ).all()
 
     for g in gorevler:
-        bildirim_olustur(g.emlakci_id, 'hatirlatma', f'📌 Görev: {g.baslik}',
-                        g.aciklama or '', link='planlama')
+        if _bildirim_ayar(g.emlakci_id, 'bildirim_gorev'):
+            bildirim_olustur(g.emlakci_id, 'hatirlatma', f'📌 Görev: {g.baslik}',
+                            g.aciklama or '', link='planlama')
         g.durum = 'devam'
 
     from app.models import db
@@ -130,6 +143,8 @@ def _yedek_hatirlat():
     from app.routes.bildirim import bildirim_olustur
 
     for e in Emlakci.query.filter_by(aktif=True).all():
+        if not _bildirim_ayar(e.id, 'bildirim_yedek'):
+            continue
         durum = yedek_durumu(e)
         if durum['uyari']:
             bildirim_olustur(e.id, 'yedek',
@@ -151,9 +166,10 @@ def _lead_soguma_kontrol():
     ).all()
 
     for l in soguk_leadler:
-        bildirim_olustur(l.emlakci_id, 'lead',
-            f'⚠️ {l.ad_soyad} — {((datetime.utcnow() - l.olusturma).days)} gündür dönüş yok!',
-            link='leadler')
+        if _bildirim_ayar(l.emlakci_id, 'bildirim_lead'):
+            bildirim_olustur(l.emlakci_id, 'lead',
+                f'⚠️ {l.ad_soyad} — {((datetime.utcnow() - l.olusturma).days)} gündür dönüş yok!',
+                link='leadler')
 
     if soguk_leadler:
         logger.info(f'[Zamanlayıcı] {len(soguk_leadler)} soğuyan lead uyarısı')
@@ -165,9 +181,10 @@ def _kredi_kontrol():
     from app.routes.bildirim import bildirim_olustur
 
     for e in Emlakci.query.filter(Emlakci.aktif == True, Emlakci.kredi < 3).all():
-        bildirim_olustur(e.id, 'kredi',
-            f'💎 Krediniz düşük: {e.kredi}',
-            'AI asistan kullanmaya devam etmek için kredi ekleyin.')
+        if _bildirim_ayar(e.id, 'bildirim_kredi'):
+            bildirim_olustur(e.id, 'kredi',
+                f'💎 Krediniz düşük: {e.kredi}',
+                'AI asistan kullanmaya devam etmek için kredi ekleyin.')
 
     logger.info('[Zamanlayıcı] Kredi kontrolleri yapıldı')
 

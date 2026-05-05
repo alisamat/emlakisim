@@ -38,10 +38,28 @@ def prompt_olustur(emlakci, kategoriler, metin=''):
     except Exception:
         ton = 'Samimi ve yardımsever ol.'
 
+    # Varsayılan değerler
+    varsayilan_str = ''
+    try:
+        from app.models.ayarlar import KullaniciAyar
+        k = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+        if k and k.ayarlar:
+            parts = []
+            v_islem = k.ayarlar.get('varsayilan_islem')
+            v_sehir = k.ayarlar.get('varsayilan_sehir')
+            v_ilce = k.ayarlar.get('varsayilan_ilce')
+            if v_islem: parts.append(f'işlem türü: {"kiralık" if v_islem == "kira" else "satılık"}')
+            if v_sehir: parts.append(f'şehir: {v_sehir}')
+            if v_ilce: parts.append(f'ilçe: {v_ilce}')
+            if parts:
+                varsayilan_str = f'\nKullanıcının varsayılan tercihleri: {", ".join(parts)}. Mülk/talep eklerken belirtilmemişse bu değerleri kullan.'
+    except Exception:
+        pass
+
     # ═══ TIER 1: Çekirdek (~200 token) ═══
     tier1 = f"""Sen {asistan_ismi} — emlak profesyonelleri için AI asistan.
 Kullanıcı: {emlakci.ad_soyad}. Kredi: {emlakci.kredi}. Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}.
-{ton}{islem_onay}
+{ton}{islem_onay}{varsayilan_str}
 Türkçe konuş. *bold* ve _italic_ kullan.
 Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 Çoklu istek varsa hepsini yap. Koşullu istek varsa önce kontrol et.

@@ -54,7 +54,15 @@ def gelen():
         saat = datetime.utcnow().hour + 3  # UTC+3 Türkiye
         if saat >= 24: saat -= 24
         if saat >= 21 or saat < 8:
-            mesai_disi = os.environ.get('MESAI_DISI_MESAJ', '')
+            # Kullanıcı ayarından mesai dışı mesajı oku
+            mesai_disi = ''
+            try:
+                from app.models.ayarlar import KullaniciAyar
+                kayit = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+                if kayit and kayit.ayarlar:
+                    mesai_disi = kayit.ayarlar.get('mesai_disi_mesaj', '')
+            except Exception:
+                pass
             if not mesai_disi:
                 mesai_disi = (f'🌙 Merhaba! Şu anda mesai saatleri dışındayız.\n\n'
                              f'Mesajınız alındı, en kısa sürede dönüş yapılacaktır.\n'
