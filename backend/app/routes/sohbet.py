@@ -119,10 +119,11 @@ def mesaj_gonder():
         kat_isimleri = [k for k, _ in kategoriler] if kategoriler and isinstance(kategoriler[0], tuple) else kategoriler
         logger.info(f'[SOHBET] ROUTER → kategoriler: {kat_isimleri}')
 
-        # 3b. Dinamik Tool Yükleme
-        secilen_tools = tools_yukle(kat_isimleri, _FUNCTIONS)
-        tool_isimleri = [t['name'] for t in secilen_tools] if secilen_tools else []
-        logger.info(f'[SOHBET] TOOLS → {len(tool_isimleri)} tool: {tool_isimleri}')
+        # 3b. Tüm tool'ları yükle — router artık gate değil, sadece prompt bilgilendirir
+        # AI modeli 70 tool arasından doğrusunu seçmekte çok iyi (function calling bunun için var)
+        # Eski: tools_yukle(kat_isimleri, _FUNCTIONS) → yanlış kategori = AI tool'u göremez
+        secilen_tools = _FUNCTIONS
+        logger.info(f'[SOHBET] TOOLS → {len(secilen_tools)} tool (tümü)')
 
         # 3c. Katmanlı Prompt
         sistem = prompt_olustur(emlakci, kat_isimleri, metin)
