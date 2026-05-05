@@ -16,10 +16,24 @@ def _eid():
 
 
 # ── Envanter ─────────────────────────────────────────────
+def _envanter_tablo_kontrol():
+    """Envanter tablosu yoksa oluştur."""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        if 'envanter' not in inspector.get_table_names():
+            Envanter.__table__.create(db.engine)
+    except Exception:
+        pass
+
 @bp.route('/envanter', methods=['GET'])
 @jwt_required()
 def envanter_listesi():
-    kayitlar = Envanter.query.filter_by(emlakci_id=_eid()).order_by(Envanter.kategori, Envanter.ad).all()
+    try:
+        kayitlar = Envanter.query.filter_by(emlakci_id=_eid()).order_by(Envanter.kategori, Envanter.ad).all()
+    except Exception:
+        _envanter_tablo_kontrol()
+        kayitlar = Envanter.query.filter_by(emlakci_id=_eid()).order_by(Envanter.kategori, Envanter.ad).all()
     eksikler = [e for e in kayitlar if e.min_miktar and e.miktar <= e.min_miktar]
     return jsonify({
         'envanter': [{
@@ -34,6 +48,7 @@ def envanter_listesi():
 @bp.route('/envanter', methods=['POST'])
 @jwt_required()
 def envanter_ekle():
+    _envanter_tablo_kontrol()
     d = request.get_json() or {}
     e = Envanter(
         emlakci_id=_eid(), ad=d.get('ad', ''), kategori=d.get('kategori'),
