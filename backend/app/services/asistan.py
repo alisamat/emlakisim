@@ -27,11 +27,12 @@ _PATTERNS = [
     # Geri kalan her şey embedding intent veya AI function calling ile çözülür.
 
     # ── Selamlama (bedava, anında) ──
-    (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba|selam|hey)', 'yardim'),
+    (r'(?:yardim|yardım|neler?\s*yapabilirsin|merhaba)', 'yardim'),
     (r'(?:ne\s*yapabilirsin|yeteneklerin|ozelliklerin|özellikler)', 'yardim'),
     (r'(?:tesekkur|teşekkür|sagol|sağol|eyv)',                'tesekkur'),
     (r'(?:gunayd|günayd|iyi\s*sabah)',                       'gunaydin'),
     (r'(?:iyi\s*aksamlar|iyi\s*geceler)',                    'iyi_aksam'),
+    (r'(?:selam|hey|naber|nasilsin|nasılsın)',               'selam'),
 
     # ── Döviz (bedava, harici API) ──
     (r'(?:doviz|döviz|kur|dolar|euro|sterlin)',               'doviz_kuru'),
@@ -394,10 +395,13 @@ def _komut_calistir(komut, emlakci, metin, session):
         return f'😊 Rica ederim {emlakci.ad_soyad.split(" ")[0]}! Başka bir konuda yardımcı olabilir miyim?'
 
     if komut == 'gunaydin':
-        return _yardim_mesaji(emlakci)  # Günaydın = hoşgeldin + özet
+        return f'☀️ Günaydın {emlakci.ad_soyad.split(" ")[0]}! Bugün nasıl yardımcı olabilirim?'
 
     if komut == 'iyi_aksam':
         return f'🌙 İyi akşamlar {emlakci.ad_soyad.split(" ")[0]}! Yarın için bir şey planlamak ister misiniz?'
+
+    if komut == 'selam':
+        return f'👋 Selam {emlakci.ad_soyad.split(" ")[0]}! Ne yapabilirim?'
 
     if komut == 'musteri_ara':
         session['son_komut'] = 'musteri'
