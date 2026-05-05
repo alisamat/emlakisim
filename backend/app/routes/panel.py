@@ -853,7 +853,7 @@ def mulk_resim_ekle(mid):
 
     import os
     storage = os.environ.get('STORAGE_TYPE', 'local')
-    max_resim = 5 if storage == 'local' else 20  # Local=DB'de, sınırlı tut
+    max_resim = 5 if storage == 'local' else 10
 
     resimler = mulk.resimler or []
     if len(resimler) >= max_resim:
