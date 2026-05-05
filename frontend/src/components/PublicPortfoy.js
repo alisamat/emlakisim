@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api';
 
-const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina' };
+const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina', yazlik: 'Yazlık', isyeri: 'İş Yeri', arazi: 'Arazi' };
+const ISLEM_LABEL = { kira: 'Kiralık', satis: 'Satılık', devren_kira: 'Devren Kiralık', devren_satis: 'Devren Satılık' };
 
 // Detay key → Türkçe label
 const DETAY_LABEL = {
@@ -87,10 +88,9 @@ function PublicMulkDetay({ m, emlakci, onGeri }) {
           <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 20, marginBottom: 16, border: '1px solid #bbf7d0' }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: '#16a34a' }}>{f(m.fiyat)} TL</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#2563eb' : '#d97706', borderRadius: 6, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>
-                {m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}
+              <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#2563eb' : '#d97706', borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+                {ISLEM_LABEL[m.islem_turu] || 'Satılık'} {TIP_LABEL[m.tip] || m.tip || ''}
               </span>
-              <span style={{ background: '#f1f5f9', borderRadius: 6, padding: '4px 12px', fontSize: 12 }}>{TIP_LABEL[m.tip] || m.tip}</span>
             </div>
           </div>
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
@@ -293,7 +293,7 @@ export default function PublicPortfoy() {
                     <span style={{ fontSize: 16, fontWeight: 800, color: '#16a34a' }}>{f(m.fiyat)} TL</span>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <span style={{ background: m.islem_turu === 'kira' ? '#eff6ff' : '#fef3c7', color: m.islem_turu === 'kira' ? '#2563eb' : '#d97706', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
-                        {m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'}
+                        {ISLEM_LABEL[m.islem_turu] || 'Satılık'} {TIP_LABEL[m.tip] || ''}
                       </span>
                     </div>
                   </div>

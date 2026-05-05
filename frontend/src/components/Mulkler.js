@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
-const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina', ciftlik: 'Çiftlik' };
+const TIP_LABEL = { daire: 'Daire', villa: 'Villa', arsa: 'Arsa', dukkan: 'Dükkan', ofis: 'Ofis', depo: 'Depo', bina: 'Bina', ciftlik: 'Çiftlik', yazlik: 'Yazlık', isyeri: 'İş Yeri', arazi: 'Arazi' };
+const ISLEM_LABEL = { kira: 'Kiralık', satis: 'Satılık', devren_kira: 'Devren Kiralık', devren_satis: 'Devren Satılık' };
 
 // Tip bazlı dinamik alan tanımları — yeni alan eklemek = buraya 1 satır
 const DETAY_ALANLARI = {
@@ -161,7 +162,7 @@ function MulkFormu({ onKaydet, onIptal, duzenle }) {
           <div>
             <label className="etiket">İşlem Türü</label>
             <select className="input" name="islem_turu" value={form.islem_turu} onChange={d}>
-              <option value="kira">Kiralık</option><option value="satis">Satılık</option>
+              {Object.entries(ISLEM_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
         </div>
@@ -425,7 +426,7 @@ function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
 
           {/* Temel bilgiler */}
           <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0' }}>
-            <DetaySatir label="Emlak Tipi" value={`${m.islem_turu === 'kira' ? 'Kiralık' : 'Satılık'} ${TIP_LABEL[m.tip] || m.tip || '—'}`} />
+            <DetaySatir label="Emlak Tipi" value={`${ISLEM_LABEL[m.islem_turu] || 'Satılık'} ${TIP_LABEL[m.tip] || m.tip || '—'}`} />
             {m.metrekare && <DetaySatir label="m² (Brüt)" value={m.metrekare} />}
             {det.brut_m2 && <DetaySatir label="m² (Brüt)" value={det.brut_m2} />}
             {det.net_m2 && <DetaySatir label="m² (Net)" value={det.net_m2} />}
@@ -655,7 +656,7 @@ export default function Mulkler() {
           border: `1px solid ${pasifGoster ? '#fecaca' : '#e2e8f0'}`,
         }}>{pasifGoster ? '👁 Pasifler gösteriliyor' : '👁‍🗨 Pasifler gizli'}</button>
         <span style={{ color: '#e2e8f0' }}>|</span>
-        {[['', 'Tümü'], ['kira', '🔵 Kiralık'], ['satis', '🟡 Satılık']].map(([v, l]) => (
+        {[['', 'Tümü'], ['kira', '🔵 Kiralık'], ['satis', '🟡 Satılık'], ['devren_kira', 'Devren Kiralık'], ['devren_satis', 'Devren Satılık']].map(([v, l]) => (
           <button key={v} onClick={() => setFiltreIslem(v)} style={{
             padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer',
             background: filtreIslem === v ? '#16a34a' : '#fff', color: filtreIslem === v ? '#fff' : '#374151',

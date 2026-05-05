@@ -2399,8 +2399,8 @@ _FUNCTIONS = [
                 'adres': {'type': 'string'},
                 'sehir': {'type': 'string'},
                 'ilce': {'type': 'string'},
-                'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis', 'bina', 'depo']},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
+                'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis', 'bina', 'depo', 'yazlik', 'isyeri', 'arazi']},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis', 'devren_kira', 'devren_satis']},
                 'fiyat': {'type': 'number'},
                 'metrekare': {'type': 'number', 'description': 'Net m²'},
                 'brut_metrekare': {'type': 'number', 'description': 'Brüt m²'},
@@ -2624,7 +2624,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'yonu': {'type': 'string', 'enum': ['arayan', 'veren'], 'description': 'arayan=daire/ev arıyor, veren=mülkünü kiraya/satışa vermek istiyor'},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis', 'devren_kira', 'devren_satis']},
                 'musteri_adi': {'type': 'string', 'description': 'Talep sahibi müşteri adı (yoksa isimsiz kalır)'},
                 'butce_min': {'type': 'number'}, 'butce_max': {'type': 'number'},
                 'tercih_oda': {'type': 'string', 'description': '2+1, 3+1'},
@@ -2670,7 +2670,7 @@ _FUNCTIONS = [
             'type': 'object',
             'properties': {
                 'yonu': {'type': 'string', 'enum': ['arayan', 'veren']},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis']},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis', 'devren_kira', 'devren_satis']},
                 'durum': {'type': 'string', 'enum': ['aktif', 'pasif', 'tamamlandi', 'hepsi']},
             },
         },
@@ -2811,7 +2811,7 @@ _FUNCTIONS = [
                 'sehir': {'type': 'string', 'description': 'Şehir adı (İstanbul, Ankara vb.)'},
                 'ilce': {'type': 'string', 'description': 'İlçe adı (Kadıköy, Beşiktaş vb.)'},
                 'tip': {'type': 'string', 'enum': ['daire', 'villa', 'arsa', 'dukkan', 'ofis', 'mustakil'], 'description': 'Mülk tipi'},
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis', 'devren_kira', 'devren_satis'], 'description': 'kiralık=kira, satılık=satis'},
                 'fiyat_min': {'type': 'number', 'description': 'Minimum fiyat TL'},
                 'fiyat_max': {'type': 'number', 'description': 'Maksimum fiyat TL'},
                 'oda_sayisi': {'type': 'string', 'description': 'Oda sayısı: 1+1, 2+1, 3+1, 4+1 vb.'},
@@ -2826,7 +2826,7 @@ _FUNCTIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis'], 'description': 'kiralık=kira, satılık=satis'},
+                'islem_turu': {'type': 'string', 'enum': ['kira', 'satis', 'devren_kira', 'devren_satis'], 'description': 'kiralık=kira, satılık=satis'},
                 'butce_min': {'type': 'number', 'description': 'Minimum bütçe TL'},
                 'butce_max': {'type': 'number', 'description': 'Maksimum bütçe TL'},
                 'sicaklik': {'type': 'string', 'enum': ['sicak', 'ilgili', 'soguk'], 'description': 'Müşteri sıcaklığı'},
