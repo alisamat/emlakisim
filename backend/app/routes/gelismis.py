@@ -158,9 +158,15 @@ def iletisim_gecmisi(musteri_id):
 @bp.route('/zeka/oneriler', methods=['GET'])
 @jwt_required()
 def zeka_oneriler():
-    """Proaktif akıllı öneriler."""
+    """Proaktif akıllı öneriler — ayar kapalıysa boş döner."""
     from app.models import Emlakci
-    emlakci = Emlakci.query.get(int(get_jwt_identity()))
+    from app.models.ayarlar import KullaniciAyar
+    eid = int(get_jwt_identity())
+    emlakci = Emlakci.query.get(eid)
+    # Ayar kontrolü
+    kayit = KullaniciAyar.query.filter_by(emlakci_id=eid).first()
+    if kayit and kayit.ayarlar and not kayit.ayarlar.get('proaktif_oneriler', True):
+        return jsonify({'oneriler': []})
     return jsonify({'oneriler': proaktif_oneriler(emlakci)})
 
 

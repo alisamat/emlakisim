@@ -3313,10 +3313,26 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         db.session.add(m)
         db.session.commit()
 
-        return (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
+        sonuc = (f'{uyari}✅ *Müşteri eklendi: {m.ad_soyad}*'
                 + (f' _({m.kunye})_' if m.kunye else '')
                 + f'\n\n📞 {m.telefon or "—"}'
                 + (f'\n📧 {m.email}' if m.email else ''))
+
+        # Otomatik eşleştirme
+        try:
+            from app.models.ayarlar import KullaniciAyar
+            ayar = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+            if ayar and ayar.ayarlar and ayar.ayarlar.get('otomatik_eslestirme', True):
+                from app.services.eslestirme import eslesdir
+                eslesimler = eslesdir(emlakci.id, musteri_id=m.id, limit=3)
+                if eslesimler:
+                    sonuc += '\n\n🔗 *Uygun mülkler:*'
+                    for e in eslesimler:
+                        sonuc += f'\n• {e.get("mulk_baslik", "—")} — {e.get("puan", 0)} puan'
+        except Exception:
+            pass
+
+        return sonuc
 
     if fonksiyon_adi == 'musteri_guncelle':
         # ID veya isimle bul
@@ -3792,7 +3808,7 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
         if det.get('gabari'): detay_satirlar.append(f'📏 Gabari: {det["gabari"]}')
         if det.get('takas'): detay_satirlar.append('🔄 Takas: Kabul edilir')
         detay_str = '\n'.join(detay_satirlar)
-        return (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
+        sonuc = (f'✅ *Mülk eklendi: {m.baslik or "—"}*\n\n'
                 f'📍 {m.adres or "—"}{", " + m.ilce if m.ilce else ""}{", " + m.sehir if m.sehir else ""}\n'
                 f'🏷 {islem} · {m.tip or "—"}\n'
                 f'💰 {f_tl(m.fiyat)} TL\n'
@@ -3800,6 +3816,22 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 + (f'\n{detay_str}\n' if detay_str else '')
                 + sahip_str
                 + f'\n🌐 _İlan sayfanızda görüntüleyin:_ {sayfa_link}')
+
+        # Otomatik eşleştirme
+        try:
+            from app.models.ayarlar import KullaniciAyar
+            ayar = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
+            if ayar and ayar.ayarlar and ayar.ayarlar.get('otomatik_eslestirme', True):
+                from app.services.eslestirme import eslesdir
+                eslesimler = eslesdir(emlakci.id, mulk_id=m.id, limit=3)
+                if eslesimler:
+                    sonuc += '\n\n🔗 *Uygun müşteriler:*'
+                    for e in eslesimler:
+                        sonuc += f'\n• {e.get("musteri_ad", "—")} — {e.get("puan", 0)} puan'
+        except Exception:
+            pass
+
+        return sonuc
 
     if fonksiyon_adi == 'mulk_listele':
         sonuc, _ = _mulk_listele(emlakci)

@@ -18,8 +18,9 @@ def prompt_olustur(emlakci, kategoriler, metin=''):
     except Exception:
         pass
 
-    # AI tonu
+    # AI tonu + işlem onayı
     ton = ''
+    islem_onay = ''
     try:
         from app.models.ayarlar import KullaniciAyar
         k = KullaniciAyar.query.filter_by(emlakci_id=emlakci.id).first()
@@ -31,13 +32,16 @@ def prompt_olustur(emlakci, kategoriler, metin=''):
                 ton = 'Çok kısa ve öz cevap ver.'
             else:
                 ton = 'Samimi ve yardımsever ol.'
+            # İşlem onayı
+            if k.ayarlar.get('islem_onay'):
+                islem_onay = '\nÖNEMLİ: Veritabanına yazma işlemi (ekle/güncelle/sil) yapmadan ÖNCE kullanıcıdan onay iste. Örnek: "X müşteriyi eklemek istiyorsunuz, onaylıyor musunuz?" Kullanıcı "evet/tamam/onay" derse işlemi yap.'
     except Exception:
         ton = 'Samimi ve yardımsever ol.'
 
     # ═══ TIER 1: Çekirdek (~200 token) ═══
     tier1 = f"""Sen {asistan_ismi} — emlak profesyonelleri için AI asistan.
 Kullanıcı: {emlakci.ad_soyad}. Kredi: {emlakci.kredi}. Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}.
-{ton}
+{ton}{islem_onay}
 Türkçe konuş. *bold* ve _italic_ kullan.
 Selamlama + komut birlikte gelirse: kısa selamla + komutu yap.
 Çoklu istek varsa hepsini yap. Koşullu istek varsa önce kontrol et.
