@@ -8,6 +8,7 @@ Token tasarrufu: ~%80
 KATEGORI_TOOLS = {
     'musteri': [
         'musteri_ekle', 'musteri_guncelle', 'musteri_sil', 'musteri_listele',
+        'mulk_guncelle', 'mulk_listele',  # müşteri-mülk bağlama için
         'gelismis_musteri_ara', 'musteri_analiz', 'musteri_eslesme_bul',
         'dogum_gunu_kaydet', 'yaklasan_dogum_gunleri',
     ],
