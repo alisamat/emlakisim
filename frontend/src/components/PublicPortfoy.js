@@ -45,7 +45,31 @@ function PublicMulkDetay({ m, emlakci, onGeri }) {
       <div style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>📍 {m.ilce || ''}{m.sehir ? `, ${m.sehir}` : ''}</div>
       {resimler.length > 0 ? (
         <div style={{ marginBottom: 16 }}>
-          <img src={resimler[aktifResim]?.url} alt="" style={{ width: '100%', height: 400, objectFit: 'cover', borderRadius: 12, background: '#f1f5f9' }} />
+          <div style={{ position: 'relative' }}>
+            <img src={resimler[aktifResim]?.url} alt="" style={{ width: '100%', height: 400, objectFit: 'cover', borderRadius: 12, background: '#f1f5f9' }} />
+            {resimler.length > 1 && (
+              <>
+                {aktifResim > 0 && (
+                  <button onClick={() => setAktifResim(p => p - 1)} style={{
+                    position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%',
+                    width: 40, height: 40, fontSize: 20, cursor: 'pointer',
+                  }}>◀</button>
+                )}
+                {aktifResim < resimler.length - 1 && (
+                  <button onClick={() => setAktifResim(p => p + 1)} style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%',
+                    width: 40, height: 40, fontSize: 20, cursor: 'pointer',
+                  }}>▶</button>
+                )}
+                <div style={{
+                  position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+                  background: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 12px', borderRadius: 12, fontSize: 12,
+                }}>{aktifResim + 1} / {resimler.length}</div>
+              </>
+            )}
+          </div>
           {resimler.length > 1 && (
             <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto' }}>
               {resimler.map((r, i) => (
