@@ -892,8 +892,11 @@ def mulk_resim_ekle(mid):
     aciklama = (request.form or request.get_json(silent=True) or {}).get('aciklama', '')
     ana = len(resimler) == 0  # İlk resim = kapak
 
+    resimler = list(resimler)  # kopya — SQLAlchemy mutation tracking
     resimler.append({'url': url, 'aciklama': aciklama, 'ana': ana})
     mulk.resimler = resimler
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(mulk, 'resimler')
     db.session.commit()
 
     return jsonify({'resimler': resimler, 'eklenen': resimler[-1]})
