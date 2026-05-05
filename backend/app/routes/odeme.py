@@ -9,7 +9,7 @@ from flask import Blueprint, request, jsonify, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Emlakci, IslemLog
-from app.services.kuveytturk import PAKETLER, start_3d_secure_payment, verify_3d_callback, provision_payment
+from app.services.kuveytturk import paketleri_getir, start_3d_secure_payment, verify_3d_callback, provision_payment
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('odeme', __name__, url_prefix='/api/odeme')
@@ -20,8 +20,9 @@ _odeme_sessions = {}
 
 @bp.route('/paketler', methods=['GET'])
 def paketler():
-    """Kredi paketlerini listele."""
-    return jsonify({'paketler': {k: {**v} for k, v in PAKETLER.items()}})
+    """Kredi paketlerini listele — fiyatlar TCMB kuruyla dinamik."""
+    pktler, kur = paketleri_getir()
+    return jsonify({'paketler': pktler, 'usd_kur': kur})
 
 
 @bp.route('/kuveytturk/init', methods=['POST'])
@@ -34,7 +35,8 @@ def odeme_baslat():
 
     d = request.get_json() or {}
     paket_id = d.get('paket_id', '')
-    paket = PAKETLER.get(paket_id)
+    pktler, _ = paketleri_getir()
+    paket = pktler.get(paket_id)
     if not paket:
         return jsonify({'message': 'Geçersiz paket'}), 400
 

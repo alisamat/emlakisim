@@ -16,16 +16,13 @@ bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 @jwt_required()
 def fiyatlandirma_getir():
     """Mevcut kredi fiyatlandırma tablosunu getir."""
-    paketler = [
-        {'id': 'temel', 'ad': 'Temel', 'kredi': 3000, 'usd': 8},
-        {'id': 'standart', 'ad': 'Standart', 'kredi': 12000, 'usd': 32},
-        {'id': 'profesyonel', 'ad': 'Profesyonel', 'kredi': 30000, 'usd': 80},
-        {'id': 'kurumsal', 'ad': 'Kurumsal', 'kredi': 120000, 'usd': 320},
-    ]
+    from app.services.kuveytturk import paketleri_getir
+    pktler, kur = paketleri_getir()
+    paketler = [{'id': k, 'ad': v['aciklama'], 'kredi': v['kredi'], 'usd': v['fiyat_usd'], 'tl': v['fiyat_tl']} for k, v in pktler.items()]
     return jsonify({
         'kredi_tablosu': KREDI_TABLOSU,
         'paketler': paketler,
-        'kur': float(os.environ.get('USD_TRY_KUR', '37.65')),
+        'kur': kur,
         'kdv_oran': 20,
     })
 

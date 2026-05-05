@@ -29,12 +29,38 @@ PASSWORD = lambda: _cfg('KUVEYTTURK_PASSWORD', 'api123')
 BASE_URL = lambda: _cfg('RAILWAY_PUBLIC_DOMAIN', 'backend-production-9ffc.up.railway.app')
 
 # Kredi paketleri
-PAKETLER = {
-    'temel':        {'kredi': 3000,   'fiyat_tl': 250,   'aciklama': 'Temel Paket'},
-    'standart':     {'kredi': 12000,  'fiyat_tl': 800,   'aciklama': 'Standart Paket'},
-    'profesyonel':  {'kredi': 30000,  'fiyat_tl': 1800,  'aciklama': 'Profesyonel Paket'},
-    'kurumsal':     {'kredi': 120000, 'fiyat_tl': 6000,  'aciklama': 'Kurumsal Paket'},
+from app.services.doviz import kurlari_getir
+
+# Paketler USD bazlı — TRY fiyatı TCMB kuruyla dinamik hesaplanır
+PAKETLER_USD = {
+    'temel':        {'kredi': 3000,   'fiyat_usd': 8.00,   'aciklama': 'Temel Paket',        'populer': False},
+    'standart':     {'kredi': 12000,  'fiyat_usd': 32.00,  'aciklama': 'Standart Paket',     'populer': True},
+    'profesyonel':  {'kredi': 30000,  'fiyat_usd': 80.00,  'aciklama': 'Profesyonel Paket',  'populer': False},
+    'kurumsal':     {'kredi': 120000, 'fiyat_usd': 320.00, 'aciklama': 'Kurumsal Paket',     'populer': False},
 }
+
+def _usd_kur():
+    """TCMB USD satış kuru."""
+    kurlar = kurlari_getir()
+    return kurlar.get('USD', {}).get('satis', 38.00)
+
+def paketleri_getir():
+    """Paketleri güncel TRY fiyatıyla döndür (KDV %20 dahil)."""
+    kur = _usd_kur()
+    sonuc = {}
+    for pid, p in PAKETLER_USD.items():
+        fiyat_tl_net = round(p['fiyat_usd'] * kur, 2)
+        fiyat_tl_kdv = round(fiyat_tl_net * 1.20, 2)
+        sonuc[pid] = {
+            'kredi': p['kredi'],
+            'fiyat_usd': p['fiyat_usd'],
+            'fiyat_tl': fiyat_tl_kdv,       # KDV dahil (ödeme tutarı)
+            'fiyat_tl_net': fiyat_tl_net,    # KDV hariç
+            'aciklama': p['aciklama'],
+            'populer': p['populer'],
+        }
+    return sonuc, kur
+
 
 
 def generate_hash_payment(merchant_id, order_id, amount, ok_url, fail_url, username, password):
