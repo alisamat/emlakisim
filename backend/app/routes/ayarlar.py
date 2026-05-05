@@ -14,6 +14,7 @@ VARSAYILAN_AYARLAR = {
     'ai_tonu': 'samimi',           # resmi / samimi / kisa
     'otomatik_eslestirme': True,   # Müşteri/mülk ekleyince otomatik eşleştir
     'proaktif_oneriler': True,     # Proaktif öneriler göster
+    'asistan_ismi': '',            # Asistan ismi (boş = Emlakisim AI)
     'bildirim_lead': True,         # Lead bildirimleri
     'bildirim_gorev': True,        # Görev hatırlatmaları
     'bildirim_yedek': True,        # Yedek uyarıları
@@ -22,6 +23,7 @@ VARSAYILAN_AYARLAR = {
     'varsayilan_sehir': '',        # Varsayılan şehir
     'varsayilan_ilce': '',         # Varsayılan ilçe
     'mesai_disi_mesaj': '',        # Özel mesai dışı mesajı
+    'grup_teklif_kapali': False,   # Grup davetlerini otomatik reddet
     'tema': 'acik',                # acik / karanlik
 }
 
