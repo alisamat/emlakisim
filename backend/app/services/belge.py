@@ -9,13 +9,32 @@ from datetime import datetime
 
 from fpdf import FPDF
 
+# Türkçe → ASCII dönüşüm tablosu (Helvetica uyumlu)
+_TR_MAP = str.maketrans({
+    'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G',
+    'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O',
+    'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U',
+})
+
+def _ascii(text):
+    """Türkçe karakterleri ASCII karşılıklarına çevir."""
+    if not text:
+        return text or ''
+    return str(text).translate(_TR_MAP)
+
+
 class TurkPDF(FPDF):
     """Türkçe karakter destekli PDF."""
     def __init__(self):
         super().__init__()
-        # DejaVu font Türkçe destekler — fpdf2 built-in unicode
         self.add_page()
         self.set_auto_page_break(auto=True, margin=20)
+
+    def cell(self, w, h=0, text='', *args, **kwargs):
+        return super().cell(w, h, _ascii(text), *args, **kwargs)
+
+    def multi_cell(self, w, h, text='', *args, **kwargs):
+        return super().multi_cell(w, h, _ascii(text), *args, **kwargs)
 
     def baslik(self, metin):
         self.set_font('Helvetica', 'B', 16)

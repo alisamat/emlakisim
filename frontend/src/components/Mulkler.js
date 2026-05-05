@@ -407,7 +407,7 @@ function MulkDetay({ m, onGeri, onDuzenle, onResimGuncelle }) {
           {/* Aksiyon butonları */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
             <button onClick={() => onDuzenle(m)} className="btn-yesil" style={{ fontSize: 12 }}>✏️ Düzenle</button>
-            <button onClick={async () => { try { const r = await api.get(`/api/panel/ofis/brosur/${m.id}`, {responseType:'blob'}); const url=URL.createObjectURL(new Blob([r.data])); const a=document.createElement('a'); a.href=url; a.download=`brosur_${m.id}.pdf`; a.click(); } catch{} }} className="btn-gri" style={{ fontSize: 12 }}>📄 Broşür PDF</button>
+            <button onClick={async () => { try { const r = await api.get(`/api/panel/ofis/brosur/${m.id}`, {responseType:'blob'}); const url=URL.createObjectURL(new Blob([r.data])); const a=document.createElement('a'); a.href=url; a.download=`brosur_${m.id}.pdf`; a.click(); } catch{ alert('Broşür oluşturulurken hata oluştu'); } }} className="btn-gri" style={{ fontSize: 12 }}>📄 Broşür PDF</button>
             <button onClick={async () => { try { const r = await api.post('/api/panel/gelismis/ilan-metni', {mulk_id:m.id}); navigator.clipboard.writeText(r.data.ilan); alert('İlan metni kopyalandı!'); } catch{} }} className="btn-gri" style={{ fontSize: 12 }}>📝 İlan Metni</button>
           </div>
         </div>
