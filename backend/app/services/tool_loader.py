@@ -8,7 +8,8 @@ Token tasarrufu: ~%80
 KATEGORI_TOOLS = {
     'musteri': [
         'musteri_ekle', 'musteri_guncelle', 'musteri_sil', 'musteri_listele',
-        'mulk_sahip_ata', 'talep_musteri_ata',  # bağlama tool'ları
+        'mulk_sahip_ata', 'talep_musteri_ata',
+        'mulk_listele', 'mulk_goruntule',  # "ilanı göster" bağlamı
         'gelismis_musteri_ara', 'musteri_analiz', 'musteri_eslesme_bul',
         'dogum_gunu_kaydet', 'yaklasan_dogum_gunleri',
     ],
