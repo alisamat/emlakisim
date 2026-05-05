@@ -54,12 +54,17 @@ def _supabase_yukle(dosya_bytes, dosya_adi, klasor):
         yol = f'{klasor}/{uuid.uuid4().hex}_{dosya_adi}'
         r = requests.post(
             f'{url}/storage/v1/object/{bucket}/{yol}',
-            headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/octet-stream'},
+            headers={
+                'Authorization': f'Bearer {key}',
+                'apikey': key,
+                'Content-Type': 'application/octet-stream',
+            },
             data=dosya_bytes, timeout=30,
         )
         if r.status_code in (200, 201):
             dosya_url = f'{url}/storage/v1/object/public/{bucket}/{yol}'
             return True, dosya_url
+        logger.error(f'[Supabase] {r.status_code}: {r.text[:200]}')
         return False, f'Supabase hata: {r.status_code}'
     except Exception as e:
         return False, str(e)
