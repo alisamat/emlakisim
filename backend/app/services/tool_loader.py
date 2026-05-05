@@ -8,15 +8,17 @@ Token tasarrufu: ~%80
 KATEGORI_TOOLS = {
     'musteri': [
         'musteri_ekle', 'musteri_guncelle', 'musteri_sil', 'musteri_listele',
-        'mulk_guncelle', 'mulk_listele',  # müşteri-mülk bağlama için
+        'mulk_sahip_ata', 'talep_musteri_ata',  # bağlama tool'ları
         'gelismis_musteri_ara', 'musteri_analiz', 'musteri_eslesme_bul',
         'dogum_gunu_kaydet', 'yaklasan_dogum_gunleri',
     ],
     'mulk': [
         'mulk_ekle', 'mulk_guncelle', 'mulk_sil', 'mulk_goruntule', 'mulk_listele', 'gelismis_mulk_ara',
+        'mulk_sahip_ata',
     ],
     'talep': [
         'talep_ekle', 'talep_listele', 'talep_guncelle', 'talep_sil',
+        'talep_musteri_ata',
     ],
     'eslestirme': [
         'eslestir', 'musteri_eslesme_bul', 'gelismis_mulk_ara', 'gelismis_musteri_ara',

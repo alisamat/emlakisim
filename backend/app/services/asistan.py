@@ -2763,6 +2763,31 @@ _FUNCTIONS = [
         },
     },
     {
+        'name': 'mulk_sahip_ata',
+        'description': 'Mülkün sahibini atar/bağlar. "müşteriyi ilana bağla", "mülk sahibi X olsun", "ilanı X\'e ata" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'mulk_baslik': {'type': 'string', 'description': 'Mülk başlığı veya arama kelimesi'},
+                'mulk_id': {'type': 'integer', 'description': 'Mülk (#ID)'},
+                'musteri_adi': {'type': 'string', 'description': 'Sahip olacak müşteri adı'},
+            },
+            'required': ['musteri_adi'],
+        },
+    },
+    {
+        'name': 'talep_musteri_ata',
+        'description': 'Talebi müşteriye bağlar. "talebi X\'e ata", "bu talep Y\'nin" gibi.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'talep_id': {'type': 'integer', 'description': 'Talep (#ID)'},
+                'musteri_adi': {'type': 'string', 'description': 'Bağlanacak müşteri adı'},
+            },
+            'required': ['musteri_adi'],
+        },
+    },
+    {
         'name': 'eslestir',
         'description': 'Eşleştirme tablosunu getirir. Müşteri ID verilirse o müşteriye uygun mülkleri bulur, verilmezse tüm müşteri×mülk çapraz eşleştirme tablosunu döndürür.',
         'parameters': {
@@ -3882,6 +3907,59 @@ def _ai_function_call_isle(fonksiyon_adi, args, emlakci):
                 f'📊 KDV (%{f.kdv_oran}): {f_tl(f.kdv_tutar)} TL\n'
                 f'💵 Toplam: {f_tl(f.toplam)} TL\n'
                 f'📋 Durum: {f.durum or "taslak"}')
+
+    if fonksiyon_adi == 'mulk_sahip_ata':
+        # Müşteriyi bul
+        mus = None
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+        if not mus:
+            return f'⚠️ "{args.get("musteri_adi", "")}" adında müşteri bulunamadı.'
+        # Mülkü bul
+        mulk = None
+        if args.get('mulk_id'):
+            mulk = Mulk.query.filter_by(id=args['mulk_id'], emlakci_id=emlakci.id).first()
+        elif args.get('mulk_baslik'):
+            mulk = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).filter(
+                Mulk.baslik.ilike(f'%{args["mulk_baslik"]}%')
+            ).first()
+        if not mulk:
+            # Tek mülk varsa onu seç
+            mulkler = Mulk.query.filter_by(emlakci_id=emlakci.id, aktif=True).all()
+            if len(mulkler) == 1:
+                mulk = mulkler[0]
+        if not mulk:
+            return '⚠️ Mülk bulunamadı. Hangi ilana bağlamak istiyorsunuz?'
+        mulk.musteri_id = mus.id
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(mulk, 'musteri_id')
+        db.session.commit()
+        return f'✅ *{mulk.baslik}* → 🔒 Sahip: *{mus.ad_soyad}* bağlandı.\n\n_Bu bilgi sadece size görünür._'
+
+    if fonksiyon_adi == 'talep_musteri_ata':
+        from app.models.talep import Talep
+        mus = None
+        if args.get('musteri_adi'):
+            mus = Musteri.query.filter_by(emlakci_id=emlakci.id).filter(
+                Musteri.ad_soyad.ilike(f'%{args["musteri_adi"]}%')
+            ).first()
+        if not mus:
+            return f'⚠️ "{args.get("musteri_adi", "")}" adında müşteri bulunamadı.'
+        t = None
+        if args.get('talep_id'):
+            t = Talep.query.filter_by(id=args['talep_id'], emlakci_id=emlakci.id).first()
+        if not t:
+            talepler = Talep.query.filter_by(emlakci_id=emlakci.id, durum='aktif').all()
+            if len(talepler) == 1:
+                t = talepler[0]
+        if not t:
+            return '⚠️ Talep bulunamadı. Hangi talebi bağlamak istiyorsunuz?'
+        t.musteri_id = mus.id
+        db.session.commit()
+        yon = '🔍 Arıyor' if t.yonu == 'arayan' else '🏠 Veriyor'
+        return f'✅ Talep → 👤 *{mus.ad_soyad}* bağlandı.\n{yon} · {t.islem_turu or ""}'
 
     if fonksiyon_adi == 'eslestir':
         if args.get('musteri_id'):
